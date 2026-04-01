@@ -24,8 +24,8 @@ export function rateLimit(identifier: string): { success: boolean; remaining: nu
 if (typeof setInterval !== 'undefined') {
   setInterval(() => {
     const now = Date.now();
-    for (const [key, val] of rateLimitMap) {
+    rateLimitMap.forEach((val, key) => {
       if (now > val.resetTime) rateLimitMap.delete(key);
-    }
+    });
   }, 60_000);
 }
