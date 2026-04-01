@@ -13,6 +13,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const pages = [
     { url: base, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 1.0 },
+    { url: `${base}/services`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.9 },
+    { url: `${base}/process`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/why-us`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/clients`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.8 },
     { url: `${base}/blog`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.8 },
   ];
 
