@@ -19,14 +19,22 @@ const INDUSTRIES = [
 const EMPLOYEE_RANGES = ['1-5', '6-20', '21-50', '51-200', '200+'];
 
 const SERVICES = [
+  { value: 'consulting', label: 'Consulting & Strategy' },
+  { value: 'seo', label: 'SEO' },
+  { value: 'ai-search', label: 'AI Search Optimisation' },
+  { value: 'media-buying', label: 'Media Buying' },
+  { value: 'creative', label: 'Creatives & Content' },
+  { value: 'google-ads', label: 'Google Ads' },
+  { value: 'social-ads', label: 'Social Media Ads' },
+  { value: 'content-strategy', label: 'Content Strategy' },
+  { value: 'website', label: 'Web Design & Development' },
+  { value: 'display-ads', label: 'Display Advertising' },
   { value: 'ai-agents', label: 'AI Agents & Chatbots' },
   { value: 'automation', label: 'Business Automation' },
   { value: 'custom-software', label: 'Custom Software' },
-  { value: 'website', label: 'Website / Web App' },
   { value: 'integrations', label: 'System Integrations' },
   { value: 'branding', label: 'Branding & Design' },
-  { value: 'data-analytics', label: 'Data & Analytics' },
-  { value: 'consulting', label: 'AI Consulting' },
+  { value: 'data-analytics', label: 'Performance Analysis' },
   { value: 'other', label: 'Other' },
 ];
 

@@ -38,6 +38,14 @@ const SERVICE_PRICING: Record<string, { setup: [number, number]; monthly: [numbe
   'branding': { setup: [1500, 4000], monthly: [0, 0] },
   'data-analytics': { setup: [3000, 8000], monthly: [499, 1299] },
   'consulting': { setup: [1000, 3000], monthly: [299, 799] },
+  'seo': { setup: [1500, 4000], monthly: [499, 1299] },
+  'ai-search': { setup: [2000, 5000], monthly: [499, 1299] },
+  'media-buying': { setup: [1000, 3000], monthly: [999, 2999] },
+  'creative': { setup: [1500, 4000], monthly: [399, 999] },
+  'google-ads': { setup: [1000, 3000], monthly: [499, 1499] },
+  'social-ads': { setup: [1000, 3000], monthly: [499, 1499] },
+  'content-strategy': { setup: [1000, 3000], monthly: [399, 999] },
+  'display-ads': { setup: [1000, 2000], monthly: [399, 999] },
   'other': { setup: [2000, 8000], monthly: [299, 999] },
 };
 

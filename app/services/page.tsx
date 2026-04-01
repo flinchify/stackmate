@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import Image from 'next/image';
 import { Bot, Workflow, Code2, Globe, Link2, Palette, BarChart3, MessageSquare, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
@@ -111,6 +112,45 @@ const SERVICES = [
       'Ongoing advisory support',
     ],
   },
+  {
+    icon: Globe,
+    title: 'SEO & GEO Optimization',
+    desc: 'Rank locally, rank globally. We make sure your business gets found by the right people at the right time.',
+    details: [
+      'Technical SEO audits and fixes',
+      'Local SEO for Google Maps and "near me" searches',
+      'GEO optimization for AI search engines (ChatGPT, Perplexity, Gemini)',
+      'Keyword research and content strategy',
+      'Schema markup and structured data',
+      'Monthly ranking reports and adjustments',
+    ],
+  },
+  {
+    icon: Palette,
+    title: 'Creatives & Content',
+    desc: 'Scroll-stopping visuals, social content, and brand assets that make your business impossible to ignore.',
+    details: [
+      'Social media content creation',
+      'Ad creative design (Meta, Google, TikTok)',
+      'Video editing and motion graphics',
+      'Photography direction and retouching',
+      'Brand asset libraries',
+      'Content calendars and strategy',
+    ],
+  },
+  {
+    icon: BarChart3,
+    title: 'Performance Analysis',
+    desc: 'Stop guessing. We track every metric that matters and turn data into growth decisions.',
+    details: [
+      'Google Analytics 4 setup and configuration',
+      'Conversion tracking and funnel analysis',
+      'A/B testing frameworks',
+      'Custom KPI dashboards',
+      'Competitor benchmarking',
+      'Monthly performance reports with actionable insights',
+    ],
+  },
 ];
 
 function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: number }) {
@@ -164,6 +204,40 @@ export default function ServicesPage() {
           {SERVICES.map((service, i) => (
             <ServiceCard key={service.title} service={service} index={i} />
           ))}
+        </div>
+      </section>
+
+      {/* FOUNDER */}
+      <section className="py-24 bg-sm-card/20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="grid md:grid-cols-[300px_1fr] gap-12 items-start">
+            <div>
+              <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-sm-border bg-sm-card">
+                <Image src="/miles.png" alt="Miles Cass — Founder of Stackmate" fill className="object-cover" />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-sm-muted uppercase tracking-widest mb-3">The Builder</p>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">Miles Cass</h2>
+              <div className="space-y-4 text-sm-light leading-relaxed">
+                <p>
+                  I started building at 17. Not because someone told me to — because I saw how broken most business software was and knew I could do it better. By 19, I&apos;d shipped full-stack platforms, built AI-powered marketplaces, and delivered production systems for real businesses.
+                </p>
+                <p>
+                  I don&apos;t come from a traditional agency background. I come from actually building things — writing code, designing interfaces, deploying infrastructure, and solving problems that matter. Every system Stackmate delivers has my hands on it.
+                </p>
+                <p>
+                  My stack runs deep: Next.js, React, TypeScript, Node, PostgreSQL, AI/ML integrations, Stripe payments, real-time systems, and everything in between. I build full products — not mockups, not wireframes — working software that goes live and makes money.
+                </p>
+                <p>
+                  Stackmate exists because Perth businesses deserve better than 12-week agency timelines and cookie-cutter WordPress sites. I build in days what others quote in months, because I actually know how to build.
+                </p>
+                <p className="text-white font-semibold">
+                  If you want someone who talks, hire an agency. If you want someone who builds, talk to me.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
