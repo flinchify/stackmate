@@ -12,6 +12,22 @@ import {
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
 import Counter from '@/components/Counter';
+import LogoMarquee from '@/components/LogoMarquee';
+import ClientLogoStrip from '@/components/ClientLogoStrip';
+
+const INTEGRATIONS_ROW1 = [
+  { name: 'Stripe' }, { name: 'Xero' }, { name: 'HubSpot' }, { name: 'Salesforce' },
+  { name: 'Slack' }, { name: 'Google Workspace' }, { name: 'Microsoft 365' },
+  { name: 'Zapier' }, { name: 'Make' }, { name: 'Shopify' }, { name: 'Square' },
+  { name: 'Twilio' }, { name: 'SendGrid' }, { name: 'AWS' },
+];
+
+const INTEGRATIONS_ROW2 = [
+  { name: 'Vercel' }, { name: 'OpenAI' }, { name: 'Anthropic' }, { name: 'PostgreSQL' },
+  { name: 'Firebase' }, { name: 'Supabase' }, { name: 'Cloudflare' },
+  { name: 'GitHub' }, { name: 'Figma' }, { name: 'Notion' }, { name: 'Airtable' },
+  { name: 'Calendly' }, { name: 'Intercom' }, { name: 'Mailchimp' },
+];
 
 const SERVICES = [
   { icon: Bot, title: 'AI Agents & Chatbots', desc: 'Custom AI agents that handle customer support, lead qualification, and internal operations 24/7.' },
@@ -176,6 +192,17 @@ export default function Home() {
               <Clock className="w-4 h-4" />
               <span className="text-sm">24/7 Support</span>
             </div>
+          </motion.div>
+
+          {/* Worked with */}
+          <motion.div
+            className="mt-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 2.4 }}
+          >
+            <p className="text-xs text-sm-muted uppercase tracking-widest mb-4 text-center">Trusted by</p>
+            <ClientLogoStrip />
           </motion.div>
         </div>
       </motion.section>
@@ -428,6 +455,22 @@ export default function Home() {
               </StaggerItem>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ====== INTEGRATIONS ====== */}
+      <section className="py-24 md:py-32 overflow-hidden">
+        <div className="max-w-5xl mx-auto px-6 mb-12">
+          <AnimatedSection className="text-center">
+            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">Integrations</p>
+            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
+              We connect with everything you already use
+            </h2>
+          </AnimatedSection>
+        </div>
+        <div className="space-y-4">
+          <LogoMarquee items={INTEGRATIONS_ROW1} direction="left" speed={35} />
+          <LogoMarquee items={INTEGRATIONS_ROW2} direction="right" speed={40} />
         </div>
       </section>
 
