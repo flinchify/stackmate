@@ -468,9 +468,9 @@ export default function Home() {
               <span className="font-display font-bold">stackmate</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-sm-muted">
-              <a href="#services" className="hover:text-white transition-colors">Services</a>
-              <a href="#process" className="hover:text-white transition-colors">Process</a>
-              <a href="#compare" className="hover:text-white transition-colors">Why Us</a>
+              <a href="/services" className="hover:text-white transition-colors">Services</a>
+              <a href="/process" className="hover:text-white transition-colors">Process</a>
+              <a href="/why-us" className="hover:text-white transition-colors">Why Us</a>
               <a href="/blog" className="hover:text-white transition-colors">Blog</a>
             </div>
             <div className="flex items-center gap-2 text-sm text-sm-muted">
@@ -478,8 +478,10 @@ export default function Home() {
               Perth, WA
             </div>
           </div>
-          <div className="text-center mt-8 pt-8 border-t border-sm-border">
-            <p className="text-xs text-sm-muted">&copy; {new Date().getFullYear()} Stackmate. All rights reserved. ABN pending.</p>
+          <div className="flex items-center justify-center gap-4 mt-8 pt-8 border-t border-sm-border">
+            <a href="/privacy" className="text-xs text-sm-muted hover:text-white transition-colors">Privacy Policy</a>
+            <a href="/terms" className="text-xs text-sm-muted hover:text-white transition-colors">Terms of Service</a>
+            <span className="text-xs text-sm-muted">&copy; {new Date().getFullYear()} Stackmate. All rights reserved.</span>
           </div>
         </div>
       </footer>

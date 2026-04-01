@@ -15,6 +15,6 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'Amazonbot', allow: '/' },
       { userAgent: 'cohere-ai', allow: '/' },
     ],
-    sitemap: 'https://stackmate.com.au/sitemap.xml',
+    sitemap: 'https://stackmate.digital/sitemap.xml',
   };
 }

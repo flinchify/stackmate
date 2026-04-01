@@ -9,7 +9,7 @@ const BLOG_SLUGS = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://stackmate.com.au';
+  const base = 'https://stackmate.digital';
 
   const pages = [
     { url: base, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 1.0 },

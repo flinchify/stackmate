@@ -15,7 +15,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://stackmate.com.au'),
+  metadataBase: new URL('https://stackmate.digital'),
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
   title: {
     default: 'Stackmate | AI-Powered Business Systems, Perth WA',
     template: '%s | Stackmate',
@@ -35,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_AU',
-    url: 'https://stackmate.com.au',
+    url: 'https://stackmate.digital',
     siteName: 'Stackmate',
     title: 'Stackmate | AI-Powered Business Systems, Perth WA',
     description:
@@ -59,8 +63,8 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Stackmate',
-  url: 'https://stackmate.com.au',
-  logo: 'https://stackmate.com.au/logo.png',
+  url: 'https://stackmate.digital',
+  logo: 'https://stackmate.digital/logo.png',
   description:
     'AI-powered business systems integrator based in Perth, Western Australia.',
   address: {
