@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 interface ClientLogo {
   name: string;
   src: string;
@@ -24,14 +22,14 @@ export default function ClientLogoStrip() {
           href={logo.url || '#'}
           target="_blank"
           rel="noopener noreferrer"
-          className="opacity-60 hover:opacity-100 transition-opacity duration-300"
+          className="opacity-50 hover:opacity-100 transition-opacity duration-300"
         >
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={logo.src}
             alt={logo.name}
-            width={120}
-            height={40}
-            className="h-8 w-auto object-contain brightness-0 invert"
+            className="h-8 w-auto object-contain"
+            style={{ filter: 'brightness(0) invert(1)' }}
           />
         </a>
       ))}
