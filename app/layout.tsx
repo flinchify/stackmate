@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://stackmate.digital',
   },
-  authors: [{ name: 'Miles Cass', url: 'https://www.linkedin.com/in/milescass' }],
+  authors: [{ name: 'Miles Cass', url: 'https://www.linkedin.com/in/miles-cass-0a01973b7/' }],
   creator: 'Miles Cass',
   publisher: 'Stackmate',
   keywords: [
@@ -85,7 +85,7 @@ const jsonLd = {
     geoRadius: '50000',
   },
   sameAs: [
-    'https://www.linkedin.com/in/milescass',
+    'https://www.linkedin.com/in/miles-cass-0a01973b7/',
     'https://instagram.com/milescass_',
   ],
 };

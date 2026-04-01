@@ -531,7 +531,11 @@ Date: _______________`,
 
 export default function DocumentsPage() {
   const [activeDoc, setActiveDoc] = useState<string | null>(null);
+  const [editedContent, setEditedContent] = useState<Record<string, string>>({});
+  const [editMode, setEditMode] = useState(false);
   const categories = Array.from(new Set(TEMPLATES.map(t => t.category)));
+
+  const getContent = (id: string, original: string) => editedContent[id] ?? original;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -631,14 +635,24 @@ export default function DocumentsPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-display font-bold">{active.title}</h2>
                   <div className="flex gap-2">
-                    <button onClick={() => copyToClipboard(active.content)} className="flex items-center gap-1.5 px-3 py-2 rounded-sm border border-sm-border text-xs text-sm-light hover:border-white/30 transition-colors">
+                    <button onClick={() => setEditMode(!editMode)} className={`flex items-center gap-1.5 px-3 py-2 rounded-sm border text-xs transition-colors ${editMode ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-sm-border text-sm-light hover:border-white/30'}`}>
+                      {editMode ? 'Preview' : 'Edit'}
+                    </button>
+                    <button onClick={() => copyToClipboard(getContent(active.id, active.content))} className="flex items-center gap-1.5 px-3 py-2 rounded-sm border border-sm-border text-xs text-sm-light hover:border-white/30 transition-colors">
                       <Copy className="w-3.5 h-3.5" /> Copy
                     </button>
-                    <button onClick={() => printDoc(active.content, active.title)} className="flex items-center gap-1.5 px-3 py-2 rounded-sm border border-orange-500/30 text-xs text-orange-400 hover:bg-orange-500/10 transition-colors">
+                    <button onClick={() => printDoc(getContent(active.id, active.content), active.title)} className="flex items-center gap-1.5 px-3 py-2 rounded-sm border border-orange-500/30 text-xs text-orange-400 hover:bg-orange-500/10 transition-colors">
                       <Printer className="w-3.5 h-3.5" /> Print / PDF
                     </button>
                   </div>
                 </div>
+                {editMode ? (
+                  <textarea
+                    value={getContent(active.id, active.content)}
+                    onChange={e => setEditedContent(prev => ({ ...prev, [active.id]: e.target.value }))}
+                    className="w-full bg-sm-dark border border-sm-border rounded-sm p-6 text-sm text-sm-light font-mono leading-relaxed max-h-[75vh] min-h-[50vh] resize-y focus:outline-none focus:border-orange-500/30"
+                  />
+                ) : (
                 <div className="bg-white text-black rounded-sm p-8 max-h-[75vh] overflow-y-auto text-sm leading-relaxed">
                   {/* Logo header */}
                   <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-black">
@@ -654,7 +668,7 @@ export default function DocumentsPage() {
                     </div>
                   </div>
                   {/* Rendered content */}
-                  {active.content.split('\n').map((line, i) => {
+                  {getContent(active.id, active.content).split('\n').map((line, i) => {
                     if (line.startsWith('STACKMATE') || line.startsWith('NON-DISCLOSURE')) return <h1 key={i} className="text-xl font-extrabold mb-1">{line}</h1>;
                     if (line.match(/^[A-Z][A-Z\s\/&()]+$/) && line.length > 3 && !line.includes('___')) return <h2 key={i} className="text-xs font-bold uppercase tracking-widest mt-6 mb-2 text-gray-700 border-b-2 border-orange-500 pb-1">{line}</h2>;
                     if (line.startsWith('\u2500')) return null;
@@ -668,6 +682,7 @@ export default function DocumentsPage() {
                     return <p key={i} className="my-0.5">{line}</p>;
                   })}
                 </div>
+                )}
               </div>
             )}
           </div>

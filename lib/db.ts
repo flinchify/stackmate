@@ -140,6 +140,22 @@ export async function ensureTables() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
 
+  await sql`CREATE TABLE IF NOT EXISTS admin_posts (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    description TEXT,
+    content TEXT,
+    image_url TEXT,
+    category TEXT,
+    tags JSONB DEFAULT '[]',
+    links JSONB DEFAULT '[]',
+    status TEXT DEFAULT 'draft',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
+
   await sql`CREATE TABLE IF NOT EXISTS showcase_clients (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,

@@ -300,6 +300,7 @@ export default function AdminPage() {
           <span className="font-display font-bold">Stackmate Admin</span>
           <a href="/admin/playbooks" className="text-xs text-orange-400 hover:underline flex items-center gap-1"><BookOpen className="w-3 h-3" /> Playbooks</a>
           <a href="/admin/documents" className="text-xs text-orange-400 hover:underline flex items-center gap-1"><FileText className="w-3 h-3" /> Documents</a>
+          <a href="/admin/editor" className="text-xs text-orange-400 hover:underline flex items-center gap-1"><FileText className="w-3 h-3" /> Editor</a>
           <a href="/" className="text-xs text-sm-muted hover:text-white">← Site</a>
         </div>
         <div className="flex items-center gap-4 text-xs text-sm-muted">
