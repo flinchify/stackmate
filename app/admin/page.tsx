@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download } from 'lucide-react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search } from 'lucide-react';
 
 interface Quote {
   id: string; companyName: string; industry: string; employees: string; services: string[];
@@ -28,6 +28,12 @@ interface Project {
 
 interface Client { id: string; name: string; url: string; logoUrl: string; heroUrl: string; createdAt: string; }
 
+interface Audit {
+  id: string; companyName: string; contactName?: string; email: string; phone?: string;
+  website?: string; industry: string; employees: string; description: string;
+  status: string; createdAt: string; completedAt?: string; notes?: string;
+}
+
 const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; bg: string }> = {
   new: { icon: AlertCircle, color: 'text-blue-400', bg: 'bg-blue-400/10' },
   reviewing: { icon: Eye, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
@@ -42,7 +48,8 @@ const inputClass = 'w-full px-4 py-3 bg-sm-dark border border-sm-border rounded-
 export default function AdminPage() {
   const [secret, setSecret] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
-  const [tab, setTab] = useState<'quotes' | 'invoices' | 'recurring' | 'projects' | 'clients'>('quotes');
+  const [tab, setTab] = useState<'quotes' | 'audits' | 'invoices' | 'recurring' | 'projects' | 'clients'>('quotes');
+  const [audits, setAudits] = useState<Audit[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [recurring, setRecurring] = useState<RecurringService[]>([]);
@@ -70,12 +77,17 @@ export default function AdminPage() {
       ]);
       if (!qRes.ok) { alert('Invalid admin secret'); setLoading(false); return; }
       setAuthenticated(true);
-      const [qData, iData, rData, pData, cData] = await Promise.all([qRes.json(), iRes.json(), rRes.json(), pRes.json(), cRes.json()]);
-      setQuotes(qData.quotes || []);
-      setInvoices(iData.invoices || []);
-      setRecurring(rData.services || []);
-      setProjects(pData.projects || []);
-      setClients(cData.clients || []);
+      const results = await Promise.all([qRes.json(), iRes.json(), rRes.json(), pRes.json(), cRes.json()]);
+      setQuotes(results[0].quotes || []);
+      setInvoices(results[1].invoices || []);
+      setRecurring(results[2].services || []);
+      setProjects(results[3].projects || []);
+      setClients(results[4].clients || []);
+      // Fetch audits
+      try {
+        const aRes = await fetch('/api/admin/audits', { headers: h });
+        if (aRes.ok) { const aData = await aRes.json(); setAudits(aData.audits || []); }
+      } catch {}
     } catch { alert('Failed to fetch'); }
     finally { setLoading(false); }
   }, [secret]);
@@ -173,6 +185,7 @@ export default function AdminPage() {
         <div className="flex gap-2 mb-8 flex-wrap">
           {([
             ['quotes', FileText, `Quotes (${quotes.length})`],
+            ['audits', Search, `Audits (${audits.length})`],
             ['invoices', Receipt, `Invoices (${invoices.length})`],
             ['recurring', Repeat, `Recurring (${recurring.length})`],
             ['projects', FolderKanban, `Projects (${projects.length})`],
@@ -243,6 +256,46 @@ export default function AdminPage() {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ====== AUDITS TAB ====== */}
+        {tab === 'audits' && (
+          <div>
+            {audits.length === 0 ? <div className="text-center py-16 text-sm-muted">No audit requests yet.</div> : (
+              <div className="space-y-3">
+                {audits.map(audit => {
+                  const statusColors: Record<string, string> = { new: 'text-blue-400 bg-blue-400/10', 'in-progress': 'text-yellow-400 bg-yellow-400/10', completed: 'text-green-400 bg-green-400/10', sent: 'text-purple-400 bg-purple-400/10' };
+                  return (
+                    <div key={audit.id} className="p-5 rounded-xl border border-sm-border bg-sm-card/30">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold">{audit.companyName}</h3>
+                          <p className="text-xs text-sm-muted">{audit.email} {audit.contactName && `— ${audit.contactName}`} {audit.phone && `| ${audit.phone}`}</p>
+                          {audit.website && <a href={audit.website} target="_blank" rel="noopener" className="text-xs text-orange-400 underline">{audit.website}</a>}
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-xs px-2 py-1 rounded-md ${statusColors[audit.status] || ''}`}>{audit.status}</span>
+                          <p className="text-xs text-sm-muted mt-1">{new Date(audit.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="text-sm text-sm-light mb-3">
+                        <span className="text-sm-muted">Industry:</span> {audit.industry} <span className="text-sm-muted ml-2">Team:</span> {audit.employees}
+                      </div>
+                      <p className="text-sm text-sm-light mb-3">{audit.description}</p>
+                      {audit.notes && <p className="text-xs text-sm-muted mb-3">Notes: {audit.notes}</p>}
+                      <div className="flex gap-2">
+                        {(['new', 'in-progress', 'completed', 'sent'] as const).map(s => (
+                          <button key={s} onClick={async () => { await fetch('/api/admin/audits', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: audit.id, status: s }) }); fetchAll(); }}
+                            className={`px-2 py-1 rounded text-xs border capitalize ${audit.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
+                          >{s}</button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

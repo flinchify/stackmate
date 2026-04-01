@@ -39,6 +39,7 @@ export default function Header({ onQuoteClick }: HeaderProps) {
     { label: 'Process', href: '/process' },
     { label: 'Why Us', href: '/why-us' },
     { label: 'Clients', href: '/clients' },
+    { label: 'Tools', href: '/tools' },
     { label: 'Blog', href: '/blog' },
   ];
 

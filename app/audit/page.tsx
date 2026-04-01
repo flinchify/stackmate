@@ -33,17 +33,18 @@ export default function AuditPage() {
     setSubmitting(true);
     setError('');
     try {
-      await fetch('/api/quote', {
+      await fetch('/api/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           companyName: form.companyName,
+          contactName: form.contactName,
+          email: form.email,
+          phone: form.phone,
+          website: form.website,
           industry: form.industry || 'other',
           employees: form.employees || '1-5',
-          services: ['consulting'],
-          description: `[FREE AI AUDIT REQUEST] Contact: ${form.contactName}. Phone: ${form.phone}. Website: ${form.website}. Business: ${form.description}`,
-          email: form.email,
-          urgency: 'standard',
+          description: form.description,
         }),
       });
       setSubmitted(true);
