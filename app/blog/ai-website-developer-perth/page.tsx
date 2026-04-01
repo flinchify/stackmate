@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import QuoteButton from '@/components/QuoteButton';
 
 export const metadata: Metadata = {
   title: 'Best AI Website Developer in Perth WA | Stackmate',
@@ -92,9 +93,9 @@ export default function AIWebDevPerth() {
         <div className="mt-16 p-8 rounded-xl border border-sm-border bg-sm-card/30 text-center">
           <h3 className="text-xl font-display font-bold mb-2">Get a quote in 60 seconds</h3>
           <p className="text-sm-muted mb-4">Perth&apos;s fastest AI developer. 1-2 day delivery.</p>
-          <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors">
+          <QuoteButton className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors">
             Get a Quote
-          </Link>
+          </QuoteButton>
         </div>
       </article>
     </main>

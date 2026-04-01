@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getBlogPost, BLOG_POSTS } from '@/lib/blog';
+import QuoteButton from '@/components/QuoteButton';
 
 export async function generateStaticParams() {
   return BLOG_POSTS.map((post) => ({ slug: post.slug }));
@@ -90,9 +91,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="mt-16 p-8 rounded-xl border border-sm-border bg-sm-card/30 text-center">
           <h3 className="text-xl font-display font-bold mb-2">Ready to automate your business?</h3>
           <p className="text-sm-muted mb-4">Get a custom quote in 60 seconds. No sales calls unless you want one.</p>
-          <Link href="/#services" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors">
+          <QuoteButton className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors">
             Get a Quote
-          </Link>
+          </QuoteButton>
         </div>
       </article>
     </main>
