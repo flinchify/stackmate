@@ -16,17 +16,34 @@ import LogoMarquee from '@/components/LogoMarquee';
 import ClientLogoStrip from '@/components/ClientLogoStrip';
 
 const INTEGRATIONS_ROW1 = [
-  { name: 'Stripe' }, { name: 'Xero' }, { name: 'HubSpot' }, { name: 'Salesforce' },
-  { name: 'Slack' }, { name: 'Google Workspace' }, { name: 'Microsoft 365' },
-  { name: 'Zapier' }, { name: 'Make' }, { name: 'Shopify' }, { name: 'Square' },
-  { name: 'Twilio' }, { name: 'SendGrid' }, { name: 'AWS' },
+  { name: 'Stripe', icon: 'stripe' },
+  { name: 'Xero', icon: 'xero' },
+  { name: 'HubSpot', icon: 'hubspot' },
+  { name: 'Salesforce', icon: 'salesforce' },
+  { name: 'Slack', icon: 'slack' },
+  { name: 'Google', icon: 'google' },
+  { name: 'Microsoft', icon: 'microsoft' },
+  { name: 'Zapier', icon: 'zapier' },
+  { name: 'Shopify', icon: 'shopify' },
+  { name: 'Square', icon: 'square' },
+  { name: 'Twilio', icon: 'twilio' },
+  { name: 'AWS', icon: 'amazonwebservices' },
 ];
 
 const INTEGRATIONS_ROW2 = [
-  { name: 'Vercel' }, { name: 'OpenAI' }, { name: 'Anthropic' }, { name: 'PostgreSQL' },
-  { name: 'Firebase' }, { name: 'Supabase' }, { name: 'Cloudflare' },
-  { name: 'GitHub' }, { name: 'Figma' }, { name: 'Notion' }, { name: 'Airtable' },
-  { name: 'Calendly' }, { name: 'Intercom' }, { name: 'Mailchimp' },
+  { name: 'Vercel', icon: 'vercel' },
+  { name: 'OpenAI', icon: 'openai' },
+  { name: 'Anthropic', icon: 'anthropic' },
+  { name: 'PostgreSQL', icon: 'postgresql' },
+  { name: 'Firebase', icon: 'firebase' },
+  { name: 'Supabase', icon: 'supabase' },
+  { name: 'Cloudflare', icon: 'cloudflare' },
+  { name: 'GitHub', icon: 'github' },
+  { name: 'Figma', icon: 'figma' },
+  { name: 'Notion', icon: 'notion' },
+  { name: 'Airtable', icon: 'airtable' },
+  { name: 'Intercom', icon: 'intercom' },
+  { name: 'Mailchimp', icon: 'mailchimp' },
 ];
 
 const SERVICES = [
