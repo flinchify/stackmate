@@ -159,7 +159,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
 
   const steps = ['Company', 'Services', 'Details', 'Contact'];
 
-  const inputClass = 'w-full px-4 py-3 bg-sm-dark border border-sm-border rounded-sm text-white placeholder-sm-muted focus:outline-none focus:border-white/30 transition-colors';
+  const inputClass = 'w-full px-4 py-3 bg-sm-dark border border-sm-border rounded-lg text-white placeholder-sm-muted focus:outline-none focus:border-white/30 transition-colors';
 
   return (
     <AnimatePresence>
@@ -176,13 +176,13 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
           />
 
           <motion.div
-            className="relative w-full max-w-lg bg-sm-card border border-sm-border rounded-md overflow-hidden max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-lg bg-sm-card border border-sm-border rounded-xl overflow-hidden max-h-[90vh] overflow-y-auto"
             initial={{ opacity: 0, y: 40, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.96 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 rounded-sm hover:bg-white/5 transition-colors" aria-label="Close">
+            <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Close">
               <X className="w-5 h-5 text-sm-muted" />
             </button>
 
@@ -191,7 +191,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h3 className="text-2xl font-display font-bold mb-2">Quote Request Sent</h3>
                 <p className="text-sm-light mb-6">We&apos;ll review your requirements and get back to you within 24 hours with a custom proposal.</p>
-                <button onClick={reset} className="px-6 py-3 bg-white text-black font-semibold rounded-sm hover:bg-white/90 transition-colors">Done</button>
+                <button onClick={reset} className="px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors">Done</button>
               </motion.div>
             ) : (
               <div className="p-8">
@@ -227,7 +227,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                           <div className="flex gap-2 flex-wrap">
                             {EMPLOYEE_RANGES.map((range) => (
                               <button key={range} onClick={() => setForm({ ...form, employees: range })}
-                                className={`px-4 py-2 rounded-sm border text-sm transition-all ${form.employees === range ? 'bg-white text-black border-white' : 'border-sm-border text-sm-light hover:border-white/30'}`}
+                                className={`px-4 py-2 rounded-lg border text-sm transition-all ${form.employees === range ? 'bg-white text-black border-white' : 'border-sm-border text-sm-light hover:border-white/30'}`}
                               >{range}</button>
                             ))}
                           </div>
@@ -243,7 +243,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                       <div className="grid grid-cols-2 gap-3">
                         {SERVICES.map((svc) => (
                           <button key={svc.value} onClick={() => toggleService(svc.value)}
-                            className={`p-3 rounded-sm border text-sm text-left transition-all ${form.services.includes(svc.value) ? 'bg-white text-black border-white' : 'border-sm-border text-sm-light hover:border-white/30'}`}
+                            className={`p-3 rounded-lg border text-sm text-left transition-all ${form.services.includes(svc.value) ? 'bg-white text-black border-white' : 'border-sm-border text-sm-light hover:border-white/30'}`}
                           >{svc.label}</button>
                         ))}
                       </div>
@@ -274,7 +274,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                             <div key={i} className="flex gap-2 mb-2">
                               <input type="url" value={link} onChange={(e) => updateLink(i, e.target.value)} className={inputClass} placeholder="https://example.com" />
                               {form.links.length > 1 && (
-                                <button onClick={() => removeLink(i)} className="p-3 rounded-sm border border-sm-border text-sm-muted hover:text-red-400 hover:border-red-400/30 transition-colors">
+                                <button onClick={() => removeLink(i)} className="p-3 rounded-lg border border-sm-border text-sm-muted hover:text-red-400 hover:border-red-400/30 transition-colors">
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               )}
@@ -295,7 +295,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                               { value: 'asap', label: 'ASAP' },
                             ].map((opt) => (
                               <button key={opt.value} onClick={() => setForm({ ...form, urgency: opt.value as 'standard' | 'fast' | 'asap' })}
-                                className={`flex-1 px-3 py-2 rounded-sm border text-sm transition-all ${form.urgency === opt.value ? 'bg-white text-black border-white' : 'border-sm-border text-sm-light hover:border-white/30'}`}
+                                className={`flex-1 px-3 py-2 rounded-lg border text-sm transition-all ${form.urgency === opt.value ? 'bg-white text-black border-white' : 'border-sm-border text-sm-light hover:border-white/30'}`}
                               >{opt.label}</button>
                             ))}
                           </div>
@@ -343,7 +343,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                                   type="text"
                                   value={form.socials[key]}
                                   onChange={(e) => setForm({ ...form, socials: { ...form.socials, [key]: e.target.value } })}
-                                  className="flex-1 px-3 py-2 bg-sm-dark border border-sm-border rounded-sm text-white text-sm placeholder-sm-muted focus:outline-none focus:border-white/30 transition-colors"
+                                  className="flex-1 px-3 py-2 bg-sm-dark border border-sm-border rounded-lg text-white text-sm placeholder-sm-muted focus:outline-none focus:border-white/30 transition-colors"
                                   placeholder={placeholder}
                                 />
                               </div>
@@ -360,20 +360,20 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                 {/* Navigation */}
                 <div className="flex items-center justify-between mt-8">
                   <button onClick={() => setStep((s) => Math.max(0, s - 1))}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm transition-colors ${step === 0 ? 'opacity-0 pointer-events-none' : 'text-sm-light hover:text-white'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors ${step === 0 ? 'opacity-0 pointer-events-none' : 'text-sm-light hover:text-white'}`}
                   >
                     <ArrowLeft className="w-4 h-4" /> Back
                   </button>
 
                   {step < 3 ? (
                     <button onClick={() => setStep((s) => Math.min(3, s + 1))} disabled={!canAdvance()}
-                      className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-sm hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       Continue <ArrowRight className="w-4 h-4" />
                     </button>
                   ) : (
                     <button onClick={handleSubmit} disabled={!canAdvance() || submitting}
-                      className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-sm hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       {submitting ? 'Sending...' : 'Get My Quote'}
