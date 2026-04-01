@@ -1,14 +1,22 @@
-// Internal pricing engine — estimates cost based on quote parameters
-// These prices are NEVER shown to the client
-
 export interface QuoteParams {
   companyName: string;
   industry: string;
   employees: string;
   services: string[];
+  otherService?: string;
   description: string;
   email: string;
   phone?: string;
+  location?: string;
+  website?: string;
+  links?: string[];
+  socials?: {
+    instagram?: string;
+    facebook?: string;
+    linkedin?: string;
+    twitter?: string;
+    tiktok?: string;
+  };
   urgency: 'standard' | 'fast' | 'asap';
 }
 
@@ -30,6 +38,7 @@ const SERVICE_PRICING: Record<string, { setup: [number, number]; monthly: [numbe
   'branding': { setup: [1500, 4000], monthly: [0, 0] },
   'data-analytics': { setup: [3000, 8000], monthly: [499, 1299] },
   'consulting': { setup: [1000, 3000], monthly: [299, 799] },
+  'other': { setup: [2000, 8000], monthly: [299, 999] },
 };
 
 const SIZE_MULTIPLIER: Record<string, number> = {
@@ -93,15 +102,11 @@ export function estimatePrice(params: QuoteParams): PriceEstimate {
   if (industryMult > 1.2) {
     notes.push(`${params.industry} sector — specialized compliance/requirements`);
   }
+  if (params.otherService) {
+    notes.push(`Custom request: ${params.otherService}`);
+  }
 
   const confidence = params.services.length > 0 && params.description.length > 20 ? 'medium' : 'low';
 
-  return {
-    setupMin: totalSetupMin,
-    setupMax: totalSetupMax,
-    monthlyMin: totalMonthlyMin,
-    monthlyMax: totalMonthlyMax,
-    confidence,
-    notes,
-  };
+  return { setupMin: totalSetupMin, setupMax: totalSetupMax, monthlyMin: totalMonthlyMin, monthlyMax: totalMonthlyMax, confidence, notes };
 }

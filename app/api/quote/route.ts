@@ -17,11 +17,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const required = ['companyName', 'industry', 'employees', 'services', 'description', 'email'];
-    for (const field of required) {
-      if (!body[field] || (Array.isArray(body[field]) && body[field].length === 0)) {
-        return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 });
-      }
+    // Email is required
+    if (!body.companyName || !body.industry || !body.employees || !body.email) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+    if (!body.services || !Array.isArray(body.services) || body.services.length === 0) {
+      return NextResponse.json({ error: 'Select at least one service' }, { status: 400 });
+    }
+    if (!body.description || String(body.description).length < 10) {
+      return NextResponse.json({ error: 'Description too short' }, { status: 400 });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,9 +38,20 @@ export async function POST(req: NextRequest) {
       industry: String(body.industry).slice(0, 100),
       employees: String(body.employees).slice(0, 10),
       services: Array.isArray(body.services) ? body.services.map((s: unknown) => String(s).slice(0, 50)).slice(0, 10) : [],
+      otherService: body.otherService ? String(body.otherService).slice(0, 500) : undefined,
       description: String(body.description).slice(0, 2000),
       email: String(body.email).slice(0, 254),
       phone: body.phone ? String(body.phone).slice(0, 20) : undefined,
+      location: body.location ? String(body.location).slice(0, 200) : undefined,
+      website: body.website ? String(body.website).slice(0, 500) : undefined,
+      links: Array.isArray(body.links) ? body.links.filter((l: unknown) => typeof l === 'string' && l).map((l: unknown) => String(l).slice(0, 500)).slice(0, 5) : undefined,
+      socials: body.socials ? {
+        instagram: body.socials.instagram ? String(body.socials.instagram).slice(0, 100) : undefined,
+        facebook: body.socials.facebook ? String(body.socials.facebook).slice(0, 200) : undefined,
+        linkedin: body.socials.linkedin ? String(body.socials.linkedin).slice(0, 200) : undefined,
+        twitter: body.socials.twitter ? String(body.socials.twitter).slice(0, 100) : undefined,
+        tiktok: body.socials.tiktok ? String(body.socials.tiktok).slice(0, 100) : undefined,
+      } : undefined,
       urgency: ['standard', 'fast', 'asap'].includes(body.urgency) ? body.urgency : 'standard',
     };
 

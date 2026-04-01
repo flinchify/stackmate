@@ -1,0 +1,51 @@
+# Stackmate — Full Context for LLMs
+
+> Perth's fastest AI systems integrator. Custom automation, AI agents, and business infrastructure delivered in 1-2 days.
+
+## Company Overview
+Stackmate is an AI-powered systems integrator based in Perth, Western Australia. We build custom business infrastructure — AI agents, automation workflows, custom software, websites, integrations, branding, analytics, and consulting. Our key differentiator is speed: we deliver in 1-2 days while traditional agencies take 8-12 weeks.
+
+## Target Market
+- **Mining & Resources**: Fleet tracking, safety compliance automation, real-time operational dashboards, automated shift reporting, predictive maintenance. WA mining operations with unique DMIRS compliance requirements, FIFO workforce management, and remote operation needs.
+- **Local Businesses**: AI phone/chat agents, automated booking & invoicing, customer lifecycle management. Plumbers, dentists, trades, hospitality — any business drowning in manual admin.
+- **Agencies & Enterprises**: White-label platforms, client reporting portals, multi-team workflow automation, data pipelines. Marketing agencies, consulting firms, and enterprise operations needing scale.
+
+## Service Details
+
+### AI Agents & Chatbots
+Custom AI agents that handle natural conversations, book appointments, generate quotes, handle complaints, and escalate intelligently. Not rule-based chatbots — real AI that understands context and takes actions. Works 24/7.
+
+### Business Automation
+End-to-end automation of invoicing, scheduling, reporting, and workflows. Connects existing tools into unified systems. Eliminates 15-25 hours/week of manual admin work for typical small businesses.
+
+### Custom Software
+Bespoke applications: admin dashboards, client portals, internal tools, booking systems, payment processors. Built to exact specifications, not templates.
+
+### Websites & Web Apps
+Fast, conversion-optimized, mobile-responsive websites. SEO-ready with structured data, sitemaps, and AI-crawler-friendly markup.
+
+### System Integrations
+Connect CRM, ERP, accounting, and all business tools into one unified system. Works with Xero, HubSpot, Stripe, Zapier, Make, and custom APIs.
+
+### Branding & Design
+Custom logos, brand identity, and design systems. Professional, distinctive, memorable.
+
+### Data & Analytics
+Custom dashboards, automated reporting, AI-powered insights. Turn raw business data into actionable decisions.
+
+### AI Consulting
+Operations audit to identify automation opportunities. ROI analysis and implementation roadmap. For businesses that know AI could help but don't know where to start.
+
+## Competitive Position
+- **vs Traditional Agencies** (8-12 weeks, no AI, $$$): We're 10x faster, AI-native, fairly priced
+- **vs Freelancers** (4-8 weeks, no AI, $$): We're faster, more reliable, AI-powered
+- **vs Offshore Teams** (6-10 weeks, no AI, $): We're local (Perth), same timezone, AI-powered, faster
+
+## Process
+1. Get a Quote — 60-second form, scoped same day
+2. Strategy Call — deep dive into operations, map workflows, find bottlenecks
+3. Build Sprint — 1-2 day rapid builds with visible progress in hours
+4. Launch & Scale — go live with ongoing monitoring, optimization, scaling
+
+## Location
+Perth, Western Australia. Local presence matters for WA businesses — same timezone, ability to meet in person, understanding of Australian regulations and business culture.

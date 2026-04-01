@@ -26,16 +26,17 @@ export default function Header({ onQuoteClick }: HeaderProps) {
   }, [mobileOpen]);
 
   const navItems = [
-    { label: 'Services', href: '#services' },
-    { label: 'Process', href: '#process' },
-    { label: 'Why Us', href: '#compare' },
+    { label: 'Services', href: '/services' },
+    { label: 'Process', href: '/process' },
+    { label: 'Why Us', href: '/why-us' },
+    { label: 'Clients', href: '/clients' },
     { label: 'Blog', href: '/blog' },
   ];
 
   return (
     <motion.header
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        scrolled ? 'bg-sm-dark/80 backdrop-blur-xl border-b border-sm-border' : ''
+        scrolled ? 'bg-sm-dark/80 backdrop-blur-xl' : ''
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
