@@ -29,6 +29,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const geoPages = [
     { url: `${base}/blog/ai-website-developer-perth`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/blog/business-automation-perth`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/blog/ai-chatbot-perth`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/blog/custom-software-perth`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/blog/seo-perth`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
   ];
 
   return [...pages, ...blogPages, ...geoPages];

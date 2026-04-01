@@ -14,6 +14,8 @@ import QuoteModal from '@/components/QuoteModal';
 import Counter from '@/components/Counter';
 import LogoMarquee from '@/components/LogoMarquee';
 import ClientLogoStrip from '@/components/ClientLogoStrip';
+import MatrixBg from '@/components/MatrixBg';
+import BracketButton from '@/components/BracketButton';
 
 const dot = (letter: string) => `<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><text x="12" y="17" text-anchor="middle" font-size="14" font-family="system-ui" font-weight="700" fill="white">${letter}</text></svg>`;
 
@@ -134,9 +136,10 @@ export default function Home() {
       {/* ====== HERO ====== */}
       <motion.section
         ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center"
+        className="relative min-h-screen flex items-center justify-center overflow-hidden"
         style={{ opacity: heroOpacity, scale: heroScale }}
       >
+        <MatrixBg />
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-32 pb-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -185,12 +188,9 @@ export default function Home() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            <a
-              href="#services"
-              className="px-8 py-4 border border-sm-border text-sm-light font-display font-semibold text-lg rounded-xl hover:border-white/30 hover:text-white transition-all duration-200"
-            >
+            <BracketButton onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}>
               See What We Build
-            </a>
+            </BracketButton>
           </motion.div>
 
           <motion.div
