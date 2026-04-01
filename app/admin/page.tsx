@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe } from 'lucide-react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown } from 'lucide-react';
+
+interface Expense {
+  id: string; clientName?: string; category: string; description: string;
+  amount: number; recurring: boolean; frequency?: string; date: string;
+}
 
 interface Quote {
   id: string; companyName: string; industry: string; employees: string; services: string[];
@@ -84,6 +89,8 @@ export default function AdminPage() {
   const [newUpdate, setNewUpdate] = useState({ portalId: '', message: '' });
   const [auditUrl, setAuditUrl] = useState('');
   const [auditResult, setAuditResult] = useState('');
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [newExpense, setNewExpense] = useState({ clientName: '', category: 'api', description: '', amount: 0, recurring: true, frequency: 'monthly', date: '' });
 
   // Load saved auth
   useEffect(() => {
@@ -119,6 +126,8 @@ export default function AdminPage() {
         if (aRes.ok) { const aData = await aRes.json(); setAudits(aData.audits || []); }
         const pRes2 = await fetch('/api/admin/portals', { headers: h });
         if (pRes2.ok) { const pData2 = await pRes2.json(); setPortalsList(pData2.portals || []); }
+        const eRes = await fetch('/api/admin/expenses', { headers: h });
+        if (eRes.ok) { const eData = await eRes.json(); setExpenses(eData.expenses || []); }
       } catch {}
     } catch { alert('Failed to fetch'); }
     finally { setLoading(false); }
@@ -652,39 +661,108 @@ export default function AdminPage() {
         )}
 
         {/* ====== REVENUE ====== */}
-        {tab === 'revenue' && (
+        {tab === 'revenue' && (() => {
+          const monthlyExpenses = expenses.filter(e => e.recurring && e.frequency === 'monthly').reduce((s, e) => s + e.amount, 0);
+          const expensesByClient: Record<string, number> = {};
+          expenses.filter(e => e.recurring && e.frequency === 'monthly').forEach(e => {
+            const k = e.clientName || 'General'; expensesByClient[k] = (expensesByClient[k] || 0) + e.amount;
+          });
+          const netMonthly = monthlyRecurring - monthlyExpenses;
+
+          return (
           <div>
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
               <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
-                <p className="text-sm text-sm-muted">Total Revenue</p>
-                <p className="text-3xl font-display font-bold text-orange-400">${totalRevenue.toLocaleString()}</p>
+                <p className="text-xs text-sm-muted">Total Revenue</p>
+                <p className="text-2xl font-display font-bold text-orange-400">${totalRevenue.toLocaleString()}</p>
               </div>
               <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
-                <p className="text-sm text-sm-muted">Monthly Recurring</p>
-                <p className="text-3xl font-display font-bold text-orange-400">${monthlyRecurring.toLocaleString()}/mo</p>
+                <p className="text-xs text-sm-muted">MRR</p>
+                <p className="text-2xl font-display font-bold text-orange-400">${monthlyRecurring.toLocaleString()}/mo</p>
               </div>
               <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
-                <p className="text-sm text-sm-muted">Projected Annual</p>
-                <p className="text-3xl font-display font-bold text-orange-400">${(totalRevenue + monthlyRecurring * 12).toLocaleString()}</p>
+                <p className="text-xs text-sm-muted">Monthly Expenses</p>
+                <p className="text-2xl font-display font-bold text-red-400">${monthlyExpenses.toLocaleString()}/mo</p>
+              </div>
+              <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
+                <p className="text-xs text-sm-muted">Net Profit/mo</p>
+                <p className={`text-2xl font-display font-bold ${netMonthly >= 0 ? 'text-green-400' : 'text-red-400'}`}>${netMonthly.toLocaleString()}/mo</p>
               </div>
             </div>
-            <h3 className="font-display font-bold mb-4">Revenue by Client</h3>
-            {Object.keys(clientRevenue).length === 0 ? <p className="text-sm-muted">No revenue data yet.</p> : (
+
+            {/* Client P&L */}
+            <h3 className="font-display font-bold mb-3">Revenue & Costs by Client</h3>
+            {Object.keys(clientRevenue).length === 0 ? <p className="text-sm-muted mb-6">No data yet.</p> : (
+              <div className="space-y-2 mb-8">
+                {Object.entries(clientRevenue).sort((a, b) => (b[1].monthly - (expensesByClient[b[0]] || 0)) - (a[1].monthly - (expensesByClient[a[0]] || 0))).map(([name, rev]) => {
+                  const cost = expensesByClient[name] || 0;
+                  const profit = rev.monthly - cost;
+                  return (
+                    <div key={name} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 flex items-center justify-between">
+                      <span className="font-semibold">{name}</span>
+                      <div className="flex gap-4 text-xs">
+                        <span>Rev: <strong className="text-orange-400">${rev.monthly.toLocaleString()}/mo</strong></span>
+                        <span>Cost: <strong className="text-red-400">${cost.toLocaleString()}/mo</strong></span>
+                        <span>Profit: <strong className={profit >= 0 ? 'text-green-400' : 'text-red-400'}>${profit.toLocaleString()}/mo</strong></span>
+                        <span>Margin: <strong className="text-white">{rev.monthly > 0 ? Math.round((profit / rev.monthly) * 100) : 0}%</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Add expense */}
+            <h3 className="font-display font-bold mb-3 flex items-center gap-2"><TrendingDown className="w-4 h-4 text-red-400" /> Expenses</h3>
+            <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 mb-4">
+              <div className="grid md:grid-cols-4 gap-3 mb-3">
+                <input value={newExpense.description} onChange={e => setNewExpense({ ...newExpense, description: e.target.value })} className={inputClass} placeholder="Description *" />
+                <input type="number" value={newExpense.amount || ''} onChange={e => setNewExpense({ ...newExpense, amount: Number(e.target.value) })} className={inputClass} placeholder="Amount ($) *" />
+                <select value={newExpense.category} onChange={e => setNewExpense({ ...newExpense, category: e.target.value })} className={inputClass}>
+                  <option value="api">API Costs</option><option value="hosting">Hosting</option><option value="tools">Tools/Software</option>
+                  <option value="twilio">Twilio/Comms</option><option value="ads">Ads Spend</option><option value="contractor">Contractor</option>
+                  <option value="software">SaaS/Subscriptions</option><option value="other">Other</option>
+                </select>
+                <input value={newExpense.clientName} onChange={e => setNewExpense({ ...newExpense, clientName: e.target.value })} className={inputClass} placeholder="Client (optional)" />
+              </div>
+              <div className="flex gap-3 items-center">
+                <label className="flex items-center gap-2 text-sm text-sm-light"><input type="checkbox" checked={newExpense.recurring} onChange={e => setNewExpense({ ...newExpense, recurring: e.target.checked })} /> Recurring</label>
+                {newExpense.recurring && (
+                  <select value={newExpense.frequency} onChange={e => setNewExpense({ ...newExpense, frequency: e.target.value })} className={`${inputClass} w-32`}>
+                    <option value="monthly">Monthly</option><option value="yearly">Yearly</option>
+                  </select>
+                )}
+                <button onClick={async () => {
+                  if (!newExpense.description || !newExpense.amount) return alert('Fill description and amount');
+                  await fetch('/api/admin/expenses', { method: 'POST', headers: headers(), body: JSON.stringify(newExpense) });
+                  logActivity(`Expense: ${newExpense.description} $${newExpense.amount}`);
+                  setNewExpense({ clientName: '', category: 'api', description: '', amount: 0, recurring: true, frequency: 'monthly', date: '' });
+                  fetchAll();
+                }} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add</button>
+              </div>
+            </div>
+
+            {/* Expense list */}
+            {expenses.length > 0 && (
               <div className="space-y-2">
-                {Object.entries(clientRevenue).sort((a, b) => (b[1].oneTime + b[1].monthly * 12) - (a[1].oneTime + a[1].monthly * 12)).map(([name, rev]) => (
-                  <div key={name} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 flex items-center justify-between">
-                    <span className="font-semibold">{name}</span>
-                    <div className="flex gap-6 text-sm">
-                      <span className="text-sm-muted">One-time: <strong className="text-white">${rev.oneTime.toLocaleString()}</strong></span>
-                      <span className="text-sm-muted">Monthly: <strong className="text-orange-400">${rev.monthly.toLocaleString()}/mo</strong></span>
-                      <span className="text-sm-muted">Annual: <strong className="text-white">${(rev.oneTime + rev.monthly * 12).toLocaleString()}</strong></span>
+                {expenses.map(exp => (
+                  <div key={exp.id} className="p-3 rounded-sm border border-sm-border bg-sm-card/30 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs px-2 py-0.5 rounded-sm bg-sm-border text-sm-light">{exp.category}</span>
+                      <span className="text-sm">{exp.description}</span>
+                      {exp.clientName && <span className="text-xs text-sm-muted">({exp.clientName})</span>}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-red-400">${exp.amount}{exp.recurring ? `/${exp.frequency === 'yearly' ? 'yr' : 'mo'}` : ''}</span>
+                      <button onClick={async () => { await fetch('/api/admin/expenses', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: exp.id }) }); fetchAll(); }} className="text-sm-muted hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        )}
+          );
+        })()}
 
         {/* ====== TERMINAL ====== */}
         {tab === 'terminal' && (

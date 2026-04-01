@@ -131,6 +131,36 @@ export default function WhyUsPage() {
         </div>
       </section>
 
+      {/* How We Work */}
+      <section className="py-20">
+        <div className="max-w-3xl mx-auto px-6">
+          <AnimatedDiv className="text-center mb-10">
+            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">How We Work</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold">From first contact to handover</h2>
+          </AnimatedDiv>
+          <div className="space-y-3">
+            {[
+              { q: 'What happens after I get a quote?', a: 'We scope your project, send a detailed proposal with pricing, and once accepted, we start building immediately. Most projects go from accepted to delivered in 1-2 days.' },
+              { q: 'How do I receive the finished product?', a: 'You get a private delivery portal with your project status, all deliverables (live URLs, repo access, credentials, design files), a handover checklist, and ongoing support contact. Everything in one place.' },
+              { q: 'What if I already have an SEO person or dev team?', a: 'No problem. We build the site/system, push the code to your GitHub, and give your team full access — Vercel, repo, CMS, environment variables. Your SEO person manages content, we handle the infrastructure.' },
+              { q: 'How does monthly SEO/GEO management work?', a: 'We run monthly audits, publish content, build backlinks, optimize structured data, and track your rankings across Google and AI search engines (ChatGPT, Perplexity, Gemini). You get a monthly report with scores, traffic, and next steps.' },
+              { q: 'Do I own what you build?', a: 'Yes. 100%. Code, designs, systems — all yours. No proprietary lock-in. If you want to leave, you take everything with you.' },
+              { q: 'What if I need changes after delivery?', a: 'Monthly clients get ongoing changes included. One-time projects include a 30-day warranty for bug fixes. After that, changes are billed at our standard rate or you can add a maintenance plan.' },
+              { q: 'How does payment work?', a: 'Setup fees are due before work begins. Monthly subscriptions bill at the start of each period. We send invoices through our portal with 14-day payment terms. Late payments incur a 2% monthly fee.' },
+              { q: 'Can I cancel a subscription?', a: '30 days written notice. No refund on setup fees. Ongoing work stops at the end of your billing period. You keep everything built to date.' },
+            ].map(faq => (
+              <details key={faq.q} className="group p-5 rounded-sm border border-sm-border bg-sm-card/30 cursor-pointer">
+                <summary className="font-display font-semibold text-white list-none flex items-center justify-between">
+                  {faq.q}
+                  <span className="text-sm-muted group-open:rotate-45 transition-transform duration-200 text-xl">+</span>
+                </summary>
+                <p className="mt-3 text-sm text-sm-light leading-relaxed">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 bg-white text-black">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Convinced yet?</h2>
