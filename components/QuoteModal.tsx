@@ -322,8 +322,8 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                           <input type="text" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className={inputClass} placeholder="Perth, WA" />
                         </div>
                         <div>
-                          <label className="block text-sm text-sm-light mb-1.5">Website (optional)</label>
-                          <input type="url" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} className={inputClass} placeholder="https://yourcompany.com" />
+                          <label className="block text-sm text-sm-light mb-1.5">Current website (optional)</label>
+                          <input type="url" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} className={inputClass} placeholder="https://yourcompany.com (we'll review it)" />
                         </div>
 
                         {/* Socials */}

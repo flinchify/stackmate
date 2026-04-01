@@ -212,7 +212,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 2.4 }}
           >
-            <p className="text-xs text-sm-muted uppercase tracking-widest mb-4 text-center">Built for</p>
+            <p className="text-xs text-sm-muted uppercase tracking-widest mb-4 text-center">Our Clients</p>
             <ClientLogoStrip />
           </motion.div>
         </div>
