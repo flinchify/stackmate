@@ -9,12 +9,21 @@ interface HeaderProps {
 }
 
 export default function Header({ onQuoteClick }: HeaderProps) {
-  const [scrolled, setScrolled] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
-    setScrolled(latest > 50);
+    // At top: always show. Scrolling down: hide. Scrolling up: show.
+    if (latest < 100) {
+      setVisible(true);
+    } else if (latest > lastScrollY) {
+      setVisible(false);
+    } else {
+      setVisible(true);
+    }
+    setLastScrollY(latest);
   });
 
   useEffect(() => {
@@ -35,12 +44,10 @@ export default function Header({ onQuoteClick }: HeaderProps) {
 
   return (
     <motion.header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        scrolled ? 'bg-sm-dark/80 backdrop-blur-xl' : ''
-      }`}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed top-0 left-0 right-0 z-40"
+      initial={{ y: 0 }}
+      animate={{ y: visible ? 0 : -100 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
