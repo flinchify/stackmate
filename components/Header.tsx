@@ -69,7 +69,7 @@ export default function Header({ onQuoteClick }: HeaderProps) {
           ))}
           <button
             onClick={onQuoteClick}
-            className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-lg hover:bg-white/90 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           >
             Get a Quote
           </button>

@@ -16,6 +16,9 @@ const config: Config = {
           muted: '#666666',
           light: '#999999',
           accent: '#ffffff',
+          orange: '#f97316',
+          'orange-light': '#fb923c',
+          'orange-dark': '#ea580c',
         },
       },
       fontFamily: {

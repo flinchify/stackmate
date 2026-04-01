@@ -138,6 +138,8 @@ export default function Home() {
         style={{ opacity: heroOpacity, scale: heroScale }}
       >
         <MatrixBg />
+        {/* Orange gradient orb */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-32 pb-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -147,7 +149,7 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-sm-border bg-sm-card/50 mb-8">
               <MapPin className="w-3.5 h-3.5 text-sm-light" />
               <span className="text-xs text-sm-light tracking-wide uppercase">Perth, Western Australia</span>
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
             </div>
           </motion.div>
 
@@ -179,7 +181,7 @@ export default function Home() {
           >
             <button
               onClick={() => setQuoteOpen(true)}
-              className="group relative px-8 py-4 bg-white text-black font-display font-bold text-lg rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+              className="group relative px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold text-lg rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
             >
               <span className="flex items-center gap-2">
                 Get a Quote
@@ -198,7 +200,7 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 2.1 }}
           >
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4" />
+              <Zap className="w-4 h-4 text-orange-400" />
               <span className="text-sm">1-2 Day Delivery</span>
             </div>
             <div className="hidden sm:flex items-center gap-2">
@@ -267,8 +269,8 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {SERVICES.map((service, i) => (
               <StaggerItem key={service.title} index={i}>
-                <div className="group p-6 rounded-xl border border-sm-border bg-sm-card/30 hover:bg-sm-card/60 hover:border-white/10 transition-all duration-300 h-full hover:-translate-y-1">
-                  <service.icon className="w-8 h-8 text-sm-light mb-4 group-hover:text-white transition-colors duration-300" />
+                <div className="group p-6 rounded-xl border border-sm-border bg-sm-card/30 hover:bg-sm-card/60 hover:border-orange-500/20 transition-all duration-300 h-full hover:-translate-y-1">
+                  <service.icon className="w-8 h-8 text-sm-light mb-4 group-hover:text-orange-400 transition-colors duration-300" />
                   <h3 className="font-display font-semibold text-lg mb-2">{service.title}</h3>
                   <p className="text-sm text-sm-muted leading-relaxed">{service.desc}</p>
                 </div>
@@ -307,7 +309,7 @@ export default function Home() {
           <AnimatedSection className="text-center mt-12">
             <button
               onClick={() => setQuoteOpen(true)}
-              className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-display font-bold rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
             >
               Start Your Project
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -344,23 +346,23 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="md:hidden text-sm-muted text-sm">Delivery:</span>
-                  <span className="text-green-400 font-semibold">{STACKMATE.delivery}</span>
+                  <span className="text-orange-400 font-semibold">{STACKMATE.delivery}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="md:hidden text-sm-muted text-sm">AI:</span>
-                  <CheckCircle2 className="w-5 h-5 text-green-400" />
+                  <CheckCircle2 className="w-5 h-5 text-orange-400" />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="md:hidden text-sm-muted text-sm">Perth:</span>
-                  <span className="text-green-400 font-semibold">{STACKMATE.perth}</span>
+                  <span className="text-orange-400 font-semibold">{STACKMATE.perth}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="md:hidden text-sm-muted text-sm">Support:</span>
-                  <span className="text-green-400 font-semibold">{STACKMATE.support}</span>
+                  <span className="text-orange-400 font-semibold">{STACKMATE.support}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="md:hidden text-sm-muted text-sm">Price:</span>
-                  <span className="text-green-400 font-semibold">{STACKMATE.price}</span>
+                  <span className="text-orange-400 font-semibold">{STACKMATE.price}</span>
                 </div>
               </div>
             </AnimatedSection>
@@ -425,7 +427,7 @@ export default function Home() {
               },
             ].map((ind, i) => (
               <StaggerItem key={ind.title} index={i}>
-                <div className="p-8 rounded-xl border border-sm-border bg-sm-dark h-full hover:border-white/10 transition-all duration-300 hover:-translate-y-1">
+                <div className="p-8 rounded-xl border border-sm-border bg-sm-dark h-full hover:border-orange-500/20 transition-all duration-300 hover:-translate-y-1">
                   <h3 className="text-xl font-display font-bold mb-3">{ind.title}</h3>
                   <p className="text-sm text-sm-muted mb-6">{ind.desc}</p>
                   <ul className="space-y-2">
@@ -466,7 +468,7 @@ export default function Home() {
             ].map((item, i) => (
               <StaggerItem key={item} index={i}>
                 <div className="flex items-center gap-3 p-4 rounded-lg border border-sm-border bg-sm-card/30 hover:bg-sm-card/50 transition-all duration-200">
-                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-orange-400 shrink-0" />
                   <span className="text-sm-light">{item}</span>
                 </div>
               </StaggerItem>
@@ -525,7 +527,7 @@ export default function Home() {
           <AnimatedSection>
             <button
               onClick={() => setQuoteOpen(true)}
-              className="group inline-flex items-center gap-2 px-10 py-5 bg-black text-white font-display font-bold text-lg rounded-xl transition-all duration-200 hover:bg-black/80 hover:scale-[1.03] active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold text-lg rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
             >
               Get Your Free Quote
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
