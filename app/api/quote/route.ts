@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { type QuoteParams } from '@/lib/pricing';
 import { addQuote } from '@/lib/quotes-store';
+import { addSubscriber } from '@/lib/mailing-list';
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
     };
 
     await addQuote(params);
+    if (body.mailingList !== false) await addSubscriber(params.email, params.companyName, 'quote');
     return NextResponse.json({ success: true, message: "Quote request received. We'll be in touch within 24 hours." }, { status: 200, headers: { 'X-RateLimit-Remaining': String(remaining) } });
   } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }); }
 }

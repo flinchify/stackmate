@@ -32,7 +32,12 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-display font-bold text-white mb-3">4. Cookies</h2>
-            <p>We use essential cookies for website functionality. We do not use tracking cookies or third-party advertising cookies.</p>
+            <p>We use essential cookies for website functionality (admin session). We do not use tracking cookies or third-party advertising cookies. No personal data is stored in cookies.</p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-display font-bold text-white mb-3">4a. Mailing List</h2>
+            <p>When you submit a quote or audit request, you may opt in to our mailing list. We only send occasional updates about AI, automation, and business technology. You can unsubscribe at any time by clicking the unsubscribe link in any email, or by visiting stackmate.digital/api/unsubscribe?email=your@email.com. We comply with the Australian Spam Act 2003 — we never send unsolicited commercial emails without consent.</p>
           </section>
 
           <section>
@@ -57,7 +62,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-display font-bold text-white mb-3">9. Contact</h2>
-            <p>For privacy-related enquiries, contact us at hello@stackmate.digital.</p>
+            <p>For privacy-related enquiries, contact us at hello@stackmate.digital. You may also contact the Office of the Australian Information Commissioner (OAIC) at oaic.gov.au if you believe your privacy has been breached.</p>
           </section>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { addAudit } from '@/lib/audits-store';
+import { addSubscriber } from '@/lib/mailing-list';
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
       employees: String(body.employees || '1-5').slice(0, 10),
       description: String(body.description).slice(0, 2000),
     });
+    if (body.mailingList !== false) await addSubscriber(body.email, body.companyName, 'audit');
     return NextResponse.json({ success: true, message: "We'll respond within 48 hours.", auditId: audit.id }, { status: 201 });
   } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
 }

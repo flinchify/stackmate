@@ -20,6 +20,7 @@ export default function AuditPage() {
     industry: '',
     employees: '',
     description: '',
+    mailingList: true,
   });
 
   const inputClass = 'w-full px-4 py-3 bg-sm-dark border border-sm-border rounded-lg text-white placeholder-sm-muted focus:outline-none focus:border-orange-500/30 transition-colors';
@@ -183,7 +184,11 @@ export default function AuditPage() {
               {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
               {submitting ? 'Submitting...' : 'Get My Free AI Audit'}
             </button>
-            <p className="text-xs text-sm-muted text-center">No cost. No obligation. We respond within 48 hours.</p>
+            <label className="flex items-center justify-center gap-2 text-sm text-sm-light cursor-pointer mt-3">
+              <input type="checkbox" checked={form.mailingList} onChange={e => setForm({ ...form, mailingList: e.target.checked })} />
+              Keep me updated on AI & automation tips
+            </label>
+            <p className="text-xs text-sm-muted text-center mt-1">No cost. No obligation. We respond within 48 hours.</p>
           </form>
         )}
       </section>

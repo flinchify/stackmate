@@ -140,6 +140,29 @@ export async function ensureTables() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
 
+  await sql`CREATE TABLE IF NOT EXISTS mailing_list (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT,
+    source TEXT,
+    subscribed BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
+
+  await sql`CREATE TABLE IF NOT EXISTS auto_audits (
+    id TEXT PRIMARY KEY,
+    client_name TEXT,
+    url TEXT NOT NULL,
+    last_run TIMESTAMPTZ,
+    frequency TEXT DEFAULT 'daily',
+    geo_score INTEGER,
+    seo_score INTEGER,
+    performance_score INTEGER,
+    status TEXT DEFAULT 'active',
+    alerts JSONB DEFAULT '[]',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
+
   await sql`CREATE TABLE IF NOT EXISTS admin_posts (
     id TEXT PRIMARY KEY,
     type TEXT NOT NULL,

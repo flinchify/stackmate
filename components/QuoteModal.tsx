@@ -68,6 +68,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
       tiktok: '',
     },
     urgency: 'standard' as 'standard' | 'fast' | 'asap',
+    mailingList: true,
   });
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -153,6 +154,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
       description: '', email: '', phone: '', location: '', website: '',
       links: [''], socials: { instagram: '', facebook: '', linkedin: '', twitter: '', tiktok: '' },
       urgency: 'standard',
+      mailingList: true,
     });
     onClose();
   };
@@ -324,6 +326,14 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                         <div>
                           <label className="block text-sm text-sm-light mb-1.5">Current website (optional)</label>
                           <input type="url" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} className={inputClass} placeholder="https://yourcompany.com (we'll review it)" />
+                        </div>
+
+                        <div>
+                          <label className="flex items-center gap-2 text-sm text-sm-light cursor-pointer">
+                            <input type="checkbox" checked={form.mailingList} onChange={(e) => setForm({ ...form, mailingList: e.target.checked })} className="rounded" />
+                            Keep me updated on AI & automation tips
+                          </label>
+                          <p className="text-xs text-sm-muted mt-1 ml-6">Occasional updates only. Unsubscribe anytime.</p>
                         </div>
 
                         {/* Socials */}

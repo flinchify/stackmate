@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown } from 'lucide-react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar } from 'lucide-react';
 
 interface Expense {
   id: string; clientName?: string; category: string; description: string;
@@ -90,6 +90,9 @@ export default function AdminPage() {
   const [auditUrl, setAuditUrl] = useState('');
   const [auditResult, setAuditResult] = useState('');
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [subscribers, setSubscribers] = useState<{ id: string; email: string; name?: string; source: string; subscribed: boolean; createdAt: string }[]>([]);
+  const [autoAudits, setAutoAudits] = useState<{ id: string; clientName?: string; url: string; lastRun?: string; frequency: string; geoScore?: number; seoScore?: number; performanceScore?: number; status: string }[]>([]);
+  const [newAutoAudit, setNewAutoAudit] = useState({ clientName: '', url: '', frequency: 'daily' });
   const [newExpense, setNewExpense] = useState({ clientName: '', category: 'api', description: '', amount: 0, recurring: true, frequency: 'monthly', date: '' });
 
   // Load saved auth
@@ -128,6 +131,10 @@ export default function AdminPage() {
         if (pRes2.ok) { const pData2 = await pRes2.json(); setPortalsList(pData2.portals || []); }
         const eRes = await fetch('/api/admin/expenses', { headers: h });
         if (eRes.ok) { const eData = await eRes.json(); setExpenses(eData.expenses || []); }
+        const mRes = await fetch('/api/admin/mailing-list', { headers: h });
+        if (mRes.ok) { const mData = await mRes.json(); setSubscribers(mData.subscribers || []); }
+        const aaRes = await fetch('/api/admin/auto-audits', { headers: h });
+        if (aaRes.ok) { const aaData = await aaRes.json(); setAutoAudits(aaData.audits || []); }
       } catch {}
     } catch { alert('Failed to fetch'); }
     finally { setLoading(false); }
@@ -289,6 +296,8 @@ export default function AdminPage() {
     { key: 'portals', icon: Package, label: `Delivery (${portalsList.length})` },
     { key: 'clients', icon: Users, label: `Clients (${clients.length})` },
     { key: 'revenue', icon: DollarSign, label: 'Revenue' },
+    { key: 'mailing', icon: Mail, label: 'Mailing List' },
+    { key: 'monitoring', icon: Radar, label: '24/7 Monitoring' },
     { key: 'terminal', icon: Terminal, label: 'Activity' },
   ];
 
@@ -819,6 +828,105 @@ export default function AdminPage() {
           </div>
           );
         })()}
+
+        {/* ====== MAILING LIST ====== */}
+        {tab === 'mailing' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display font-bold">Mailing List ({subscribers.filter(s => s.subscribed).length} active / {subscribers.length} total)</h3>
+            </div>
+            {subscribers.length === 0 ? <p className="text-sm-muted py-12 text-center">No subscribers yet. Emails are collected from quote and audit submissions.</p> : (
+              <div className="space-y-2">
+                {subscribers.map(sub => (
+                  <div key={sub.id} className="p-3 rounded-sm border border-sm-border bg-sm-card/30 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-2 h-2 rounded-full ${sub.subscribed ? 'bg-green-400' : 'bg-red-400'}`} />
+                      <div>
+                        <p className="text-sm">{sub.email}</p>
+                        <p className="text-xs text-sm-muted">{sub.name || 'No name'} — via {sub.source} — {new Date(sub.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs ${sub.subscribed ? 'text-green-400' : 'text-red-400'}`}>{sub.subscribed ? 'Subscribed' : 'Unsubscribed'}</span>
+                      <button onClick={async () => { await fetch('/api/admin/mailing-list', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: sub.id }) }); fetchAll(); }} className="text-sm-muted hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ====== 24/7 MONITORING ====== */}
+        {tab === 'monitoring' && (
+          <div>
+            <div className="p-5 rounded-sm border border-orange-500/20 bg-orange-500/5 mb-6">
+              <h3 className="font-display font-bold mb-3 flex items-center gap-2"><Radar className="w-4 h-4 text-orange-400" /> Add Site to Monitor</h3>
+              <p className="text-xs text-sm-muted mb-3">Track client websites 24/7. Scores update when you manually run audits (auto PageSpeed API coming soon).</p>
+              <div className="flex gap-3 mb-3">
+                <input value={newAutoAudit.clientName} onChange={e => setNewAutoAudit({ ...newAutoAudit, clientName: e.target.value })} className={`${inputClass} w-48`} placeholder="Client name" />
+                <input value={newAutoAudit.url} onChange={e => setNewAutoAudit({ ...newAutoAudit, url: e.target.value })} className={`${inputClass} flex-1`} placeholder="website.com.au *" />
+                <select value={newAutoAudit.frequency} onChange={e => setNewAutoAudit({ ...newAutoAudit, frequency: e.target.value })} className={`${inputClass} w-32`}>
+                  <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option>
+                </select>
+                <button onClick={async () => {
+                  if (!newAutoAudit.url) return;
+                  await fetch('/api/admin/auto-audits', { method: 'POST', headers: headers(), body: JSON.stringify(newAutoAudit) });
+                  logActivity(`Monitoring added: ${newAutoAudit.url}`);
+                  setNewAutoAudit({ clientName: '', url: '', frequency: 'daily' });
+                  fetchAll();
+                }} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add</button>
+              </div>
+            </div>
+
+            {autoAudits.length === 0 ? <p className="text-sm-muted py-12 text-center">No sites being monitored. Add one above.</p> : (
+              <div className="space-y-3">
+                {autoAudits.map(aa => (
+                  <div key={aa.id} className="p-5 rounded-sm border border-sm-border bg-sm-card/30">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold">{aa.clientName || aa.url}</h3>
+                        <a href={aa.url.startsWith('http') ? aa.url : `https://${aa.url}`} target="_blank" rel="noopener" className="text-xs text-orange-400">{aa.url}</a>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-sm ${aa.status === 'active' ? 'bg-green-400/10 text-green-400' : 'bg-sm-border text-sm-muted'}`}>{aa.status}</span>
+                        <button onClick={async () => { await fetch('/api/admin/auto-audits', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: aa.id }) }); fetchAll(); }} className="text-sm-muted hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-4 mb-3">
+                      <div className="p-3 rounded-sm bg-sm-dark border border-sm-border text-center">
+                        <p className="text-xs text-sm-muted">GEO</p>
+                        <p className={`text-lg font-display font-bold ${(aa.geoScore || 0) >= 80 ? 'text-green-400' : (aa.geoScore || 0) >= 60 ? 'text-orange-400' : 'text-red-400'}`}>{aa.geoScore ?? '—'}</p>
+                      </div>
+                      <div className="p-3 rounded-sm bg-sm-dark border border-sm-border text-center">
+                        <p className="text-xs text-sm-muted">SEO</p>
+                        <p className={`text-lg font-display font-bold ${(aa.seoScore || 0) >= 80 ? 'text-green-400' : (aa.seoScore || 0) >= 60 ? 'text-orange-400' : 'text-red-400'}`}>{aa.seoScore ?? '—'}</p>
+                      </div>
+                      <div className="p-3 rounded-sm bg-sm-dark border border-sm-border text-center">
+                        <p className="text-xs text-sm-muted">Performance</p>
+                        <p className={`text-lg font-display font-bold ${(aa.performanceScore || 0) >= 80 ? 'text-green-400' : (aa.performanceScore || 0) >= 60 ? 'text-orange-400' : 'text-red-400'}`}>{aa.performanceScore ?? '—'}</p>
+                      </div>
+                      <div className="p-3 rounded-sm bg-sm-dark border border-sm-border text-center">
+                        <p className="text-xs text-sm-muted">Last Run</p>
+                        <p className="text-xs text-sm-light mt-1">{aa.lastRun ? new Date(aa.lastRun).toLocaleDateString() : 'Never'}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => {
+                        const geo = prompt('GEO score (0-100):', String(aa.geoScore || ''));
+                        const seo = prompt('SEO score (0-100):', String(aa.seoScore || ''));
+                        const perf = prompt('Performance score (0-100):', String(aa.performanceScore || ''));
+                        fetch('/api/admin/auto-audits', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: aa.id, geoScore: geo ? Number(geo) : undefined, seoScore: seo ? Number(seo) : undefined, performanceScore: perf ? Number(perf) : undefined }) }).then(() => fetchAll());
+                      }} className="px-3 py-1.5 rounded-sm text-xs border border-orange-500/30 text-orange-400 hover:bg-orange-500/10">Update Scores</button>
+                      <a href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(aa.url.startsWith('http') ? aa.url : `https://${aa.url}`)}`} target="_blank" rel="noopener" className="px-3 py-1.5 rounded-sm text-xs border border-sm-border text-sm-light hover:border-white/30">PageSpeed →</a>
+                      <a href="https://geoptie.com/free-geo-audit" target="_blank" rel="noopener" className="px-3 py-1.5 rounded-sm text-xs border border-sm-border text-sm-light hover:border-white/30">GEO Audit →</a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ====== TERMINAL ====== */}
         {tab === 'terminal' && (
