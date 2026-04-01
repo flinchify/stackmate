@@ -458,6 +458,21 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ====== NEW ERA ====== */}
+      <section className="py-24 md:py-32">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <AnimatedSection>
+            <p className="text-sm text-sm-muted uppercase tracking-widest mb-6">The Stackmate Effect</p>
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight leading-[1.1] mb-6">
+              When you become a Stackmate, you enter a new era of AI adoption and API integration.
+            </h2>
+            <p className="text-lg text-sm-light max-w-2xl mx-auto">
+              Your business stops running on manual effort and starts running on systems that think, connect, and scale without you.
+            </p>
+          </AnimatedSection>
+        </div>
+      </section>
+
       {/* ====== INTEGRATIONS ====== */}
       <section className="py-24 md:py-32 overflow-hidden">
         <div className="max-w-5xl mx-auto px-6 mb-12">
