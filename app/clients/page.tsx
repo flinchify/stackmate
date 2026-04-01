@@ -13,6 +13,7 @@ interface Client {
   url: string;
   logoUrl: string;
   heroUrl: string;
+  description?: string;
 }
 
 function ClientCard({ client, index }: { client: Client; index: number }) {
@@ -57,6 +58,9 @@ function ClientCard({ client, index }: { client: Client; index: number }) {
         </div>
         <ExternalLink className="w-4 h-4 text-sm-muted group-hover:text-white transition-colors" />
       </div>
+      {client.description && (
+        <p className="px-5 pb-4 text-xs text-sm-muted">{client.description}</p>
+      )}
     </motion.a>
   );
 }

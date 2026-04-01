@@ -5,6 +5,7 @@ export interface Client {
   logoUrl: string;
   heroUrl: string;
   createdAt: string;
+  description?: string;
 }
 
 const clients: Client[] = [
@@ -15,6 +16,7 @@ const clients: Client[] = [
     logoUrl: '/umove-logo.png',
     heroUrl: '/umove-hero.png',
     createdAt: '2026-03-30T00:00:00.000Z',
+    description: 'Full website rebuild for Perth shipping container company. SEO-optimised, mobile-first.',
   },
   {
     id: 'c_hireacreator',
@@ -23,6 +25,7 @@ const clients: Client[] = [
     logoUrl: '/hireacreator-logo.png',
     heroUrl: '/hireacreator-logo.png',
     createdAt: '2026-03-16T00:00:00.000Z',
+    description: 'AI-powered creator marketplace with dynamic comment-to-service automation for social media.',
   },
 ];
 
