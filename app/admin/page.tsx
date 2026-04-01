@@ -643,7 +643,10 @@ export default function AdminPage() {
               <button onClick={addClientFn} className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add</button>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {clients.map(client => (
+              {clients.map(client => {
+                const rev = clientRevenue[client.name];
+                const cost = (() => { let t = 0; expenses.filter(e => e.clientName === client.name && e.recurring && e.frequency === 'monthly').forEach(e => t += e.amount); return t; })();
+                return (
                 <div key={client.id} className="p-4 rounded-sm border border-sm-border bg-sm-card/30">
                   <div className="flex justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -651,12 +654,33 @@ export default function AdminPage() {
                       <img src={client.logoUrl} alt="" className="w-8 h-8 rounded object-cover" />
                       <div><p className="font-semibold text-sm">{client.name}</p><p className="text-xs text-sm-muted">{client.url.replace(/^https?:\/\//, '')}</p></div>
                     </div>
-                    <button onClick={() => deleteClientFn(client.id)} className="text-sm-muted hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                    <div className="flex gap-1">
+                      <button onClick={() => {
+                        const name = prompt('Client name:', client.name);
+                        const url = prompt('Website URL:', client.url);
+                        const logoUrl = prompt('Logo URL:', client.logoUrl);
+                        const heroUrl = prompt('Hero URL:', client.heroUrl);
+                        if (name && url && logoUrl && heroUrl) {
+                          fetch('/api/admin/clients', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: client.id }) })
+                            .then(() => fetch('/api/admin/clients', { method: 'POST', headers: headers(), body: JSON.stringify({ name, url, logoUrl, heroUrl }) }))
+                            .then(() => { logActivity(`Client edited: ${name}`); fetchAll(); });
+                        }
+                      }} className="text-sm-muted hover:text-orange-400"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => deleteClientFn(client.id)} className="text-sm-muted hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                    </div>
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={client.heroUrl} alt="" className="w-full aspect-video object-cover rounded" />
+                  <img src={client.heroUrl} alt="" className="w-full aspect-video object-cover rounded mb-2" />
+                  {rev && (
+                    <div className="flex justify-between text-xs pt-2 border-t border-sm-border">
+                      <span className="text-sm-muted">Rev: <strong className="text-orange-400">${rev.monthly}/mo</strong></span>
+                      <span className="text-sm-muted">Cost: <strong className="text-red-400">${cost}/mo</strong></span>
+                      <span className="text-sm-muted">Profit: <strong className={rev.monthly - cost >= 0 ? 'text-green-400' : 'text-red-400'}>${rev.monthly - cost}/mo</strong></span>
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -743,7 +767,28 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* Quarterly summary */}
+            <h3 className="font-display font-bold mt-8 mb-3">Quarterly Projections</h3>
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
+              {['Q1', 'Q2', 'Q3', 'Q4'].map((q, i) => {
+                const qRevenue = monthlyRecurring * 3;
+                const qExpenses = monthlyExpenses * 3;
+                const qProfit = qRevenue - qExpenses;
+                return (
+                  <div key={q} className="p-4 rounded-sm border border-sm-border bg-sm-card/30">
+                    <p className="text-xs text-sm-muted font-bold">{q} {new Date().getFullYear()}</p>
+                    <div className="mt-2 space-y-1 text-xs">
+                      <div className="flex justify-between"><span className="text-sm-muted">Revenue</span><span className="text-orange-400 font-bold">${qRevenue.toLocaleString()}</span></div>
+                      <div className="flex justify-between"><span className="text-sm-muted">Expenses</span><span className="text-red-400 font-bold">${qExpenses.toLocaleString()}</span></div>
+                      <div className="flex justify-between border-t border-sm-border pt-1"><span className="text-sm-muted">Net</span><span className={`font-bold ${qProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>${qProfit.toLocaleString()}</span></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Expense list */}
+            <h3 className="font-display font-bold mb-3">All Expenses</h3>
             {expenses.length > 0 && (
               <div className="space-y-2">
                 {expenses.map(exp => (
