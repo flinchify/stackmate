@@ -170,7 +170,7 @@ export default function Home() {
           >
             <button
               onClick={() => setQuoteOpen(true)}
-              className="group relative px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold text-lg rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
+              className="group relative px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold text-lg rounded-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
             >
               <span className="flex items-center gap-2">
                 Get a Quote
@@ -179,7 +179,7 @@ export default function Home() {
             </button>
             <a
               href="/audit"
-              className="px-8 py-4 border border-orange-500/30 text-orange-400 font-display font-semibold text-lg rounded-xl hover:border-orange-500/60 hover:bg-orange-500/5 transition-all duration-200"
+              className="px-8 py-4 border border-orange-500/30 text-orange-400 font-display font-semibold text-lg rounded-sm hover:border-orange-500/60 hover:bg-orange-500/5 transition-all duration-200"
             >
               Free AI Audit
             </a>
@@ -264,7 +264,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {SERVICES.map((service, i) => (
               <StaggerItem key={service.title} index={i}>
-                <div className="group p-6 rounded-xl border border-sm-border bg-sm-card/30 hover:bg-sm-card/60 hover:border-orange-500/20 transition-all duration-300 h-full hover:-translate-y-1">
+                <div className="group p-6 rounded-sm border border-sm-border bg-sm-card/30 hover:bg-sm-card/60 hover:border-orange-500/20 transition-all duration-300 h-full hover:-translate-y-1">
                   <service.icon className="w-8 h-8 text-sm-light mb-4 group-hover:text-orange-400 transition-colors duration-300" />
                   <h3 className="font-display font-semibold text-lg mb-2">{service.title}</h3>
                   <p className="text-sm text-sm-muted leading-relaxed">{service.desc}</p>
@@ -304,7 +304,7 @@ export default function Home() {
           <AnimatedSection className="text-center mt-12">
             <button
               onClick={() => setQuoteOpen(true)}
-              className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold rounded-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
             >
               Start Your Project
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -334,7 +334,7 @@ export default function Home() {
             </div>
 
             <AnimatedSection>
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 p-6 rounded-xl border-2 border-white/20 bg-white/5">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 p-6 rounded-sm border-2 border-white/20 bg-white/5">
                 <div className="col-span-2 md:col-span-1 font-display font-bold text-lg flex items-center gap-2">
                   <Image src="/logo.png" alt="" width={24} height={24} className="invert" />
                   Stackmate
@@ -364,7 +364,7 @@ export default function Home() {
 
             {COMPETITORS.map((comp, i) => (
               <StaggerItem key={comp.name} index={i}>
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 p-6 rounded-xl border border-sm-border bg-sm-card/30">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 p-6 rounded-sm border border-sm-border bg-sm-card/30">
                   <div className="col-span-2 md:col-span-1 font-semibold text-sm-light">{comp.name}</div>
                   <div className="flex items-center gap-2">
                     <span className="md:hidden text-sm-muted text-sm">Delivery:</span>
@@ -422,7 +422,7 @@ export default function Home() {
               },
             ].map((ind, i) => (
               <StaggerItem key={ind.title} index={i}>
-                <div className="p-8 rounded-xl border border-sm-border bg-sm-dark h-full hover:border-orange-500/20 transition-all duration-300 hover:-translate-y-1">
+                <div className="p-8 rounded-sm border border-sm-border bg-sm-dark h-full hover:border-orange-500/20 transition-all duration-300 hover:-translate-y-1">
                   <h3 className="text-xl font-display font-bold mb-3">{ind.title}</h3>
                   <p className="text-sm text-sm-muted mb-6">{ind.desc}</p>
                   <ul className="space-y-2">
@@ -531,7 +531,7 @@ export default function Home() {
               { q: 'Do I own the code Stackmate builds?', a: 'Yes. Upon full payment, you own 100% of the code, designs, and systems we build. No lock-in, no proprietary platforms. Everything is yours.' },
               { q: 'What technologies does Stackmate use?', a: 'We build with Next.js, React, TypeScript, Node.js, PostgreSQL, and integrate with Stripe, Xero, HubSpot, OpenAI, and 100+ other platforms. Modern stack, no legacy tech.' },
             ].map((faq) => (
-              <details key={faq.q} className="group p-5 rounded-xl border border-sm-border bg-sm-card/30 cursor-pointer">
+              <details key={faq.q} className="group p-5 rounded-sm border border-sm-border bg-sm-card/30 cursor-pointer">
                 <summary className="font-display font-semibold text-white list-none flex items-center justify-between">
                   {faq.q}
                   <span className="text-sm-muted group-open:rotate-45 transition-transform duration-200 text-xl">+</span>
@@ -557,7 +557,7 @@ export default function Home() {
               </p>
               <a
                 href="/audit"
-                className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold rounded-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
               >
                 Get Your Free AI Audit
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -586,7 +586,7 @@ export default function Home() {
           <AnimatedSection>
             <button
               onClick={() => setQuoteOpen(true)}
-              className="group inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold text-lg rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
+              className="group inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold text-lg rounded-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
             >
               Get Your Free Quote
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
