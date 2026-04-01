@@ -10,6 +10,7 @@ interface ClientLogo {
 
 const CLIENT_LOGOS: ClientLogo[] = [
   { name: 'U-Move Australia', src: '/umove-logo.png', url: 'https://umove.lol' },
+  { name: 'HireACreator', src: '/hireacreator-logo.png', url: 'https://hireacreator.ai' },
 ];
 
 export default function ClientLogoStrip() {

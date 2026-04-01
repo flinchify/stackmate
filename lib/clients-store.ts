@@ -16,6 +16,14 @@ const clients: Client[] = [
     heroUrl: '/umove-hero.png',
     createdAt: '2026-03-30T00:00:00.000Z',
   },
+  {
+    id: 'c_hireacreator',
+    name: 'HireACreator',
+    url: 'https://hireacreator.ai',
+    logoUrl: '/hireacreator-logo.png',
+    heroUrl: '/hireacreator-logo.png',
+    createdAt: '2026-03-16T00:00:00.000Z',
+  },
 ];
 
 export function addClient(data: Omit<Client, 'id' | 'createdAt'>): Client {
