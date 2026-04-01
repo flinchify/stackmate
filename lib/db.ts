@@ -188,6 +188,24 @@ export async function ensureTables() {
     description TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
+
+  await sql`CREATE TABLE IF NOT EXISTS client_dashboards (
+    id TEXT PRIMARY KEY,
+    access_code TEXT UNIQUE NOT NULL,
+    client_name TEXT NOT NULL,
+    client_email TEXT,
+    client_logo TEXT,
+    client_domain TEXT,
+    brand_color TEXT DEFAULT '#f97316',
+    metrics JSONB DEFAULT '[]',
+    seo_scores JSONB DEFAULT '[]',
+    geo_scores JSONB DEFAULT '[]',
+    traffic_data JSONB DEFAULT '[]',
+    rankings JSONB DEFAULT '[]',
+    leads JSONB DEFAULT '[]',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
 }
 
 export { sql };

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar } from 'lucide-react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar, LayoutDashboard, Copy, ExternalLink } from 'lucide-react';
 
 interface Expense {
   id: string; clientName?: string; category: string; description: string;
@@ -94,6 +94,10 @@ export default function AdminPage() {
   const [autoAudits, setAutoAudits] = useState<{ id: string; clientName?: string; url: string; lastRun?: string; frequency: string; geoScore?: number; seoScore?: number; performanceScore?: number; status: string }[]>([]);
   const [newAutoAudit, setNewAutoAudit] = useState({ clientName: '', url: '', frequency: 'daily' });
   const [newExpense, setNewExpense] = useState({ clientName: '', category: 'api', description: '', amount: 0, recurring: true, frequency: 'monthly', date: '' });
+  const [dashboards, setDashboards] = useState<{ id: string; accessCode: string; clientName: string; clientEmail?: string; clientLogo?: string; clientDomain?: string; brandColor: string; metrics: { label: string; value: number; prev?: number }[]; seoScores: { date: string; score: number }[]; geoScores: { platform: string; score: number }[]; trafficData: { month: string; visits: number }[]; rankings: { keyword: string; position: number; change: number }[]; leads: { date: string; name: string; source?: string }[]; notes?: string; createdAt: string }[]>([]);
+  const [newDashboard, setNewDashboard] = useState({ clientName: '', clientEmail: '', clientLogo: '', clientDomain: '', brandColor: '#f97316', notes: '' });
+  const [editingDashboard, setEditingDashboard] = useState<string | null>(null);
+  const [dashboardMetric, setDashboardMetric] = useState({ type: 'seo', date: '', score: 0, platform: '', month: '', visits: 0, keyword: '', position: 0, change: 0, leadName: '', leadSource: '', metricLabel: '', metricValue: 0, metricPrev: 0 });
 
   // Load saved auth
   useEffect(() => {
@@ -135,6 +139,8 @@ export default function AdminPage() {
         if (mRes.ok) { const mData = await mRes.json(); setSubscribers(mData.subscribers || []); }
         const aaRes = await fetch('/api/admin/auto-audits', { headers: h });
         if (aaRes.ok) { const aaData = await aaRes.json(); setAutoAudits(aaData.audits || []); }
+        const dbRes = await fetch('/api/admin/dashboards', { headers: h });
+        if (dbRes.ok) { const dbData = await dbRes.json(); setDashboards(dbData.dashboards || []); }
       } catch {}
     } catch { alert('Failed to fetch'); }
     finally { setLoading(false); }
@@ -298,6 +304,7 @@ export default function AdminPage() {
     { key: 'revenue', icon: DollarSign, label: 'Revenue' },
     { key: 'mailing', icon: Mail, label: 'Mailing List' },
     { key: 'monitoring', icon: Radar, label: '24/7 Monitoring' },
+    { key: 'dashboards', icon: LayoutDashboard, label: `Dashboards (${dashboards.length})` },
     { key: 'terminal', icon: Terminal, label: 'Activity' },
   ];
 
@@ -929,6 +936,178 @@ export default function AdminPage() {
         )}
 
         {/* ====== TERMINAL ====== */}
+        {tab === 'dashboards' && (
+          <div className="space-y-6">
+            <h3 className="font-display font-bold flex items-center gap-2"><LayoutDashboard className="w-5 h-5 text-orange-400" /> Client Dashboards</h3>
+
+            {/* Create New Dashboard */}
+            <div className="bg-sm-card/30 border border-sm-border rounded-sm p-4 space-y-3">
+              <h4 className="text-sm font-semibold text-white">Create Dashboard</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <input className={inputClass} placeholder="Client Name *" value={newDashboard.clientName} onChange={e => setNewDashboard(p => ({ ...p, clientName: e.target.value }))} />
+                <input className={inputClass} placeholder="Client Email" value={newDashboard.clientEmail} onChange={e => setNewDashboard(p => ({ ...p, clientEmail: e.target.value }))} />
+                <input className={inputClass} placeholder="Logo URL" value={newDashboard.clientLogo} onChange={e => setNewDashboard(p => ({ ...p, clientLogo: e.target.value }))} />
+                <input className={inputClass} placeholder="Domain (e.g. example.com)" value={newDashboard.clientDomain} onChange={e => setNewDashboard(p => ({ ...p, clientDomain: e.target.value }))} />
+                <div className="flex items-center gap-2">
+                  <input type="color" value={newDashboard.brandColor} onChange={e => setNewDashboard(p => ({ ...p, brandColor: e.target.value }))} className="w-10 h-10 rounded cursor-pointer bg-transparent border-0" />
+                  <span className="text-xs text-sm-muted">Brand Color</span>
+                </div>
+                <input className={inputClass} placeholder="Notes" value={newDashboard.notes} onChange={e => setNewDashboard(p => ({ ...p, notes: e.target.value }))} />
+              </div>
+              <button onClick={async () => {
+                if (!newDashboard.clientName) return alert('Client name required');
+                await fetch('/api/admin/dashboards', { method: 'POST', headers: headers(), body: JSON.stringify(newDashboard) });
+                logActivity(`Dashboard created: ${newDashboard.clientName}`);
+                setNewDashboard({ clientName: '', clientEmail: '', clientLogo: '', clientDomain: '', brandColor: '#f97316', notes: '' });
+                fetchAll();
+              }} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-sm text-xs font-semibold flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> Create Dashboard
+              </button>
+            </div>
+
+            {/* Dashboard List */}
+            <div className="space-y-3">
+              {dashboards.length === 0 && <div className="text-center py-12 text-sm-muted">No dashboards yet.</div>}
+              {dashboards.map(db => (
+                <div key={db.id} className="bg-sm-card/30 border border-sm-border rounded-sm p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <span className="font-semibold text-white">{db.clientName}</span>
+                      {db.clientDomain && <span className="text-xs text-sm-muted ml-2">{db.clientDomain}</span>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-sm-dark px-2 py-1 rounded text-orange-400 font-mono">{db.accessCode}</code>
+                      <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/client-dashboard/${db.accessCode}`); alert('Link copied!'); }} className="p-1.5 hover:bg-white/5 rounded" title="Copy link">
+                        <Copy className="w-3.5 h-3.5 text-sm-light" />
+                      </button>
+                      <a href={`/client-dashboard/${db.accessCode}`} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-white/5 rounded" title="View dashboard">
+                        <ExternalLink className="w-3.5 h-3.5 text-sm-light" />
+                      </a>
+                      <button onClick={async () => { if (!confirm('Delete this dashboard?')) return; await fetch('/api/admin/dashboards', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: db.id }) }); logActivity(`Dashboard deleted: ${db.clientName}`); fetchAll(); }} className="p-1.5 hover:bg-red-500/10 rounded">
+                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 text-xs text-sm-muted mb-3">
+                    <span>SEO: {db.seoScores.length} entries</span>
+                    <span>GEO: {db.geoScores.length} platforms</span>
+                    <span>Traffic: {db.trafficData.length} months</span>
+                    <span>Rankings: {db.rankings.length}</span>
+                    <span>Leads: {db.leads.length}</span>
+                  </div>
+
+                  {/* Add Metrics Toggle */}
+                  {editingDashboard === db.id ? (
+                    <div className="border-t border-sm-border pt-3 mt-3 space-y-3">
+                      <div className="flex gap-2 flex-wrap">
+                        {['seo', 'geo', 'traffic', 'ranking', 'lead', 'metric'].map(t => (
+                          <button key={t} onClick={() => setDashboardMetric(p => ({ ...p, type: t }))}
+                            className={`px-2 py-1 rounded text-xs ${dashboardMetric.type === t ? 'bg-orange-500 text-white' : 'border border-sm-border text-sm-light'}`}>{t.toUpperCase()}</button>
+                        ))}
+                      </div>
+                      {dashboardMetric.type === 'seo' && (
+                        <div className="flex gap-2 items-end">
+                          <input className={inputClass} placeholder="Date (e.g. Jan)" value={dashboardMetric.date} onChange={e => setDashboardMetric(p => ({ ...p, date: e.target.value }))} />
+                          <input className={inputClass} type="number" placeholder="Score (0-100)" value={dashboardMetric.score || ''} onChange={e => setDashboardMetric(p => ({ ...p, score: +e.target.value }))} />
+                          <button onClick={async () => {
+                            const updated = [...db.seoScores, { date: dashboardMetric.date, score: dashboardMetric.score }];
+                            await fetch('/api/admin/dashboards', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: db.id, seoScores: updated }) });
+                            logActivity(`SEO score added to ${db.clientName}: ${dashboardMetric.score}`);
+                            setDashboardMetric(p => ({ ...p, date: '', score: 0 }));
+                            fetchAll();
+                          }} className="px-3 py-3 bg-orange-500 text-white rounded-lg text-xs shrink-0">Add</button>
+                        </div>
+                      )}
+                      {dashboardMetric.type === 'geo' && (
+                        <div className="flex gap-2 items-end">
+                          <select className={inputClass} value={dashboardMetric.platform} onChange={e => setDashboardMetric(p => ({ ...p, platform: e.target.value }))}>
+                            <option value="">Platform</option>
+                            <option value="ChatGPT">ChatGPT</option>
+                            <option value="Perplexity">Perplexity</option>
+                            <option value="Gemini">Gemini</option>
+                            <option value="Claude">Claude</option>
+                            <option value="Copilot">Copilot</option>
+                          </select>
+                          <input className={inputClass} type="number" placeholder="Score (0-100)" value={dashboardMetric.score || ''} onChange={e => setDashboardMetric(p => ({ ...p, score: +e.target.value }))} />
+                          <button onClick={async () => {
+                            const existing = db.geoScores.filter(g => g.platform !== dashboardMetric.platform);
+                            const updated = [...existing, { platform: dashboardMetric.platform, score: dashboardMetric.score }];
+                            await fetch('/api/admin/dashboards', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: db.id, geoScores: updated }) });
+                            logActivity(`GEO score added to ${db.clientName}: ${dashboardMetric.platform} ${dashboardMetric.score}`);
+                            setDashboardMetric(p => ({ ...p, platform: '', score: 0 }));
+                            fetchAll();
+                          }} className="px-3 py-3 bg-orange-500 text-white rounded-lg text-xs shrink-0">Add</button>
+                        </div>
+                      )}
+                      {dashboardMetric.type === 'traffic' && (
+                        <div className="flex gap-2 items-end">
+                          <input className={inputClass} placeholder="Month (e.g. Mar)" value={dashboardMetric.month} onChange={e => setDashboardMetric(p => ({ ...p, month: e.target.value }))} />
+                          <input className={inputClass} type="number" placeholder="Visits" value={dashboardMetric.visits || ''} onChange={e => setDashboardMetric(p => ({ ...p, visits: +e.target.value }))} />
+                          <button onClick={async () => {
+                            const updated = [...db.trafficData, { month: dashboardMetric.month, visits: dashboardMetric.visits }];
+                            await fetch('/api/admin/dashboards', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: db.id, trafficData: updated }) });
+                            logActivity(`Traffic added to ${db.clientName}: ${dashboardMetric.month} ${dashboardMetric.visits}`);
+                            setDashboardMetric(p => ({ ...p, month: '', visits: 0 }));
+                            fetchAll();
+                          }} className="px-3 py-3 bg-orange-500 text-white rounded-lg text-xs shrink-0">Add</button>
+                        </div>
+                      )}
+                      {dashboardMetric.type === 'ranking' && (
+                        <div className="flex gap-2 items-end">
+                          <input className={inputClass} placeholder="Keyword" value={dashboardMetric.keyword} onChange={e => setDashboardMetric(p => ({ ...p, keyword: e.target.value }))} />
+                          <input className={inputClass} type="number" placeholder="Position" value={dashboardMetric.position || ''} onChange={e => setDashboardMetric(p => ({ ...p, position: +e.target.value }))} />
+                          <input className={inputClass} type="number" placeholder="Change (+/-)" value={dashboardMetric.change || ''} onChange={e => setDashboardMetric(p => ({ ...p, change: +e.target.value }))} />
+                          <button onClick={async () => {
+                            const existing = db.rankings.filter(r => r.keyword !== dashboardMetric.keyword);
+                            const updated = [...existing, { keyword: dashboardMetric.keyword, position: dashboardMetric.position, change: dashboardMetric.change }];
+                            await fetch('/api/admin/dashboards', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: db.id, rankings: updated }) });
+                            logActivity(`Ranking added to ${db.clientName}: ${dashboardMetric.keyword} #${dashboardMetric.position}`);
+                            setDashboardMetric(p => ({ ...p, keyword: '', position: 0, change: 0 }));
+                            fetchAll();
+                          }} className="px-3 py-3 bg-orange-500 text-white rounded-lg text-xs shrink-0">Add</button>
+                        </div>
+                      )}
+                      {dashboardMetric.type === 'lead' && (
+                        <div className="flex gap-2 items-end">
+                          <input className={inputClass} placeholder="Lead Name" value={dashboardMetric.leadName} onChange={e => setDashboardMetric(p => ({ ...p, leadName: e.target.value }))} />
+                          <input className={inputClass} placeholder="Source (e.g. Google)" value={dashboardMetric.leadSource} onChange={e => setDashboardMetric(p => ({ ...p, leadSource: e.target.value }))} />
+                          <button onClick={async () => {
+                            const updated = [...db.leads, { date: new Date().toLocaleDateString('en-AU'), name: dashboardMetric.leadName, source: dashboardMetric.leadSource }];
+                            await fetch('/api/admin/dashboards', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: db.id, leads: updated }) });
+                            logActivity(`Lead added to ${db.clientName}: ${dashboardMetric.leadName}`);
+                            setDashboardMetric(p => ({ ...p, leadName: '', leadSource: '' }));
+                            fetchAll();
+                          }} className="px-3 py-3 bg-orange-500 text-white rounded-lg text-xs shrink-0">Add</button>
+                        </div>
+                      )}
+                      {dashboardMetric.type === 'metric' && (
+                        <div className="flex gap-2 items-end">
+                          <input className={inputClass} placeholder="Label" value={dashboardMetric.metricLabel} onChange={e => setDashboardMetric(p => ({ ...p, metricLabel: e.target.value }))} />
+                          <input className={inputClass} type="number" placeholder="Value" value={dashboardMetric.metricValue || ''} onChange={e => setDashboardMetric(p => ({ ...p, metricValue: +e.target.value }))} />
+                          <input className={inputClass} type="number" placeholder="Previous (optional)" value={dashboardMetric.metricPrev || ''} onChange={e => setDashboardMetric(p => ({ ...p, metricPrev: +e.target.value }))} />
+                          <button onClick={async () => {
+                            const existing = db.metrics.filter(m => m.label !== dashboardMetric.metricLabel);
+                            const updated = [...existing, { label: dashboardMetric.metricLabel, value: dashboardMetric.metricValue, prev: dashboardMetric.metricPrev || undefined }];
+                            await fetch('/api/admin/dashboards', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: db.id, metrics: updated }) });
+                            logActivity(`Metric added to ${db.clientName}: ${dashboardMetric.metricLabel} = ${dashboardMetric.metricValue}`);
+                            setDashboardMetric(p => ({ ...p, metricLabel: '', metricValue: 0, metricPrev: 0 }));
+                            fetchAll();
+                          }} className="px-3 py-3 bg-orange-500 text-white rounded-lg text-xs shrink-0">Add</button>
+                        </div>
+                      )}
+                      <button onClick={() => setEditingDashboard(null)} className="text-xs text-sm-muted hover:text-white">Close</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditingDashboard(db.id)} className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1">
+                      <Plus className="w-3 h-3" /> Add Metrics
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {tab === 'terminal' && (
           <div>
             <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Terminal className="w-5 h-5 text-orange-400" /> Activity Log</h3>
