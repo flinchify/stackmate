@@ -25,7 +25,13 @@ export const metadata: Metadata = {
     template: '%s | Stackmate',
   },
   description:
-    'Perth\'s fastest AI systems integrator. Custom automation, AI agents, and business infrastructure for mining companies, agencies, and local businesses. Get a quote in 60 seconds.',
+    'Stackmate is Perth\'s fastest AI systems integrator. We build custom AI agents, business automation, websites, and software for mining companies, agencies, and local businesses in Western Australia. 1-2 day delivery. Get a free quote or AI audit in 60 seconds.',
+  alternates: {
+    canonical: 'https://stackmate.digital',
+  },
+  authors: [{ name: 'Miles Cass', url: 'https://www.linkedin.com/in/milescass' }],
+  creator: 'Miles Cass',
+  publisher: 'Stackmate',
   keywords: [
     'AI automation Perth',
     'business systems Perth',

@@ -14,7 +14,8 @@ import QuoteModal from '@/components/QuoteModal';
 import Counter from '@/components/Counter';
 import LogoMarquee from '@/components/LogoMarquee';
 import ClientLogoStrip from '@/components/ClientLogoStrip';
-import MatrixBg from '@/components/MatrixBg';
+import dynamic from 'next/dynamic';
+const MatrixBg = dynamic(() => import('@/components/MatrixBg'), { ssr: false });
 
 
 const INTEGRATIONS_ROW1 = [
@@ -222,25 +223,28 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <AnimatedSection>
             <div className="text-3xl md:text-4xl font-display font-bold">
-              <Counter target={50} suffix="+" />
+              <span aria-label="50+ projects delivered"><Counter target={50} suffix="+" /></span>
             </div>
             <p className="text-sm text-sm-muted mt-1">Projects Delivered</p>
+            <noscript><span>50+</span></noscript>
           </AnimatedSection>
           <AnimatedSection>
             <div className="text-3xl md:text-4xl font-display font-bold">
-              <Counter target={98} suffix="%" />
+              <span aria-label="98% client satisfaction"><Counter target={98} suffix="%" /></span>
             </div>
             <p className="text-sm text-sm-muted mt-1">Client Satisfaction</p>
+            <noscript><span>98%</span></noscript>
           </AnimatedSection>
           <AnimatedSection>
             <div className="text-3xl md:text-4xl font-display font-bold">
-              <Counter target={10} suffix="x" />
+              <span aria-label="10x faster than agencies"><Counter target={10} suffix="x" /></span>
             </div>
             <p className="text-sm text-sm-muted mt-1">Faster Than Agencies</p>
+            <noscript><span>10x</span></noscript>
           </AnimatedSection>
           <AnimatedSection>
             <div className="text-3xl md:text-4xl font-display font-bold">
-              24/7
+              <span aria-label="24/7 support and monitoring">24/7</span>
             </div>
             <p className="text-sm text-sm-muted mt-1">Support & Monitoring</p>
           </AnimatedSection>
@@ -496,6 +500,46 @@ export default function Home() {
         <div className="space-y-4">
           <LogoMarquee items={INTEGRATIONS_ROW1} direction="left" speed={35} />
           <LogoMarquee items={INTEGRATIONS_ROW2} direction="right" speed={40} />
+        </div>
+      </section>
+
+      {/* ====== FAQ ====== */}
+      <section className="py-24 md:py-32">
+        <div className="max-w-3xl mx-auto px-6">
+          <AnimatedSection className="text-center mb-12">
+            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight">Common questions</h2>
+          </AnimatedSection>
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              { '@type': 'Question', name: 'How fast does Stackmate deliver projects?', acceptedAnswer: { '@type': 'Answer', text: 'Most projects are delivered within 1-2 business days. We use AI-accelerated development to build 10x faster than traditional agencies.' } },
+              { '@type': 'Question', name: 'What industries does Stackmate work with?', acceptedAnswer: { '@type': 'Answer', text: 'We work with mining and resources companies, local businesses (trades, hospitality, retail), agencies, and enterprises across Western Australia and beyond.' } },
+              { '@type': 'Question', name: 'Is Stackmate based in Perth?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Stackmate is based in Perth, Western Australia. We offer in-person meetings, same-timezone support, and deep understanding of WA business and mining regulations.' } },
+              { '@type': 'Question', name: 'What does the free AI audit include?', acceptedAnswer: { '@type': 'Answer', text: 'Our free AI audit includes an operations scan, AI opportunity map, ROI projection, and a prioritised action plan showing exactly where automation can save your business time and money. We respond within 48 hours.' } },
+              { '@type': 'Question', name: 'Do I own the code Stackmate builds?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Upon full payment, you own 100% of the code, designs, and systems we build. No lock-in, no proprietary platforms. Everything is yours.' } },
+              { '@type': 'Question', name: 'What technologies does Stackmate use?', acceptedAnswer: { '@type': 'Answer', text: 'We build with Next.js, React, TypeScript, Node.js, PostgreSQL, and integrate with Stripe, Xero, HubSpot, OpenAI, and 100+ other platforms. Modern stack, no legacy tech.' } },
+            ]
+          }) }} />
+          <div className="space-y-4">
+            {[
+              { q: 'How fast does Stackmate deliver projects?', a: 'Most projects are delivered within 1-2 business days. We use AI-accelerated development to build 10x faster than traditional agencies.' },
+              { q: 'What industries does Stackmate work with?', a: 'We work with mining and resources companies, local businesses (trades, hospitality, retail), agencies, and enterprises across Western Australia and beyond.' },
+              { q: 'Is Stackmate based in Perth?', a: 'Yes. Stackmate is based in Perth, Western Australia. We offer in-person meetings, same-timezone support, and deep understanding of WA business and mining regulations.' },
+              { q: 'What does the free AI audit include?', a: 'Our free AI audit includes an operations scan, AI opportunity map, ROI projection, and a prioritised action plan showing exactly where automation can save your business time and money. We respond within 48 hours.' },
+              { q: 'Do I own the code Stackmate builds?', a: 'Yes. Upon full payment, you own 100% of the code, designs, and systems we build. No lock-in, no proprietary platforms. Everything is yours.' },
+              { q: 'What technologies does Stackmate use?', a: 'We build with Next.js, React, TypeScript, Node.js, PostgreSQL, and integrate with Stripe, Xero, HubSpot, OpenAI, and 100+ other platforms. Modern stack, no legacy tech.' },
+            ].map((faq) => (
+              <details key={faq.q} className="group p-5 rounded-xl border border-sm-border bg-sm-card/30 cursor-pointer">
+                <summary className="font-display font-semibold text-white list-none flex items-center justify-between">
+                  {faq.q}
+                  <span className="text-sm-muted group-open:rotate-45 transition-transform duration-200 text-xl">+</span>
+                </summary>
+                <p className="mt-3 text-sm text-sm-light leading-relaxed">{faq.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
