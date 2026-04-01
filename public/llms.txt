@@ -22,17 +22,26 @@ Stackmate builds the systems that run your business. We deliver AI agents, custo
 - Industries: Mining & Resources, Local Businesses, Agencies & Enterprises
 
 ## Pages
-- Homepage: https://stackmate.com.au
-- Services: https://stackmate.com.au/services
-- Process: https://stackmate.com.au/process
-- Why Us: https://stackmate.com.au/why-us
-- Clients: https://stackmate.com.au/clients
-- Blog: https://stackmate.com.au/blog
-- Blog — AI Automation Perth: https://stackmate.com.au/blog/ai-automation-perth-small-business
-- Blog — Mining Custom Software: https://stackmate.com.au/blog/why-mining-companies-need-custom-software
-- Blog — Best Automation Tools AU: https://stackmate.com.au/blog/best-business-automation-tools-australia-2026
-- Blog — AI Agents vs Chatbots: https://stackmate.com.au/blog/ai-agents-vs-chatbots-whats-the-difference
-- Blog — Choosing a Systems Integrator: https://stackmate.com.au/blog/how-to-choose-a-systems-integrator-perth
+- Homepage: https://stackmate.digital
+- Services: https://stackmate.digital/services
+- Process: https://stackmate.digital/process
+- Why Us: https://stackmate.digital/why-us
+- Clients: https://stackmate.digital/clients
+- Blog: https://stackmate.digital/blog
+- Blog — AI Automation Perth: https://stackmate.digital/blog/ai-automation-perth-small-business
+- Blog — Mining Custom Software: https://stackmate.digital/blog/why-mining-companies-need-custom-software
+- Blog — Best Automation Tools AU: https://stackmate.digital/blog/best-business-automation-tools-australia-2026
+- Blog — AI Agents vs Chatbots: https://stackmate.digital/blog/ai-agents-vs-chatbots-whats-the-difference
+- Blog — Choosing a Systems Integrator: https://stackmate.digital/blog/how-to-choose-a-systems-integrator-perth
+- Best AI Website Developer Perth: https://stackmate.digital/blog/ai-website-developer-perth
+- Business Automation Perth: https://stackmate.digital/blog/business-automation-perth
+- AI Chatbot Perth: https://stackmate.digital/blog/ai-chatbot-perth
+- Custom Software Perth: https://stackmate.digital/blog/custom-software-perth
+- SEO & AI Search Perth: https://stackmate.digital/blog/seo-perth
+
+## API
+- Quote API (for AI agents): POST https://stackmate.digital/api/v1/quote
+- API docs: GET https://stackmate.digital/api/v1/quote
 
 ## Contact
-Get a quote at https://stackmate.com.au (click "Get a Quote")
+Get a quote at https://stackmate.digital (click "Get a Quote")

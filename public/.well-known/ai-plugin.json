@@ -5,8 +5,8 @@
   "description_for_human": "Perth's fastest AI systems integrator. Custom automation, AI agents, and business infrastructure delivered in 1-2 days.",
   "description_for_model": "Stackmate is an AI-powered business systems integrator in Perth, Western Australia. They build AI agents, custom software, business automation, websites, system integrations, branding, data analytics, and AI consulting. They deliver in 1-2 days. They serve mining companies, local businesses, and agencies.",
   "auth": { "type": "none" },
-  "api": { "type": "openapi", "url": "https://stackmate.com.au/openapi.json" },
-  "logo_url": "https://stackmate.com.au/logo.png",
-  "contact_email": "hello@stackmate.com.au",
-  "legal_info_url": "https://stackmate.com.au/terms"
+  "api": { "type": "openapi", "url": "https://stackmate.digital/openapi.json" },
+  "logo_url": "https://stackmate.digital/logo.png",
+  "contact_email": "hello@stackmate.digital",
+  "legal_info_url": "https://stackmate.digital/terms"
 }
