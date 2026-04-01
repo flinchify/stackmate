@@ -541,12 +541,54 @@ export default function DocumentsPage() {
   const printDoc = (content: string, title: string) => {
     const win = window.open('', '_blank');
     if (!win) return;
+    // Convert plain text to styled HTML doc
+    const lines = content.split('\n');
+    let html = '';
+    for (const line of lines) {
+      if (line.startsWith('STACKMATE') || line.startsWith('NON-DISCLOSURE')) {
+        html += `<h1 style="font-size:24px;font-weight:800;margin:0 0 4px 0;letter-spacing:-0.5px;">${line}</h1>`;
+      } else if (line.match(/^[A-Z][A-Z\s\/&()]+$/) && line.length > 3 && !line.includes('___')) {
+        html += `<h2 style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:24px 0 8px 0;color:#333;border-bottom:2px solid #f97316;padding-bottom:4px;">${line}</h2>`;
+      } else if (line.startsWith('────') || line.startsWith('───')) {
+        // skip dividers, handled by h2 border
+      } else if (line.startsWith('☐')) {
+        html += `<div style="margin:4px 0 4px 12px;">${line}</div>`;
+      } else if (line.match(/^\d+\.\s/)) {
+        html += `<div style="margin:4px 0 4px 12px;font-weight:500;">${line}</div>`;
+      } else if (line.includes('___') && line.includes(':')) {
+        const [label, ...rest] = line.split(':');
+        html += `<div style="margin:6px 0;display:flex;gap:8px;"><span style="color:#666;min-width:180px;">${label.trim()}:</span><span style="flex:1;border-bottom:1px solid #ddd;min-height:20px;">${rest.join(':').replace(/_/g, '').trim()}</span></div>`;
+      } else if (line.trim() === '') {
+        html += '<div style="height:8px;"></div>';
+      } else {
+        html += `<p style="margin:4px 0;">${line}</p>`;
+      }
+    }
+
     win.document.write(`<html><head><title>${title} — Stackmate</title><style>
-      body { font-family: 'Courier New', monospace; font-size: 12px; padding: 40px; max-width: 800px; margin: 0 auto; line-height: 1.6; }
-      @media print { body { padding: 20px; } }
-    </style></head><body><pre>${content}</pre></body></html>`);
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+      body { font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; padding: 60px; max-width: 800px; margin: 0 auto; line-height: 1.7; color: #1a1a1a; }
+      @media print { body { padding: 40px; } @page { margin: 20mm; } }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 3px solid #0a0a0a; }
+      .header img { height: 36px; }
+      .header-right { text-align: right; font-size: 11px; color: #666; }
+    </style></head><body>
+      <div class="header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="/logo.png" alt="Stackmate" />
+          <span style="font-size:20px;font-weight:800;letter-spacing:-0.5px;">stackmate</span>
+        </div>
+        <div class="header-right">
+          stackmate.digital<br/>Perth, Western Australia<br/>hello@stackmate.digital
+        </div>
+      </div>
+      ${html}
+      <div style="margin-top:48px;padding-top:16px;border-top:1px solid #eee;text-align:center;font-size:10px;color:#999;">
+        Stackmate &middot; stackmate.digital &middot; Perth, Western Australia
+      </div>
+    </body></html>`);
     win.document.close();
-    win.print();
+    setTimeout(() => win.print(), 500);
   };
 
   const active = TEMPLATES.find(t => t.id === activeDoc);
@@ -597,7 +639,35 @@ export default function DocumentsPage() {
                     </button>
                   </div>
                 </div>
-                <pre className="bg-sm-dark border border-sm-border rounded-sm p-6 text-xs text-sm-light font-mono whitespace-pre-wrap leading-relaxed max-h-[75vh] overflow-y-auto">{active.content}</pre>
+                <div className="bg-white text-black rounded-sm p-8 max-h-[75vh] overflow-y-auto text-sm leading-relaxed">
+                  {/* Logo header */}
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-black">
+                    <div className="flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/logo.png" alt="Stackmate" className="h-8" />
+                      <span className="font-bold text-lg tracking-tight">stackmate</span>
+                    </div>
+                    <div className="text-right text-xs text-gray-500">
+                      <p>stackmate.digital</p>
+                      <p>Perth, Western Australia</p>
+                      <p>hello@stackmate.digital</p>
+                    </div>
+                  </div>
+                  {/* Rendered content */}
+                  {active.content.split('\n').map((line, i) => {
+                    if (line.startsWith('STACKMATE') || line.startsWith('NON-DISCLOSURE')) return <h1 key={i} className="text-xl font-extrabold mb-1">{line}</h1>;
+                    if (line.match(/^[A-Z][A-Z\s\/&()]+$/) && line.length > 3 && !line.includes('___')) return <h2 key={i} className="text-xs font-bold uppercase tracking-widest mt-6 mb-2 text-gray-700 border-b-2 border-orange-500 pb-1">{line}</h2>;
+                    if (line.startsWith('\u2500')) return null;
+                    if (line.startsWith('\u2610')) return <div key={i} className="ml-3 my-1">{line}</div>;
+                    if (line.match(/^\d+\.\s/)) return <div key={i} className="ml-3 my-1 font-medium">{line}</div>;
+                    if (line.includes('___') && line.includes(':')) {
+                      const [label] = line.split(':');
+                      return <div key={i} className="flex gap-2 my-1"><span className="text-gray-500 w-44 shrink-0">{label.trim()}:</span><span className="flex-1 border-b border-gray-300"></span></div>;
+                    }
+                    if (line.trim() === '') return <div key={i} className="h-2" />;
+                    return <p key={i} className="my-0.5">{line}</p>;
+                  })}
+                </div>
               </div>
             )}
           </div>
