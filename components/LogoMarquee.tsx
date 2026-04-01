@@ -2,7 +2,7 @@
 
 interface LogoItem {
   name: string;
-  svg: string;
+  icon: string;
 }
 
 interface LogoMarqueeProps {
@@ -18,7 +18,7 @@ export default function LogoMarquee({ items, direction = 'left', speed = 40, cla
   return (
     <div className={`overflow-hidden ${className}`}>
       <div
-        className="flex items-center gap-12 whitespace-nowrap"
+        className="flex items-center gap-14 whitespace-nowrap"
         style={{
           animation: `marquee-${direction} ${speed}s linear infinite`,
         }}
@@ -28,7 +28,14 @@ export default function LogoMarquee({ items, direction = 'left', speed = 40, cla
             key={`${item.name}-${i}`}
             className="shrink-0 flex items-center gap-2.5 opacity-40 hover:opacity-100 transition-opacity duration-300"
           >
-            <div className="w-6 h-6 flex items-center justify-center" dangerouslySetInnerHTML={{ __html: item.svg }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`https://cdn.jsdelivr.net/npm/simple-icons@v14/icons/${item.icon}.svg`}
+              alt={item.name}
+              className="h-5 w-5 invert"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
             <span className="text-sm text-sm-light font-medium">{item.name}</span>
           </div>
         ))}
