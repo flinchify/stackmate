@@ -235,6 +235,10 @@ export default function ServicesPage() {
                 <p className="text-white font-semibold">
                   If you want someone who talks, hire an agency. If you want someone who builds, talk to me.
                 </p>
+                <div className="flex items-center gap-4 mt-6">
+                  <a href="https://www.linkedin.com/in/milescass" target="_blank" rel="noopener noreferrer" className="text-sm text-sm-muted hover:text-white transition-colors">LinkedIn</a>
+                  <a href="https://instagram.com/milescass_" target="_blank" rel="noopener noreferrer" className="text-sm text-sm-muted hover:text-white transition-colors">Instagram</a>
+                </div>
               </div>
             </div>
           </div>

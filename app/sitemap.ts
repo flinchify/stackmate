@@ -27,5 +27,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...pages, ...blogPages];
+  const geoPages = [
+    { url: `${base}/blog/ai-website-developer-perth`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+  ];
+
+  return [...pages, ...blogPages, ...geoPages];
 }

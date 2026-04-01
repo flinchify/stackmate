@@ -78,7 +78,10 @@ const jsonLd = {
     geoMidpoint: { '@type': 'GeoCoordinates', latitude: -31.9505, longitude: 115.8605 },
     geoRadius: '50000',
   },
-  sameAs: [],
+  sameAs: [
+    'https://www.linkedin.com/in/milescass',
+    'https://instagram.com/milescass_',
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
