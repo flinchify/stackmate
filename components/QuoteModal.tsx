@@ -191,7 +191,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h3 className="text-2xl font-display font-bold mb-2">Quote Request Sent</h3>
                 <p className="text-sm-light mb-6">We&apos;ll review your requirements and get back to you within 24 hours with a custom proposal.</p>
-                <button onClick={reset} className="px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors">Done</button>
+                <button onClick={reset} className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-colors">Done</button>
               </motion.div>
             ) : (
               <div className="p-8">
@@ -367,13 +367,13 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
 
                   {step < 3 ? (
                     <button onClick={() => setStep((s) => Math.min(3, s + 1))} disabled={!canAdvance()}
-                      className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       Continue <ArrowRight className="w-4 h-4" />
                     </button>
                   ) : (
                     <button onClick={handleSubmit} disabled={!canAdvance() || submitting}
-                      className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       {submitting ? 'Sending...' : 'Get My Quote'}

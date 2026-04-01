@@ -9,11 +9,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    if (!body.companyName || !body.email || !body.description) {
-      return NextResponse.json({ error: 'Missing required fields: companyName, email, description' }, { status: 400 });
-    }
-
-    const audit = addAudit({
+    if (!body.companyName || !body.email || !body.description) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    const audit = await addAudit({
       companyName: String(body.companyName).slice(0, 200),
       contactName: body.contactName ? String(body.contactName).slice(0, 100) : undefined,
       email: String(body.email).slice(0, 254),
@@ -23,9 +20,6 @@ export async function POST(req: NextRequest) {
       employees: String(body.employees || '1-5').slice(0, 10),
       description: String(body.description).slice(0, 2000),
     });
-
-    return NextResponse.json({ success: true, message: 'Audit request received. We\'ll respond within 48 hours.', auditId: audit.id }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
-  }
+    return NextResponse.json({ success: true, message: "We'll respond within 48 hours.", auditId: audit.id }, { status: 201 });
+  } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
 }

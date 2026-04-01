@@ -9,7 +9,7 @@ function checkAuth(req: NextRequest): boolean {
 
 export async function GET(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const quotes = getQuotes();
+  const quotes = await getQuotes();
   return NextResponse.json({ total: quotes.length, quotes });
 }
 
@@ -18,15 +18,9 @@ export async function PATCH(req: NextRequest) {
   const { id, status } = await req.json();
   const validStatuses = ['new', 'reviewing', 'quoted', 'accepted', 'paid', 'rejected'];
   if (!validStatuses.includes(status)) return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
-  
-  const quote = updateQuoteStatus(id, status);
+  const quote = await updateQuoteStatus(id, status);
   if (!quote) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
-  // Auto-generate invoice when marked as paid
   let invoice = null;
-  if (status === 'paid') {
-    invoice = generateInvoiceFromQuote(quote);
-  }
-
+  if (status === 'paid') invoice = await generateInvoiceFromQuote(quote);
   return NextResponse.json({ success: true, quote, invoice });
 }

@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPortals, createPortal, updatePortal, addDeliverable, addUpdate, toggleHandoverItem } from '@/lib/deliverables-store';
 
 function checkAuth(req: NextRequest): boolean {
-  const secret = req.headers.get('x-admin-secret');
-  return secret === (process.env.ADMIN_SECRET || 'stackmate-admin-2026');
+  return req.headers.get('x-admin-secret') === (process.env.ADMIN_SECRET || 'stackmate-admin-2026');
 }
 
 export async function GET(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  return NextResponse.json({ portals: getPortals() });
+  return NextResponse.json({ portals: await getPortals() });
 }
 
 export async function POST(req: NextRequest) {
@@ -17,11 +16,9 @@ export async function POST(req: NextRequest) {
 
   if (body.action === 'create') {
     if (!body.clientName || !body.projectTitle) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
-    const portal = createPortal({
-      clientName: body.clientName,
-      clientEmail: body.clientEmail || '',
-      projectTitle: body.projectTitle,
-      projectDescription: body.projectDescription || '',
+    const portal = await createPortal({
+      clientName: body.clientName, clientEmail: body.clientEmail || '',
+      projectTitle: body.projectTitle, projectDescription: body.projectDescription || '',
       status: body.status || 'in-progress',
       handoverChecklist: body.handoverChecklist || [
         { item: 'Domain credentials shared', done: false },
@@ -38,25 +35,25 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.action === 'update') {
-    const portal = updatePortal(body.id, body.updates);
+    const portal = await updatePortal(body.id, body.updates);
     if (!portal) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, portal });
   }
 
   if (body.action === 'add-deliverable') {
-    const d = addDeliverable(body.portalId, body.deliverable);
-    if (!d) return NextResponse.json({ error: 'Portal not found' }, { status: 404 });
+    const d = await addDeliverable(body.portalId, body.deliverable);
+    if (!d) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true, deliverable: d });
   }
 
   if (body.action === 'add-update') {
-    const ok = addUpdate(body.portalId, body.message);
-    if (!ok) return NextResponse.json({ error: 'Portal not found' }, { status: 404 });
+    const ok = await addUpdate(body.portalId, body.message);
+    if (!ok) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   }
 
   if (body.action === 'toggle-handover') {
-    const ok = toggleHandoverItem(body.portalId, body.index);
+    const ok = await toggleHandoverItem(body.portalId, body.index);
     if (!ok) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   }
