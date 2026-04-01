@@ -15,7 +15,7 @@ import Counter from '@/components/Counter';
 import LogoMarquee from '@/components/LogoMarquee';
 import ClientLogoStrip from '@/components/ClientLogoStrip';
 import MatrixBg from '@/components/MatrixBg';
-import BracketButton from '@/components/BracketButton';
+
 
 const INTEGRATIONS_ROW1 = [
   { name: 'Stripe', icon: 'stripe' },
@@ -110,8 +110,8 @@ export default function Home() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.97]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
 
   // Typewriter for hero
   const [heroText, setHeroText] = useState('');
@@ -135,25 +135,13 @@ export default function Home() {
       <motion.section
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        style={{ opacity: heroOpacity, scale: heroScale }}
+        style={{ opacity: heroOpacity }}
       >
         <MatrixBg />
         {/* Orange gradient orb */}
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-32 pb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-sm-border bg-sm-card/50 mb-8">
-              <MapPin className="w-3.5 h-3.5 text-sm-light" />
-              <span className="text-xs text-sm-light tracking-wide uppercase">Perth, Western Australia</span>
-              <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
-            </div>
-          </motion.div>
-
-          <div className="mb-6">
+          <div className="mb-8">
             <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-display font-bold tracking-tight leading-[1.05]">
               {heroText}
               <motion.span
@@ -165,7 +153,7 @@ export default function Home() {
           </div>
 
           <motion.p
-            className="text-lg md:text-xl text-sm-light max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-lg md:text-xl text-sm-light max-w-2xl mx-auto mb-14 leading-relaxed"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 1.5 }}
@@ -188,9 +176,12 @@ export default function Home() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            <BracketButton onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}>
-              See What We Build
-            </BracketButton>
+            <a
+              href="/audit"
+              className="px-8 py-4 border border-orange-500/30 text-orange-400 font-display font-semibold text-lg rounded-xl hover:border-orange-500/60 hover:bg-orange-500/5 transition-all duration-200"
+            >
+              Free AI Audit
+            </a>
           </motion.div>
 
           <motion.div
@@ -505,6 +496,30 @@ export default function Home() {
         <div className="space-y-4">
           <LogoMarquee items={INTEGRATIONS_ROW1} direction="left" speed={35} />
           <LogoMarquee items={INTEGRATIONS_ROW2} direction="right" speed={40} />
+        </div>
+      </section>
+
+      {/* ====== FREE AUDIT ====== */}
+      <section className="py-24 md:py-32 bg-sm-card/30">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="p-10 md:p-14 rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-transparent">
+            <AnimatedSection className="text-center">
+              <p className="text-sm text-orange-400 uppercase tracking-widest mb-4">Free for every business</p>
+              <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-4">
+                Not sure where AI fits? Get a free audit.
+              </h2>
+              <p className="text-sm-light max-w-2xl mx-auto mb-8">
+                We&apos;ll analyse your business operations and show you exactly where AI and automation can save time, cut costs, and help you scale. No cost, no obligation. We respond within 48 hours.
+              </p>
+              <a
+                href="/audit"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold rounded-xl transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
+              >
+                Get Your Free AI Audit
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </AnimatedSection>
+          </div>
         </div>
       </section>
 
