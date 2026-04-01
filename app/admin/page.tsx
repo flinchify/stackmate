@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe } from 'lucide-react';
 
 interface Quote {
   id: string; companyName: string; industry: string; employees: string; services: string[];
@@ -28,6 +28,12 @@ interface Project {
 
 interface Client { id: string; name: string; url: string; logoUrl: string; heroUrl: string; createdAt: string; }
 
+interface Audit {
+  id: string; companyName: string; contactName?: string; email: string; phone?: string;
+  website?: string; industry: string; employees: string; description: string;
+  status: string; createdAt: string; completedAt?: string; notes?: string;
+}
+
 interface Portal {
   id: string; accessCode: string; clientName: string; clientEmail: string;
   projectTitle: string; projectDescription: string; status: string;
@@ -35,12 +41,6 @@ interface Portal {
   updates: { date: string; message: string }[];
   handoverChecklist: { item: string; done: boolean }[];
   createdAt: string;
-}
-
-interface Audit {
-  id: string; companyName: string; contactName?: string; email: string; phone?: string;
-  website?: string; industry: string; employees: string; description: string;
-  status: string; createdAt: string; completedAt?: string; notes?: string;
 }
 
 const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; bg: string }> = {
@@ -54,26 +54,42 @@ const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; bg: str
 
 const inputClass = 'w-full px-4 py-3 bg-sm-dark border border-sm-border rounded-lg text-white placeholder-sm-muted focus:outline-none focus:border-orange-500/30 transition-colors text-sm';
 
+// Activity log
+const activityLog: { time: string; event: string }[] = [];
+function logActivity(event: string) {
+  activityLog.unshift({ time: new Date().toISOString(), event });
+  if (activityLog.length > 200) activityLog.pop();
+}
+
 export default function AdminPage() {
+  // Persistent auth
   const [secret, setSecret] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
-  const [tab, setTab] = useState<'quotes' | 'audits' | 'invoices' | 'recurring' | 'projects' | 'portals' | 'clients'>('quotes');
-  const [audits, setAudits] = useState<Audit[]>([]);
-  const [portalsList, setPortalsList] = useState<Portal[]>([]);
-  const [newPortal, setNewPortal] = useState({ clientName: '', clientEmail: '', projectTitle: '', projectDescription: '' });
-  const [newDeliverable, setNewDeliverable] = useState({ portalId: '', type: 'website', title: '', description: '', url: '' });
-  const [newUpdate, setNewUpdate] = useState({ portalId: '', message: '' });
+  const [tab, setTab] = useState<string>('quotes');
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [recurring, setRecurring] = useState<RecurringService[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [audits, setAudits] = useState<Audit[]>([]);
+  const [portalsList, setPortalsList] = useState<Portal[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Quote | null>(null);
 
   const [newClient, setNewClient] = useState({ name: '', url: '', logoUrl: '', heroUrl: '' });
-  const [newRecurring, setNewRecurring] = useState({ clientName: '', clientEmail: '', service: '', description: '', monthlyAmount: 0, startDate: '', nextBillingDate: '', status: 'active', notes: '' });
+  const [newRecurring, setNewRecurring] = useState({ clientName: '', clientEmail: '', services: [{ service: '', amount: 0 }] as { service: string; amount: number }[], startDate: '', notes: '' });
   const [newProject, setNewProject] = useState({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '' });
+  const [newPortal, setNewPortal] = useState({ clientName: '', clientEmail: '', projectTitle: '', projectDescription: '' });
+  const [newDeliverable, setNewDeliverable] = useState({ portalId: '', type: 'website', title: '', description: '', url: '' });
+  const [newUpdate, setNewUpdate] = useState({ portalId: '', message: '' });
+  const [auditUrl, setAuditUrl] = useState('');
+  const [auditResult, setAuditResult] = useState('');
+
+  // Load saved auth
+  useEffect(() => {
+    const saved = localStorage.getItem('sm_admin_secret');
+    if (saved) { setSecret(saved); }
+  }, []);
 
   const headers = () => ({ 'x-admin-secret': secret, 'Content-Type': 'application/json' });
 
@@ -88,15 +104,16 @@ export default function AdminPage() {
         fetch('/api/admin/projects', { headers: h }),
         fetch('/api/admin/clients'),
       ]);
-      if (!qRes.ok) { alert('Invalid admin secret'); setLoading(false); return; }
+      if (!qRes.ok) { alert('Invalid admin secret'); localStorage.removeItem('sm_admin_secret'); setLoading(false); return; }
       setAuthenticated(true);
+      localStorage.setItem('sm_admin_secret', secret);
+      logActivity('Admin logged in');
       const results = await Promise.all([qRes.json(), iRes.json(), rRes.json(), pRes.json(), cRes.json()]);
       setQuotes(results[0].quotes || []);
       setInvoices(results[1].invoices || []);
       setRecurring(results[2].services || []);
       setProjects(results[3].projects || []);
       setClients(results[4].clients || []);
-      // Fetch audits + portals
       try {
         const aRes = await fetch('/api/admin/audits', { headers: h });
         if (aRes.ok) { const aData = await aRes.json(); setAudits(aData.audits || []); }
@@ -107,18 +124,28 @@ export default function AdminPage() {
     finally { setLoading(false); }
   }, [secret]);
 
+  // Auto-login if saved
+  useEffect(() => {
+    const saved = localStorage.getItem('sm_admin_secret');
+    if (saved && !authenticated) { setSecret(saved); }
+  }, [authenticated]);
+
+  useEffect(() => {
+    if (secret && !authenticated) { fetchAll(); }
+  }, [secret, authenticated, fetchAll]);
+
   const updateQuoteStatus = async (id: string, status: string) => {
     const res = await fetch('/api/admin/quotes', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, status }) });
     const data = await res.json();
-    if (data.invoice) {
-      setInvoices(prev => [data.invoice, ...prev]);
-    }
+    logActivity(`Quote ${id} → ${status}${data.invoice ? ` (Invoice ${data.invoice.id} generated)` : ''}`);
+    if (data.invoice) setInvoices(prev => [data.invoice, ...prev]);
     fetchAll();
   };
 
   const addClientFn = async () => {
     if (!newClient.name || !newClient.url || !newClient.logoUrl || !newClient.heroUrl) return alert('Fill all fields');
     await fetch('/api/admin/clients', { method: 'POST', headers: headers(), body: JSON.stringify(newClient) });
+    logActivity(`Client added: ${newClient.name}`);
     setNewClient({ name: '', url: '', logoUrl: '', heroUrl: '' });
     fetchAll();
   };
@@ -126,36 +153,81 @@ export default function AdminPage() {
   const deleteClientFn = async (id: string) => {
     if (!confirm('Remove?')) return;
     await fetch('/api/admin/clients', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id }) });
+    logActivity(`Client removed: ${id}`);
     fetchAll();
   };
 
-  const addRecurringFn = async () => {
-    if (!newRecurring.clientName || !newRecurring.service || !newRecurring.monthlyAmount) return alert('Fill required fields');
-    await fetch('/api/admin/recurring', { method: 'POST', headers: headers(), body: JSON.stringify(newRecurring) });
-    setNewRecurring({ clientName: '', clientEmail: '', service: '', description: '', monthlyAmount: 0, startDate: '', nextBillingDate: '', status: 'active', notes: '' });
+  const addRecurringBatch = async () => {
+    const valid = newRecurring.services.filter(s => s.service && s.amount > 0);
+    if (!newRecurring.clientName || valid.length === 0) return alert('Fill client name and at least one service');
+    for (const svc of valid) {
+      await fetch('/api/admin/recurring', { method: 'POST', headers: headers(), body: JSON.stringify({
+        clientName: newRecurring.clientName, clientEmail: newRecurring.clientEmail,
+        service: svc.service, description: '', monthlyAmount: svc.amount,
+        startDate: newRecurring.startDate, nextBillingDate: newRecurring.startDate,
+        status: 'active', notes: newRecurring.notes,
+      }) });
+      logActivity(`Recurring: ${newRecurring.clientName} — ${svc.service} $${svc.amount}/mo`);
+    }
+    setNewRecurring({ clientName: '', clientEmail: '', services: [{ service: '', amount: 0 }], startDate: '', notes: '' });
     fetchAll();
   };
 
   const updateRecurringStatus = async (id: string, status: string) => {
     await fetch('/api/admin/recurring', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, status }) });
+    logActivity(`Recurring ${id} → ${status}`);
     fetchAll();
   };
 
   const addProjectFn = async () => {
     if (!newProject.clientName || !newProject.title) return alert('Fill required fields');
     await fetch('/api/admin/projects', { method: 'POST', headers: headers(), body: JSON.stringify(newProject) });
+    logActivity(`Project: ${newProject.title} for ${newProject.clientName}`);
     setNewProject({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '' });
     fetchAll();
   };
 
   const updateProjectStatus = async (id: string, status: string) => {
     await fetch('/api/admin/projects', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, status }) });
+    logActivity(`Project ${id} → ${status}`);
     fetchAll();
   };
 
   const updateInvoiceStatus = async (id: string, status: string) => {
     await fetch('/api/admin/invoices', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id, status }) });
+    logActivity(`Invoice ${id} → ${status}`);
     fetchAll();
+  };
+
+  const runQuickAudit = async () => {
+    if (!auditUrl) return;
+    setAuditResult('Running audit...');
+    logActivity(`Quick audit: ${auditUrl}`);
+    try {
+      const [seo, geo] = await Promise.all([
+        fetch(`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(auditUrl.startsWith('http') ? auditUrl : `https://${auditUrl}`)}`).then(() => 'PageSpeed: Open tool to see full results'),
+        fetch(`/api/v1/quote`).then(r => r.json()).then(() => 'GEO: Check llms.txt, robots.txt, structured data'),
+      ]);
+      const result = `QUICK AUDIT: ${auditUrl}\n\n` +
+        `CHECKS:\n` +
+        `✓ Website accessible\n` +
+        `→ Run full PageSpeed: https://pagespeed.web.dev/analysis?url=${encodeURIComponent(auditUrl.startsWith('http') ? auditUrl : `https://${auditUrl}`)}\n` +
+        `→ Run GEO audit: https://geoptie.com/free-geo-audit\n` +
+        `→ Schema check: https://validator.schema.org/\n` +
+        `→ Security: https://securityheaders.com/?q=${encodeURIComponent(auditUrl)}\n\n` +
+        `AI OPPORTUNITIES TO CHECK:\n` +
+        `• Does the business answer phone calls? → AI receptionist ($499-1,799/mo)\n` +
+        `• Do they have a booking system? → AI booking agent\n` +
+        `• Manual invoicing/quoting? → Automation workflow\n` +
+        `• Old/slow website? → Rebuild (1-2 days)\n` +
+        `• No online presence? → Website + SEO + GEO package\n` +
+        `• Manual customer follow-ups? → AI email/SMS sequences\n` +
+        `• No analytics? → Dashboard + reporting setup\n` +
+        `• Using spreadsheets for CRM? → Custom CRM or HubSpot integration`;
+      setAuditResult(result);
+    } catch {
+      setAuditResult('Could not reach the website. Check the URL.');
+    }
   };
 
   // LOGIN
@@ -179,135 +251,153 @@ export default function AdminPage() {
   const monthlyRecurring = recurring.filter(r => r.status === 'active').reduce((s, r) => s + r.monthlyAmount, 0);
   const activeProjects = projects.filter(p => ['queued', 'in-progress', 'review'].includes(p.status)).length;
 
-  return (
-    <main className="min-h-screen p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-display font-bold">Stackmate Admin</h1>
-            <div className="flex items-center gap-4 mt-1 text-sm text-sm-muted">
-              <span>Revenue: <strong className="text-orange-400">${totalRevenue.toLocaleString()}</strong></span>
-              <span>MRR: <strong className="text-orange-400">${monthlyRecurring.toLocaleString()}/mo</strong></span>
-              <span>Active: <strong className="text-white">{activeProjects} projects</strong></span>
-            </div>
-          </div>
-          <button onClick={fetchAll} disabled={loading} className="flex items-center gap-2 px-4 py-2 border border-sm-border rounded-lg text-sm hover:bg-sm-card transition-colors">
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-          </button>
-        </div>
+  // Client revenue summary
+  const clientRevenue: Record<string, { oneTime: number; monthly: number }> = {};
+  invoices.filter(i => i.status === 'paid').forEach(inv => {
+    if (!clientRevenue[inv.clientName]) clientRevenue[inv.clientName] = { oneTime: 0, monthly: 0 };
+    clientRevenue[inv.clientName].oneTime += inv.total;
+  });
+  recurring.filter(r => r.status === 'active').forEach(r => {
+    if (!clientRevenue[r.clientName]) clientRevenue[r.clientName] = { oneTime: 0, monthly: 0 };
+    clientRevenue[r.clientName].monthly += r.monthlyAmount;
+  });
 
+  const TABS = [
+    { key: 'quotes', icon: FileText, label: `Quotes (${quotes.length})` },
+    { key: 'audits', icon: Search, label: `Audits (${audits.length})` },
+    { key: 'invoices', icon: Receipt, label: `Invoices (${invoices.length})` },
+    { key: 'recurring', icon: Repeat, label: `Recurring (${recurring.length})` },
+    { key: 'projects', icon: FolderKanban, label: `Projects (${projects.length})` },
+    { key: 'portals', icon: Package, label: `Delivery (${portalsList.length})` },
+    { key: 'clients', icon: Users, label: `Clients (${clients.length})` },
+    { key: 'revenue', icon: DollarSign, label: 'Revenue' },
+    { key: 'terminal', icon: Terminal, label: 'Activity' },
+  ];
+
+  return (
+    <main className="min-h-screen">
+      {/* Admin header */}
+      <div className="border-b border-sm-border bg-sm-card/50 px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-4">
+          <span className="font-display font-bold">Stackmate Admin</span>
+          <a href="/admin/playbooks" className="text-xs text-orange-400 hover:underline flex items-center gap-1"><BookOpen className="w-3 h-3" /> Playbooks</a>
+          <a href="/" className="text-xs text-sm-muted hover:text-white">← Site</a>
+        </div>
+        <div className="flex items-center gap-4 text-xs text-sm-muted">
+          <span>Rev: <strong className="text-orange-400">${totalRevenue.toLocaleString()}</strong></span>
+          <span>MRR: <strong className="text-orange-400">${monthlyRecurring.toLocaleString()}/mo</strong></span>
+          <span>Active: <strong className="text-white">{activeProjects}</strong></span>
+          <button onClick={fetchAll} disabled={loading} className="flex items-center gap-1 hover:text-white">
+            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+          <button onClick={() => { localStorage.removeItem('sm_admin_secret'); setAuthenticated(false); setSecret(''); }} className="hover:text-red-400">Logout</button>
+        </div>
+      </div>
+
+      <div className="p-6 max-w-7xl mx-auto">
         {/* Tabs */}
-        <div className="flex gap-2 mb-8 flex-wrap">
-          {([
-            ['quotes', FileText, `Quotes (${quotes.length})`],
-            ['audits', Search, `Audits (${audits.length})`],
-            ['invoices', Receipt, `Invoices (${invoices.length})`],
-            ['recurring', Repeat, `Recurring (${recurring.length})`],
-            ['projects', FolderKanban, `Projects (${projects.length})`],
-            ['portals', Package, `Delivery (${portalsList.length})`],
-            ['clients', Users, `Clients (${clients.length})`],
-          ] as const).map(([key, Icon, label]) => (
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {TABS.map(({ key, icon: Icon, label }) => (
             <button key={key} onClick={() => setTab(key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all ${tab === key ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : 'border border-sm-border text-sm-light hover:border-white/30'}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-sm text-xs transition-all ${tab === key ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : 'border border-sm-border text-sm-light hover:border-white/30'}`}
             >
-              <Icon className="w-4 h-4" /> {label}
+              <Icon className="w-3.5 h-3.5" /> {label}
             </button>
           ))}
         </div>
 
-        {/* ====== QUOTES TAB ====== */}
+        {/* ====== QUOTES ====== */}
         {tab === 'quotes' && (
           <div className="flex gap-6">
             <div className="flex-1 space-y-3">
               {quotes.length === 0 && <div className="text-center py-16 text-sm-muted">No quotes yet.</div>}
-              {quotes.map((quote) => {
+              {quotes.map(quote => {
                 const config = STATUS_CONFIG[quote.status] || STATUS_CONFIG.new;
                 const Icon = config.icon;
                 return (
                   <button key={quote.id} onClick={() => setSelected(quote)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all ${selected?.id === quote.id ? 'border-orange-500/30 bg-sm-card/60' : 'border-sm-border bg-sm-card/30 hover:bg-sm-card/50'}`}
+                    className={`w-full text-left p-4 rounded-sm border transition-all ${selected?.id === quote.id ? 'border-orange-500/30 bg-sm-card/60' : 'border-sm-border bg-sm-card/30 hover:bg-sm-card/50'}`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div><h3 className="font-semibold">{quote.companyName}</h3><p className="text-xs text-sm-muted">{quote.email}</p></div>
-                      <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${config.bg} ${config.color}`}><Icon className="w-3 h-3" /> {quote.status}</div>
+                      <div className={`flex items-center gap-1.5 px-2 py-1 rounded-sm text-xs ${config.bg} ${config.color}`}><Icon className="w-3 h-3" /> {quote.status}</div>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-sm-muted">
-                      <span>{quote.industry}</span><span>{quote.employees} employees</span><span>{new Date(quote.createdAt).toLocaleDateString()}</span>
+                      <span>{quote.industry}</span><span>{quote.employees}</span><span>{new Date(quote.createdAt).toLocaleDateString()}</span>
                     </div>
                   </button>
                 );
               })}
             </div>
             {selected && (
-              <div className="hidden lg:block w-[420px] p-6 rounded-xl border border-sm-border bg-sm-card/30 sticky top-6 self-start max-h-[85vh] overflow-y-auto">
-                <h2 className="text-xl font-display font-bold mb-1">{selected.companyName}</h2>
-                <p className="text-sm text-sm-muted mb-4">{selected.email} {selected.phone && `| ${selected.phone}`}</p>
-                <div className="space-y-3 mb-4 text-sm">
-                  <div><span className="text-sm-muted">Industry:</span> {selected.industry}</div>
-                  <div><span className="text-sm-muted">Team:</span> {selected.employees}</div>
-                  {selected.location && <div><span className="text-sm-muted">Location:</span> {selected.location}</div>}
-                  {selected.website && <div><span className="text-sm-muted">Website:</span> <a href={selected.website} target="_blank" rel="noopener" className="text-orange-400 underline">{selected.website}</a></div>}
-                  <div><span className="text-sm-muted">Services:</span> <div className="flex flex-wrap gap-1 mt-1">{selected.services.map(s => <span key={s} className="text-xs px-2 py-1 rounded-md bg-sm-border text-sm-light">{s}</span>)}</div></div>
-                  {selected.otherService && <div><span className="text-sm-muted">Other:</span> {selected.otherService}</div>}
-                  <div><span className="text-sm-muted">Description:</span><p className="text-sm-light mt-1">{selected.description}</p></div>
-                  <div><span className="text-sm-muted">Urgency:</span> <span className="capitalize">{selected.urgency}</span></div>
-                  {selected.links && selected.links.length > 0 && <div><span className="text-sm-muted">Links:</span>{selected.links.map((l, i) => <a key={i} href={l} target="_blank" rel="noopener" className="block text-orange-400 underline truncate text-xs">{l}</a>)}</div>}
-                  {selected.socials && Object.entries(selected.socials).some(([, v]) => v) && <div><span className="text-sm-muted">Socials:</span>{Object.entries(selected.socials).filter(([, v]) => v).map(([k, v]) => <p key={k} className="text-xs"><span className="text-sm-muted capitalize">{k}:</span> {v}</p>)}</div>}
+              <div className="hidden lg:block w-[400px] p-5 rounded-sm border border-sm-border bg-sm-card/30 sticky top-20 self-start max-h-[80vh] overflow-y-auto text-sm">
+                <h2 className="font-display font-bold text-lg mb-1">{selected.companyName}</h2>
+                <p className="text-sm-muted mb-3">{selected.email} {selected.phone && `| ${selected.phone}`}</p>
+                <div className="space-y-2 mb-3">
+                  {selected.location && <p><span className="text-sm-muted">Location:</span> {selected.location}</p>}
+                  {selected.website && <p><span className="text-sm-muted">Web:</span> <a href={selected.website} target="_blank" className="text-orange-400">{selected.website}</a></p>}
+                  <p><span className="text-sm-muted">Industry:</span> {selected.industry} | <span className="text-sm-muted">Team:</span> {selected.employees}</p>
+                  <div className="flex flex-wrap gap-1">{selected.services.map(s => <span key={s} className="text-xs px-2 py-0.5 rounded-sm bg-sm-border text-sm-light">{s}</span>)}</div>
+                  <p className="text-sm-light">{selected.description}</p>
                 </div>
-                <div className="p-4 rounded-lg bg-sm-dark border border-sm-border mb-4">
-                  <p className="text-xs text-sm-muted mb-2">Auto-Estimate</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div><p className="text-xs text-sm-muted">Setup</p><p className="font-display font-bold text-sm">${selected.estimate.setupMin.toLocaleString()} - ${selected.estimate.setupMax.toLocaleString()}</p></div>
-                    <div><p className="text-xs text-sm-muted">Monthly</p><p className="font-display font-bold text-sm">${selected.estimate.monthlyMin.toLocaleString()} - ${selected.estimate.monthlyMax.toLocaleString()}/mo</p></div>
-                  </div>
-                  {selected.estimate.notes.length > 0 && <ul className="mt-2 space-y-1">{selected.estimate.notes.map((n, i) => <li key={i} className="text-xs text-sm-muted">— {n}</li>)}</ul>}
-                </div>
-                <div>
-                  <p className="text-xs text-sm-muted mb-2">Status {selected.status === 'paid' && '— Invoice auto-generated'}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {['new', 'reviewing', 'quoted', 'accepted', 'paid', 'rejected'].map(status => (
-                      <button key={status} onClick={() => updateQuoteStatus(selected.id, status)}
-                        className={`px-3 py-1.5 rounded-md text-xs border transition-all capitalize ${selected.status === status ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted hover:border-white/30'}`}
-                      >{status}</button>
-                    ))}
+                <div className="p-3 rounded-sm bg-sm-dark border border-sm-border mb-3">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div><span className="text-sm-muted">Setup</span><p className="font-bold">${selected.estimate.setupMin.toLocaleString()}-${selected.estimate.setupMax.toLocaleString()}</p></div>
+                    <div><span className="text-sm-muted">Monthly</span><p className="font-bold">${selected.estimate.monthlyMin.toLocaleString()}-${selected.estimate.monthlyMax.toLocaleString()}/mo</p></div>
                   </div>
                 </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['new', 'reviewing', 'quoted', 'accepted', 'paid', 'rejected'].map(s => (
+                    <button key={s} onClick={() => updateQuoteStatus(selected.id, s)}
+                      className={`px-2 py-1 rounded-sm text-xs border capitalize ${selected.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
+                    >{s}</button>
+                  ))}
+                </div>
+                {selected.status === 'paid' && <p className="text-xs text-orange-400 mt-2">Invoice auto-generated</p>}
               </div>
             )}
           </div>
         )}
 
-        {/* ====== AUDITS TAB ====== */}
+        {/* ====== AUDITS ====== */}
         {tab === 'audits' && (
           <div>
-            {audits.length === 0 ? <div className="text-center py-16 text-sm-muted">No audit requests yet.</div> : (
+            {/* Quick audit tool */}
+            <div className="p-5 rounded-sm border border-orange-500/20 bg-orange-500/5 mb-6">
+              <h3 className="font-display font-bold mb-3 flex items-center gap-2"><Globe className="w-4 h-4 text-orange-400" /> Quick Website Audit</h3>
+              <p className="text-xs text-sm-muted mb-3">Paste a website URL to generate audit links and AI opportunity checklist. Use this when meeting clients in person.</p>
+              <div className="flex gap-3 mb-3">
+                <input value={auditUrl} onChange={e => setAuditUrl(e.target.value)} className={`${inputClass} flex-1`} placeholder="example.com.au" />
+                <button onClick={runQuickAudit} className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Audit</button>
+              </div>
+              {auditResult && <pre className="text-xs text-sm-light bg-sm-dark border border-sm-border rounded-sm p-4 whitespace-pre-wrap font-mono max-h-80 overflow-y-auto">{auditResult}</pre>}
+            </div>
+
+            {/* Audit requests */}
+            {audits.length === 0 ? <div className="text-center py-12 text-sm-muted">No audit requests yet.</div> : (
               <div className="space-y-3">
                 {audits.map(audit => {
-                  const statusColors: Record<string, string> = { new: 'text-blue-400 bg-blue-400/10', 'in-progress': 'text-yellow-400 bg-yellow-400/10', completed: 'text-green-400 bg-green-400/10', sent: 'text-purple-400 bg-purple-400/10' };
+                  const sc: Record<string, string> = { new: 'text-blue-400 bg-blue-400/10', 'in-progress': 'text-yellow-400 bg-yellow-400/10', completed: 'text-green-400 bg-green-400/10', sent: 'text-purple-400 bg-purple-400/10' };
                   return (
-                    <div key={audit.id} className="p-5 rounded-xl border border-sm-border bg-sm-card/30">
-                      <div className="flex items-start justify-between mb-3">
+                    <div key={audit.id} className="p-5 rounded-sm border border-sm-border bg-sm-card/30">
+                      <div className="flex items-start justify-between mb-2">
                         <div>
                           <h3 className="font-semibold">{audit.companyName}</h3>
-                          <p className="text-xs text-sm-muted">{audit.email} {audit.contactName && `— ${audit.contactName}`} {audit.phone && `| ${audit.phone}`}</p>
-                          {audit.website && <a href={audit.website} target="_blank" rel="noopener" className="text-xs text-orange-400 underline">{audit.website}</a>}
+                          <p className="text-xs text-sm-muted">{audit.email} {audit.contactName && `— ${audit.contactName}`}</p>
+                          {audit.website && <a href={audit.website.startsWith('http') ? audit.website : `https://${audit.website}`} target="_blank" rel="noopener" className="text-xs text-orange-400">{audit.website}</a>}
                         </div>
-                        <div className="text-right">
-                          <span className={`text-xs px-2 py-1 rounded-md ${statusColors[audit.status] || ''}`}>{audit.status}</span>
-                          <p className="text-xs text-sm-muted mt-1">{new Date(audit.createdAt).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="text-sm text-sm-light mb-3">
-                        <span className="text-sm-muted">Industry:</span> {audit.industry} <span className="text-sm-muted ml-2">Team:</span> {audit.employees}
+                        <span className={`text-xs px-2 py-1 rounded-sm ${sc[audit.status] || ''}`}>{audit.status}</span>
                       </div>
                       <p className="text-sm text-sm-light mb-3">{audit.description}</p>
-                      {audit.notes && <p className="text-xs text-sm-muted mb-3">Notes: {audit.notes}</p>}
                       <div className="flex gap-2">
                         {(['new', 'in-progress', 'completed', 'sent'] as const).map(s => (
-                          <button key={s} onClick={async () => { await fetch('/api/admin/audits', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: audit.id, status: s }) }); fetchAll(); }}
-                            className={`px-2 py-1 rounded text-xs border capitalize ${audit.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
+                          <button key={s} onClick={async () => { await fetch('/api/admin/audits', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: audit.id, status: s }) }); logActivity(`Audit ${audit.id} → ${s}`); fetchAll(); }}
+                            className={`px-2 py-1 rounded-sm text-xs border capitalize ${audit.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
                           >{s}</button>
                         ))}
+                        {audit.website && (
+                          <button onClick={() => { setAuditUrl(audit.website || ''); runQuickAudit(); }} className="px-2 py-1 rounded-sm text-xs border border-orange-500/30 text-orange-400">Quick Audit</button>
+                        )}
                       </div>
                     </div>
                   );
@@ -317,46 +407,39 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ====== INVOICES TAB ====== */}
+        {/* ====== INVOICES ====== */}
         {tab === 'invoices' && (
           <div>
-            {invoices.length === 0 ? <div className="text-center py-16 text-sm-muted">No invoices yet. Mark a quote as &quot;paid&quot; to auto-generate one.</div> : (
+            {invoices.length === 0 ? <div className="text-center py-12 text-sm-muted">No invoices. Mark a quote as &quot;paid&quot; to auto-generate.</div> : (
               <div className="space-y-3">
                 {invoices.map(inv => (
-                  <div key={inv.id} className="p-5 rounded-xl border border-sm-border bg-sm-card/30">
+                  <div key={inv.id} className="p-5 rounded-sm border border-sm-border bg-sm-card/30">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h3 className="font-display font-bold">{inv.id}</h3>
-                        <p className="text-sm text-sm-muted">{inv.clientName} — {inv.clientEmail}</p>
+                        <p className="text-xs text-sm-muted">{inv.clientName} — {inv.clientEmail}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-display font-bold text-lg text-orange-400">${inv.total.toLocaleString()}</p>
                         <p className="text-xs text-sm-muted">incl. ${inv.gst.toLocaleString()} GST</p>
                       </div>
                     </div>
-                    <div className="space-y-1 mb-3">
-                      {inv.items.map((item, i) => (
-                        <div key={i} className="flex justify-between text-sm">
-                          <span className="text-sm-light">{item.description}</span>
-                          <span className="text-sm-muted">${item.total.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 text-xs text-sm-muted">
+                    {inv.items.map((item, i) => (
+                      <div key={i} className="flex justify-between text-sm mb-1"><span className="text-sm-light">{item.description}</span><span className="text-sm-muted">${item.total.toLocaleString()}</span></div>
+                    ))}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-sm-border">
+                      <div className="flex gap-3 text-xs text-sm-muted">
                         <span>Issued: {new Date(inv.issuedAt).toLocaleDateString()}</span>
                         <span>Due: {new Date(inv.dueAt).toLocaleDateString()}</span>
-                        {inv.paidAt && <span className="text-green-400">Paid: {new Date(inv.paidAt).toLocaleDateString()}</span>}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         {['draft', 'sent', 'paid', 'overdue'].map(s => (
                           <button key={s} onClick={() => updateInvoiceStatus(inv.id, s)}
-                            className={`px-2 py-1 rounded text-xs border capitalize ${inv.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
+                            className={`px-2 py-1 rounded-sm text-xs border capitalize ${inv.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
                           >{s}</button>
                         ))}
                       </div>
                     </div>
-                    {inv.notes && <p className="text-xs text-sm-muted mt-2">{inv.notes}</p>}
                   </div>
                 ))}
               </div>
@@ -364,50 +447,45 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ====== RECURRING TAB ====== */}
+        {/* ====== RECURRING ====== */}
         {tab === 'recurring' && (
           <div>
-            <div className="p-6 rounded-xl border border-sm-border bg-sm-card/30 mb-6">
-              <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Plus className="w-4 h-4" /> Add Recurring Service</h3>
+            <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+              <h3 className="font-display font-bold mb-4">Add Recurring Services (multiple at once)</h3>
               <div className="grid md:grid-cols-3 gap-4 mb-4">
                 <input value={newRecurring.clientName} onChange={e => setNewRecurring({ ...newRecurring, clientName: e.target.value })} className={inputClass} placeholder="Client name *" />
                 <input value={newRecurring.clientEmail} onChange={e => setNewRecurring({ ...newRecurring, clientEmail: e.target.value })} className={inputClass} placeholder="Client email" />
-                <select value={newRecurring.service} onChange={e => setNewRecurring({ ...newRecurring, service: e.target.value })} className={inputClass}>
-                  <option value="">Service type *</option>
-                  <option value="SEO">SEO</option>
-                  <option value="GEO">GEO (AI Search)</option>
-                  <option value="SEO + GEO">SEO + GEO</option>
-                  <option value="Google Ads">Google Ads</option>
-                  <option value="Social Ads">Social Ads</option>
-                  <option value="Content">Content</option>
-                  <option value="Maintenance">Maintenance & Support</option>
-                  <option value="AI Agents">AI Agents</option>
-                  <option value="Automation">Automation</option>
-                  <option value="Custom">Custom</option>
-                </select>
+                <input type="date" value={newRecurring.startDate} onChange={e => setNewRecurring({ ...newRecurring, startDate: e.target.value })} className={inputClass} />
               </div>
-              <div className="grid md:grid-cols-3 gap-4 mb-4">
-                <input type="number" value={newRecurring.monthlyAmount || ''} onChange={e => setNewRecurring({ ...newRecurring, monthlyAmount: Number(e.target.value) })} className={inputClass} placeholder="Monthly amount ($) *" />
-                <input type="date" value={newRecurring.startDate} onChange={e => setNewRecurring({ ...newRecurring, startDate: e.target.value, nextBillingDate: e.target.value })} className={inputClass} />
-                <input value={newRecurring.description} onChange={e => setNewRecurring({ ...newRecurring, description: e.target.value })} className={inputClass} placeholder="Description" />
-              </div>
-              <button onClick={addRecurringFn} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-lg">Add Service</button>
+              {newRecurring.services.map((svc, i) => (
+                <div key={i} className="flex gap-3 mb-2">
+                  <select value={svc.service} onChange={e => { const s = [...newRecurring.services]; s[i].service = e.target.value; setNewRecurring({ ...newRecurring, services: s }); }} className={`${inputClass} flex-1`}>
+                    <option value="">Service *</option>
+                    <option value="SEO">SEO</option><option value="GEO">GEO</option><option value="SEO + GEO">SEO + GEO</option>
+                    <option value="Google Ads">Google Ads</option><option value="Social Ads">Social Ads</option><option value="Content">Content</option>
+                    <option value="Maintenance">Maintenance</option><option value="AI Agents">AI Agents</option><option value="Automation">Automation</option><option value="Custom">Custom</option>
+                  </select>
+                  <input type="number" value={svc.amount || ''} onChange={e => { const s = [...newRecurring.services]; s[i].amount = Number(e.target.value); setNewRecurring({ ...newRecurring, services: s }); }} className={`${inputClass} w-32`} placeholder="$/mo" />
+                  {newRecurring.services.length > 1 && <button onClick={() => { const s = newRecurring.services.filter((_, j) => j !== i); setNewRecurring({ ...newRecurring, services: s }); }} className="text-red-400 text-xs">Remove</button>}
+                </div>
+              ))}
+              <button onClick={() => setNewRecurring({ ...newRecurring, services: [...newRecurring.services, { service: '', amount: 0 }] })} className="text-xs text-orange-400 hover:underline mb-4 block">+ Add another service</button>
+              <button onClick={addRecurringBatch} className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add All Services</button>
             </div>
-            {recurring.length === 0 ? <div className="text-center py-12 text-sm-muted">No recurring services. Add one above.</div> : (
+            {recurring.length === 0 ? <div className="text-center py-12 text-sm-muted">No recurring services.</div> : (
               <div className="space-y-3">
                 {recurring.map(svc => (
-                  <div key={svc.id} className="p-5 rounded-xl border border-sm-border bg-sm-card/30 flex items-center justify-between">
+                  <div key={svc.id} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold">{svc.clientName} — <span className="text-orange-400">{svc.service}</span></h3>
-                      <p className="text-xs text-sm-muted">{svc.description || svc.clientEmail}</p>
-                      <p className="text-xs text-sm-muted mt-1">Next billing: {svc.nextBillingDate ? new Date(svc.nextBillingDate).toLocaleDateString() : 'TBD'}</p>
+                      <p className="text-xs text-sm-muted">Next: {svc.nextBillingDate ? new Date(svc.nextBillingDate).toLocaleDateString() : 'TBD'}</p>
                     </div>
-                    <div className="text-right flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                       <p className="font-display font-bold text-orange-400">${svc.monthlyAmount}/mo</p>
                       <div className="flex gap-1">
                         {['active', 'paused', 'cancelled'].map(s => (
                           <button key={s} onClick={() => updateRecurringStatus(svc.id, s)}
-                            className={`px-2 py-1 rounded text-xs border capitalize ${svc.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
+                            className={`px-2 py-1 rounded-sm text-xs border capitalize ${svc.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
                           >{s}</button>
                         ))}
                       </div>
@@ -419,200 +497,209 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ====== PROJECTS TAB ====== */}
+        {/* ====== PROJECTS ====== */}
         {tab === 'projects' && (
           <div>
-            <div className="p-6 rounded-xl border border-sm-border bg-sm-card/30 mb-6">
-              <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Plus className="w-4 h-4" /> Add Project</h3>
+            <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+              <h3 className="font-display font-bold mb-4">Add Project</h3>
               <div className="grid md:grid-cols-3 gap-4 mb-4">
-                <input value={newProject.clientName} onChange={e => setNewProject({ ...newProject, clientName: e.target.value })} className={inputClass} placeholder="Client name *" />
-                <input value={newProject.clientEmail} onChange={e => setNewProject({ ...newProject, clientEmail: e.target.value })} className={inputClass} placeholder="Client email" />
-                <input value={newProject.title} onChange={e => setNewProject({ ...newProject, title: e.target.value })} className={inputClass} placeholder="Project title *" />
-              </div>
-              <div className="grid md:grid-cols-3 gap-4 mb-4">
-                <select value={newProject.priority} onChange={e => setNewProject({ ...newProject, priority: e.target.value })} className={inputClass}>
-                  <option value="low">Low priority</option>
-                  <option value="medium">Medium priority</option>
-                  <option value="high">High priority</option>
-                  <option value="urgent">Urgent</option>
-                </select>
+                <input value={newProject.clientName} onChange={e => setNewProject({ ...newProject, clientName: e.target.value })} className={inputClass} placeholder="Client *" />
+                <input value={newProject.title} onChange={e => setNewProject({ ...newProject, title: e.target.value })} className={inputClass} placeholder="Title *" />
                 <input type="date" value={newProject.dueDate} onChange={e => setNewProject({ ...newProject, dueDate: e.target.value })} className={inputClass} />
-                <input value={newProject.description} onChange={e => setNewProject({ ...newProject, description: e.target.value })} className={inputClass} placeholder="Description" />
               </div>
-              <button onClick={addProjectFn} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-lg">Add Project</button>
+              <button onClick={addProjectFn} className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add</button>
             </div>
-            {projects.length === 0 ? <div className="text-center py-12 text-sm-muted">No projects. Add one above.</div> : (
-              <div className="space-y-3">
-                {projects.map(proj => (
-                  <div key={proj.id} className="p-5 rounded-xl border border-sm-border bg-sm-card/30">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold">{proj.title}</h3>
-                        <p className="text-xs text-sm-muted">{proj.clientName} {proj.clientEmail && `— ${proj.clientEmail}`}</p>
-                        {proj.description && <p className="text-xs text-sm-light mt-1">{proj.description}</p>}
-                      </div>
-                      <div className="text-right">
-                        <span className={`text-xs px-2 py-1 rounded-md ${proj.priority === 'urgent' ? 'bg-red-500/10 text-red-400' : proj.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : 'bg-sm-border text-sm-light'}`}>{proj.priority}</span>
-                        {proj.dueDate && <p className="text-xs text-sm-muted mt-1">Due: {new Date(proj.dueDate).toLocaleDateString()}</p>}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {['queued', 'in-progress', 'review', 'delivered', 'completed'].map(s => (
-                        <button key={s} onClick={() => updateProjectStatus(proj.id, s)}
-                          className={`px-2 py-1 rounded text-xs border capitalize ${proj.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
-                        >{s}</button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+            {projects.map(proj => (
+              <div key={proj.id} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 mb-3">
+                <div className="flex justify-between mb-2">
+                  <div><h3 className="font-semibold">{proj.title}</h3><p className="text-xs text-sm-muted">{proj.clientName}</p></div>
+                  <span className={`text-xs px-2 py-1 rounded-sm ${proj.priority === 'urgent' ? 'bg-red-500/10 text-red-400' : proj.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : 'bg-sm-border text-sm-light'}`}>{proj.priority}</span>
+                </div>
+                <div className="flex gap-1.5">
+                  {['queued', 'in-progress', 'review', 'delivered', 'completed'].map(s => (
+                    <button key={s} onClick={() => updateProjectStatus(proj.id, s)}
+                      className={`px-2 py-1 rounded-sm text-xs border capitalize ${proj.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
+                    >{s}</button>
+                  ))}
+                </div>
               </div>
-            )}
+            ))}
           </div>
         )}
 
-        {/* ====== PORTALS/DELIVERY TAB ====== */}
+        {/* ====== PORTALS ====== */}
         {tab === 'portals' && (
           <div>
-            <div className="p-6 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
-              <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Plus className="w-4 h-4" /> Create Delivery Portal</h3>
+            <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+              <h3 className="font-display font-bold mb-4">Create Delivery Portal</h3>
               <div className="grid md:grid-cols-2 gap-4 mb-4">
-                <input value={newPortal.clientName} onChange={e => setNewPortal({ ...newPortal, clientName: e.target.value })} className={inputClass} placeholder="Client name *" />
-                <input value={newPortal.clientEmail} onChange={e => setNewPortal({ ...newPortal, clientEmail: e.target.value })} className={inputClass} placeholder="Client email" />
+                <input value={newPortal.clientName} onChange={e => setNewPortal({ ...newPortal, clientName: e.target.value })} className={inputClass} placeholder="Client *" />
+                <input value={newPortal.clientEmail} onChange={e => setNewPortal({ ...newPortal, clientEmail: e.target.value })} className={inputClass} placeholder="Email" />
                 <input value={newPortal.projectTitle} onChange={e => setNewPortal({ ...newPortal, projectTitle: e.target.value })} className={inputClass} placeholder="Project title *" />
                 <input value={newPortal.projectDescription} onChange={e => setNewPortal({ ...newPortal, projectDescription: e.target.value })} className={inputClass} placeholder="Description" />
               </div>
               <button onClick={async () => {
-                if (!newPortal.clientName || !newPortal.projectTitle) return alert('Fill required fields');
+                if (!newPortal.clientName || !newPortal.projectTitle) return alert('Fill required');
                 const res = await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'create', ...newPortal }) });
                 const data = await res.json();
-                if (data.viewUrl) alert(`Portal created! Client link: stackmate.digital${data.viewUrl}`);
+                if (data.viewUrl) { logActivity(`Portal created: ${newPortal.clientName}`); alert(`Client link: stackmate.digital${data.viewUrl}`); }
                 setNewPortal({ clientName: '', clientEmail: '', projectTitle: '', projectDescription: '' });
                 fetchAll();
-              }} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Create Portal</button>
+              }} className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Create</button>
             </div>
 
-            {/* Add deliverable */}
             {portalsList.length > 0 && (
-              <div className="p-6 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
-                <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Send className="w-4 h-4" /> Add Deliverable</h3>
-                <div className="grid md:grid-cols-3 gap-4 mb-4">
-                  <select value={newDeliverable.portalId} onChange={e => setNewDeliverable({ ...newDeliverable, portalId: e.target.value })} className={inputClass}>
-                    <option value="">Select portal *</option>
-                    {portalsList.map(p => <option key={p.id} value={p.id}>{p.clientName} — {p.projectTitle}</option>)}
-                  </select>
-                  <select value={newDeliverable.type} onChange={e => setNewDeliverable({ ...newDeliverable, type: e.target.value })} className={inputClass}>
-                    <option value="website">Website / Live URL</option>
-                    <option value="repo">GitHub Repo</option>
-                    <option value="credentials">Credentials</option>
-                    <option value="design">Design Files</option>
-                    <option value="document">Document</option>
-                    <option value="api">API / Integration</option>
-                    <option value="agent">AI Agent</option>
-                    <option value="other">Other</option>
-                  </select>
-                  <input value={newDeliverable.title} onChange={e => setNewDeliverable({ ...newDeliverable, title: e.target.value })} className={inputClass} placeholder="Title *" />
-                </div>
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <input value={newDeliverable.url} onChange={e => setNewDeliverable({ ...newDeliverable, url: e.target.value })} className={inputClass} placeholder="URL (live site, repo, file link)" />
-                  <input value={newDeliverable.description} onChange={e => setNewDeliverable({ ...newDeliverable, description: e.target.value })} className={inputClass} placeholder="Description" />
-                </div>
-                <button onClick={async () => {
-                  if (!newDeliverable.portalId || !newDeliverable.title) return alert('Select portal and add title');
-                  await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'add-deliverable', portalId: newDeliverable.portalId, deliverable: { type: newDeliverable.type, title: newDeliverable.title, description: newDeliverable.description, url: newDeliverable.url, projectId: newDeliverable.portalId } }) });
-                  setNewDeliverable({ portalId: '', type: 'website', title: '', description: '', url: '' });
-                  fetchAll();
-                }} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add Deliverable</button>
-              </div>
-            )}
-
-            {/* Add update */}
-            {portalsList.length > 0 && (
-              <div className="p-6 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
-                <h3 className="font-display font-bold mb-4">Post Status Update</h3>
-                <div className="grid md:grid-cols-3 gap-4 mb-4">
-                  <select value={newUpdate.portalId} onChange={e => setNewUpdate({ ...newUpdate, portalId: e.target.value })} className={inputClass}>
-                    <option value="">Select portal *</option>
-                    {portalsList.map(p => <option key={p.id} value={p.id}>{p.clientName} — {p.projectTitle}</option>)}
-                  </select>
-                  <input value={newUpdate.message} onChange={e => setNewUpdate({ ...newUpdate, message: e.target.value })} className={`${inputClass} md:col-span-2`} placeholder="Update message *" />
-                </div>
-                <button onClick={async () => {
-                  if (!newUpdate.portalId || !newUpdate.message) return alert('Fill fields');
-                  await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'add-update', portalId: newUpdate.portalId, message: newUpdate.message }) });
-                  setNewUpdate({ portalId: '', message: '' });
-                  fetchAll();
-                }} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Post Update</button>
-              </div>
-            )}
-
-            {/* Portal list */}
-            {portalsList.length === 0 ? <div className="text-center py-12 text-sm-muted">No delivery portals yet.</div> : (
-              <div className="space-y-4">
-                {portalsList.map(portal => (
-                  <div key={portal.id} className="p-5 rounded-sm border border-sm-border bg-sm-card/30">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold">{portal.projectTitle}</h3>
-                        <p className="text-xs text-sm-muted">{portal.clientName} {portal.clientEmail && `— ${portal.clientEmail}`}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex gap-1">
-                          {(['in-progress', 'review', 'delivered', 'completed'] as const).map(s => (
-                            <button key={s} onClick={async () => { await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'update', id: portal.id, updates: { status: s } }) }); fetchAll(); }}
-                              className={`px-2 py-1 rounded-sm text-xs border capitalize ${portal.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
-                            >{s}</button>
-                          ))}
-                        </div>
-                        <p className="text-xs text-orange-400 mt-2 cursor-pointer" onClick={() => { navigator.clipboard.writeText(`stackmate.digital/portal/${portal.accessCode}`); alert('Link copied!'); }}>Copy client link</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-sm-muted">
-                      <span>{portal.deliverables.length} deliverables</span>
-                      <span>{portal.updates.length} updates</span>
-                      <span>{portal.handoverChecklist.filter(h => h.done).length}/{portal.handoverChecklist.length} handover</span>
-                    </div>
+              <>
+                <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+                  <h3 className="font-display font-bold mb-3">Add Deliverable</h3>
+                  <div className="grid md:grid-cols-3 gap-3 mb-3">
+                    <select value={newDeliverable.portalId} onChange={e => setNewDeliverable({ ...newDeliverable, portalId: e.target.value })} className={inputClass}>
+                      <option value="">Portal *</option>
+                      {portalsList.map(p => <option key={p.id} value={p.id}>{p.clientName} — {p.projectTitle}</option>)}
+                    </select>
+                    <select value={newDeliverable.type} onChange={e => setNewDeliverable({ ...newDeliverable, type: e.target.value })} className={inputClass}>
+                      <option value="website">Website</option><option value="repo">Repo</option><option value="credentials">Credentials</option>
+                      <option value="design">Design</option><option value="document">Doc</option><option value="api">API</option><option value="agent">Agent</option>
+                    </select>
+                    <input value={newDeliverable.title} onChange={e => setNewDeliverable({ ...newDeliverable, title: e.target.value })} className={inputClass} placeholder="Title *" />
                   </div>
-                ))}
-              </div>
+                  <div className="flex gap-3 mb-3">
+                    <input value={newDeliverable.url} onChange={e => setNewDeliverable({ ...newDeliverable, url: e.target.value })} className={`${inputClass} flex-1`} placeholder="URL" />
+                    <button onClick={async () => {
+                      if (!newDeliverable.portalId || !newDeliverable.title) return;
+                      await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'add-deliverable', portalId: newDeliverable.portalId, deliverable: { type: newDeliverable.type, title: newDeliverable.title, description: newDeliverable.description, url: newDeliverable.url, projectId: newDeliverable.portalId } }) });
+                      logActivity(`Deliverable: ${newDeliverable.title}`);
+                      setNewDeliverable({ portalId: '', type: 'website', title: '', description: '', url: '' });
+                      fetchAll();
+                    }} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add</button>
+                  </div>
+                </div>
+                <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+                  <h3 className="font-display font-bold mb-3">Post Update</h3>
+                  <div className="flex gap-3">
+                    <select value={newUpdate.portalId} onChange={e => setNewUpdate({ ...newUpdate, portalId: e.target.value })} className={`${inputClass} w-64`}>
+                      <option value="">Portal *</option>
+                      {portalsList.map(p => <option key={p.id} value={p.id}>{p.clientName}</option>)}
+                    </select>
+                    <input value={newUpdate.message} onChange={e => setNewUpdate({ ...newUpdate, message: e.target.value })} className={`${inputClass} flex-1`} placeholder="Update message *" />
+                    <button onClick={async () => {
+                      if (!newUpdate.portalId || !newUpdate.message) return;
+                      await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'add-update', portalId: newUpdate.portalId, message: newUpdate.message }) });
+                      logActivity(`Update posted: ${newUpdate.message}`);
+                      setNewUpdate({ portalId: '', message: '' });
+                      fetchAll();
+                    }} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Post</button>
+                  </div>
+                </div>
+              </>
             )}
 
-            <div className="mt-6 p-4 rounded-sm border border-sm-border bg-sm-card/20">
-              <p className="text-xs text-sm-muted"><a href="/admin/playbooks" className="text-orange-400 hover:underline">Open Playbooks</a> for step-by-step delivery checklists.</p>
+            {portalsList.map(portal => (
+              <div key={portal.id} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 mb-3">
+                <div className="flex justify-between mb-2">
+                  <div><h3 className="font-semibold">{portal.projectTitle}</h3><p className="text-xs text-sm-muted">{portal.clientName}</p></div>
+                  <div className="text-right">
+                    <div className="flex gap-1">
+                      {(['in-progress', 'review', 'delivered', 'completed'] as const).map(s => (
+                        <button key={s} onClick={async () => { await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'update', id: portal.id, updates: { status: s } }) }); fetchAll(); }}
+                          className={`px-2 py-1 rounded-sm text-xs border capitalize ${portal.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
+                        >{s}</button>
+                      ))}
+                    </div>
+                    <button className="text-xs text-orange-400 mt-1" onClick={() => { navigator.clipboard.writeText(`stackmate.digital/portal/${portal.accessCode}`); alert('Copied!'); }}>Copy link</button>
+                  </div>
+                </div>
+                <div className="flex gap-3 text-xs text-sm-muted">
+                  <span>{portal.deliverables.length} deliverables</span>
+                  <span>{portal.updates.length} updates</span>
+                  <span>{portal.handoverChecklist.filter(h => h.done).length}/{portal.handoverChecklist.length} handover</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ====== CLIENTS ====== */}
+        {tab === 'clients' && (
+          <div>
+            <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+              <h3 className="font-display font-bold mb-4">Add Client</h3>
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <input value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} className={inputClass} placeholder="Name" />
+                <input value={newClient.url} onChange={e => setNewClient({ ...newClient, url: e.target.value })} className={inputClass} placeholder="URL" />
+                <input value={newClient.logoUrl} onChange={e => setNewClient({ ...newClient, logoUrl: e.target.value })} className={inputClass} placeholder="Logo URL" />
+                <input value={newClient.heroUrl} onChange={e => setNewClient({ ...newClient, heroUrl: e.target.value })} className={inputClass} placeholder="Hero URL" />
+              </div>
+              <button onClick={addClientFn} className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add</button>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {clients.map(client => (
+                <div key={client.id} className="p-4 rounded-sm border border-sm-border bg-sm-card/30">
+                  <div className="flex justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={client.logoUrl} alt="" className="w-8 h-8 rounded object-cover" />
+                      <div><p className="font-semibold text-sm">{client.name}</p><p className="text-xs text-sm-muted">{client.url.replace(/^https?:\/\//, '')}</p></div>
+                    </div>
+                    <button onClick={() => deleteClientFn(client.id)} className="text-sm-muted hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={client.heroUrl} alt="" className="w-full aspect-video object-cover rounded" />
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* ====== CLIENTS TAB ====== */}
-        {tab === 'clients' && (
+        {/* ====== REVENUE ====== */}
+        {tab === 'revenue' && (
           <div>
-            <div className="p-6 rounded-xl border border-sm-border bg-sm-card/30 mb-6">
-              <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Plus className="w-4 h-4" /> Add Client</h3>
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
-                <input value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} className={inputClass} placeholder="Client Name" />
-                <input value={newClient.url} onChange={e => setNewClient({ ...newClient, url: e.target.value })} className={inputClass} placeholder="Website URL" />
-                <input value={newClient.logoUrl} onChange={e => setNewClient({ ...newClient, logoUrl: e.target.value })} className={inputClass} placeholder="Logo URL" />
-                <input value={newClient.heroUrl} onChange={e => setNewClient({ ...newClient, heroUrl: e.target.value })} className={inputClass} placeholder="Hero Screenshot URL" />
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
+                <p className="text-sm text-sm-muted">Total Revenue</p>
+                <p className="text-3xl font-display font-bold text-orange-400">${totalRevenue.toLocaleString()}</p>
               </div>
-              <button onClick={addClientFn} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-lg">Add Client</button>
+              <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
+                <p className="text-sm text-sm-muted">Monthly Recurring</p>
+                <p className="text-3xl font-display font-bold text-orange-400">${monthlyRecurring.toLocaleString()}/mo</p>
+              </div>
+              <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
+                <p className="text-sm text-sm-muted">Projected Annual</p>
+                <p className="text-3xl font-display font-bold text-orange-400">${(totalRevenue + monthlyRecurring * 12).toLocaleString()}</p>
+              </div>
             </div>
-            {clients.length === 0 ? <div className="text-center py-12 text-sm-muted">No clients.</div> : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {clients.map(client => (
-                  <div key={client.id} className="p-4 rounded-xl border border-sm-border bg-sm-card/30">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={client.logoUrl} alt="" className="w-8 h-8 rounded-md object-cover" />
-                        <div><p className="font-semibold text-sm">{client.name}</p><p className="text-xs text-sm-muted">{client.url.replace(/^https?:\/\//, '')}</p></div>
-                      </div>
-                      <button onClick={() => deleteClientFn(client.id)} className="p-2 rounded-lg hover:bg-red-500/10 text-sm-muted hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
+            <h3 className="font-display font-bold mb-4">Revenue by Client</h3>
+            {Object.keys(clientRevenue).length === 0 ? <p className="text-sm-muted">No revenue data yet.</p> : (
+              <div className="space-y-2">
+                {Object.entries(clientRevenue).sort((a, b) => (b[1].oneTime + b[1].monthly * 12) - (a[1].oneTime + a[1].monthly * 12)).map(([name, rev]) => (
+                  <div key={name} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 flex items-center justify-between">
+                    <span className="font-semibold">{name}</span>
+                    <div className="flex gap-6 text-sm">
+                      <span className="text-sm-muted">One-time: <strong className="text-white">${rev.oneTime.toLocaleString()}</strong></span>
+                      <span className="text-sm-muted">Monthly: <strong className="text-orange-400">${rev.monthly.toLocaleString()}/mo</strong></span>
+                      <span className="text-sm-muted">Annual: <strong className="text-white">${(rev.oneTime + rev.monthly * 12).toLocaleString()}</strong></span>
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={client.heroUrl} alt="" className="w-full aspect-video object-cover rounded-lg" />
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ====== TERMINAL ====== */}
+        {tab === 'terminal' && (
+          <div>
+            <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Terminal className="w-5 h-5 text-orange-400" /> Activity Log</h3>
+            <div className="bg-sm-dark border border-sm-border rounded-sm p-4 font-mono text-xs max-h-[70vh] overflow-y-auto">
+              {activityLog.length === 0 ? <p className="text-sm-muted">No activity yet. Actions will appear here in real-time.</p> : (
+                activityLog.map((entry, i) => (
+                  <div key={i} className="flex gap-3 py-1 border-b border-sm-border/50 last:border-0">
+                    <span className="text-sm-muted shrink-0">{new Date(entry.time).toLocaleTimeString()}</span>
+                    <span className="text-sm-light">{entry.event}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
       </div>
