@@ -15,35 +15,37 @@ import Counter from '@/components/Counter';
 import LogoMarquee from '@/components/LogoMarquee';
 import ClientLogoStrip from '@/components/ClientLogoStrip';
 
+const dot = (letter: string) => `<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><text x="12" y="17" text-anchor="middle" font-size="14" font-family="system-ui" font-weight="700" fill="white">${letter}</text></svg>`;
+
 const INTEGRATIONS_ROW1 = [
-  { name: 'Stripe', icon: 'stripe' },
-  { name: 'Xero', icon: 'xero' },
-  { name: 'HubSpot', icon: 'hubspot' },
-  { name: 'Salesforce', icon: 'salesforce' },
-  { name: 'Slack', icon: 'slack' },
-  { name: 'Google', icon: 'google' },
-  { name: 'Microsoft', icon: 'microsoft' },
-  { name: 'Zapier', icon: 'zapier' },
-  { name: 'Shopify', icon: 'shopify' },
-  { name: 'Square', icon: 'square' },
-  { name: 'Twilio', icon: 'twilio' },
-  { name: 'AWS', icon: 'amazonwebservices' },
+  { name: 'Stripe', svg: dot('S') },
+  { name: 'Xero', svg: dot('X') },
+  { name: 'HubSpot', svg: dot('H') },
+  { name: 'Salesforce', svg: dot('S') },
+  { name: 'Slack', svg: dot('S') },
+  { name: 'Google Workspace', svg: dot('G') },
+  { name: 'Microsoft 365', svg: dot('M') },
+  { name: 'Zapier', svg: dot('Z') },
+  { name: 'Shopify', svg: dot('S') },
+  { name: 'Square', svg: dot('S') },
+  { name: 'Twilio', svg: dot('T') },
+  { name: 'AWS', svg: dot('A') },
 ];
 
 const INTEGRATIONS_ROW2 = [
-  { name: 'Vercel', icon: 'vercel' },
-  { name: 'OpenAI', icon: 'openai' },
-  { name: 'Anthropic', icon: 'anthropic' },
-  { name: 'PostgreSQL', icon: 'postgresql' },
-  { name: 'Firebase', icon: 'firebase' },
-  { name: 'Supabase', icon: 'supabase' },
-  { name: 'Cloudflare', icon: 'cloudflare' },
-  { name: 'GitHub', icon: 'github' },
-  { name: 'Figma', icon: 'figma' },
-  { name: 'Notion', icon: 'notion' },
-  { name: 'Airtable', icon: 'airtable' },
-  { name: 'Intercom', icon: 'intercom' },
-  { name: 'Mailchimp', icon: 'mailchimp' },
+  { name: 'Vercel', svg: dot('V') },
+  { name: 'OpenAI', svg: dot('O') },
+  { name: 'Anthropic', svg: dot('A') },
+  { name: 'PostgreSQL', svg: dot('P') },
+  { name: 'Firebase', svg: dot('F') },
+  { name: 'Supabase', svg: dot('S') },
+  { name: 'Cloudflare', svg: dot('C') },
+  { name: 'GitHub', svg: dot('G') },
+  { name: 'Figma', svg: dot('F') },
+  { name: 'Notion', svg: dot('N') },
+  { name: 'Airtable', svg: dot('A') },
+  { name: 'Intercom', svg: dot('I') },
+  { name: 'Mailchimp', svg: dot('M') },
 ];
 
 const SERVICES = [
