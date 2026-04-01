@@ -208,35 +208,44 @@ export default function AdminPage() {
     fetchAll();
   };
 
-  const runQuickAudit = async () => {
+  const runQuickAudit = () => {
     if (!auditUrl) return;
-    setAuditResult('Running audit...');
-    logActivity(`Quick audit: ${auditUrl}`);
-    try {
-      const [seo, geo] = await Promise.all([
-        fetch(`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(auditUrl.startsWith('http') ? auditUrl : `https://${auditUrl}`)}`).then(() => 'PageSpeed: Open tool to see full results'),
-        fetch(`/api/v1/quote`).then(r => r.json()).then(() => 'GEO: Check llms.txt, robots.txt, structured data'),
-      ]);
-      const result = `QUICK AUDIT: ${auditUrl}\n\n` +
-        `CHECKS:\n` +
-        `✓ Website accessible\n` +
-        `→ Run full PageSpeed: https://pagespeed.web.dev/analysis?url=${encodeURIComponent(auditUrl.startsWith('http') ? auditUrl : `https://${auditUrl}`)}\n` +
-        `→ Run GEO audit: https://geoptie.com/free-geo-audit\n` +
-        `→ Schema check: https://validator.schema.org/\n` +
-        `→ Security: https://securityheaders.com/?q=${encodeURIComponent(auditUrl)}\n\n` +
-        `AI OPPORTUNITIES TO CHECK:\n` +
-        `• Does the business answer phone calls? → AI receptionist ($499-1,799/mo)\n` +
-        `• Do they have a booking system? → AI booking agent\n` +
-        `• Manual invoicing/quoting? → Automation workflow\n` +
-        `• Old/slow website? → Rebuild (1-2 days)\n` +
-        `• No online presence? → Website + SEO + GEO package\n` +
-        `• Manual customer follow-ups? → AI email/SMS sequences\n` +
-        `• No analytics? → Dashboard + reporting setup\n` +
-        `• Using spreadsheets for CRM? → Custom CRM or HubSpot integration`;
-      setAuditResult(result);
-    } catch {
-      setAuditResult('Could not reach the website. Check the URL.');
-    }
+    const url = auditUrl.startsWith('http') ? auditUrl : `https://${auditUrl}`;
+    const domain = auditUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    logActivity(`Quick audit: ${domain}`);
+    const result = `QUICK AUDIT: ${domain}\n` +
+      `${'='.repeat(50)}\n\n` +
+      `AUDIT TOOLS (click to open):\n` +
+      `\n→ PageSpeed & Core Web Vitals:\n  https://pagespeed.web.dev/analysis?url=${encodeURIComponent(url)}\n` +
+      `\n→ GEO Score (AI Search Visibility):\n  https://geoptie.com/free-geo-audit\n  (paste: ${domain})\n` +
+      `\n→ Schema/Structured Data Check:\n  https://validator.schema.org/\n  (paste: ${url})\n` +
+      `\n→ Security Headers:\n  https://securityheaders.com/?q=${encodeURIComponent(url)}\n` +
+      `\n→ Rich Results Test:\n  https://search.google.com/test/rich-results?url=${encodeURIComponent(url)}\n` +
+      `\n→ Mobile Friendly Test:\n  https://search.google.com/test/mobile-friendly?url=${encodeURIComponent(url)}\n` +
+      `\n→ SSL Check:\n  https://www.ssllabs.com/ssltest/analyze.html?d=${encodeURIComponent(domain)}\n` +
+      `\n${'='.repeat(50)}\n` +
+      `\nAI OPPORTUNITIES TO PITCH:\n` +
+      `\n• Do they answer phone calls manually?\n  → AI receptionist ($499-1,799/mo)\n` +
+      `\n• Do they have online booking?\n  → AI booking system with calendar sync\n` +
+      `\n• Manual invoicing or quoting?\n  → Automated quoting + invoicing workflow\n` +
+      `\n• Website old, slow, or not mobile-friendly?\n  → Full rebuild (1-2 days, $2-5K setup)\n` +
+      `\n• No Google Business Profile?\n  → GBP setup + local SEO ($499/mo)\n` +
+      `\n• Not showing up in AI search (ChatGPT/Perplexity)?\n  → GEO package — llms.txt, schema, content ($499-999/mo)\n` +
+      `\n• Manual customer follow-ups?\n  → AI email/SMS sequences\n` +
+      `\n• No analytics or reporting?\n  → Custom dashboard + automated reports\n` +
+      `\n• Using spreadsheets as CRM?\n  → HubSpot/custom CRM integration\n` +
+      `\n• No social media automation?\n  → Content scheduling + AI content generation\n` +
+      `\n${'='.repeat(50)}\n` +
+      `\nQUICK PRICING GUIDE:\n` +
+      `  Website rebuild:     $2,000-5,000 setup + $199-499/mo\n` +
+      `  AI chatbot:          $2,500-5,000 setup + $499-999/mo\n` +
+      `  AI receptionist:     $5,000-8,000 setup + $999-1,799/mo\n` +
+      `  SEO:                 $499-999/mo\n` +
+      `  GEO (AI search):     $499-999/mo\n` +
+      `  SEO + GEO bundle:    $799-1,499/mo\n` +
+      `  Business automation: $2,000-6,000 setup + $399-999/mo\n` +
+      `  Custom software:     $5,000-15,000 setup + $599-1,799/mo`;
+    setAuditResult(result);
   };
 
   // LOGIN
