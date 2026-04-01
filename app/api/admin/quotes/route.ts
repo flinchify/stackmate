@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { quotes } from '../../quote/route';
+import { getQuotes, updateQuoteStatus } from '@/lib/quotes-store';
 
 function checkAuth(req: NextRequest): boolean {
   const secret = req.headers.get('x-admin-secret');
@@ -11,10 +11,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  return NextResponse.json({
-    total: quotes.length,
-    quotes: [...quotes].reverse(),
-  });
+  const quotes = getQuotes();
+  return NextResponse.json({ total: quotes.length, quotes });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -23,17 +21,16 @@ export async function PATCH(req: NextRequest) {
   }
 
   const { id, status } = await req.json();
-  const quote = quotes.find((q) => q.id === id);
-
-  if (!quote) {
-    return NextResponse.json({ error: 'Quote not found' }, { status: 404 });
-  }
 
   const validStatuses = ['new', 'reviewing', 'quoted', 'accepted', 'rejected'];
   if (!validStatuses.includes(status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
   }
 
-  quote.status = status;
+  const quote = updateQuoteStatus(id, status);
+  if (!quote) {
+    return NextResponse.json({ error: 'Quote not found' }, { status: 404 });
+  }
+
   return NextResponse.json({ success: true, quote });
 }

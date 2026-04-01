@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
-import { estimatePrice, type QuoteParams } from '@/lib/pricing';
-
-// In-memory store for MVP — replace with DB later
-const quotes: Array<QuoteParams & { id: string; estimate: ReturnType<typeof estimatePrice>; createdAt: string; status: string }> = [];
-
-// Make quotes accessible for admin
-export { quotes };
+import { type QuoteParams } from '@/lib/pricing';
+import { addQuote } from '@/lib/quotes-store';
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
@@ -22,7 +17,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Validate required fields
     const required = ['companyName', 'industry', 'employees', 'services', 'description', 'email'];
     for (const field of required) {
       if (!body[field] || (Array.isArray(body[field]) && body[field].length === 0)) {
@@ -30,13 +24,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(body.email)) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
     }
 
-    // Sanitize
     const params: QuoteParams = {
       companyName: String(body.companyName).slice(0, 200),
       industry: String(body.industry).slice(0, 100),
@@ -48,16 +40,7 @@ export async function POST(req: NextRequest) {
       urgency: ['standard', 'fast', 'asap'].includes(body.urgency) ? body.urgency : 'standard',
     };
 
-    const estimate = estimatePrice(params);
-    const id = `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-    quotes.push({
-      ...params,
-      id,
-      estimate,
-      createdAt: new Date().toISOString(),
-      status: 'new',
-    });
+    addQuote(params);
 
     return NextResponse.json(
       { success: true, message: 'Quote request received. We\'ll be in touch within 24 hours.' },
