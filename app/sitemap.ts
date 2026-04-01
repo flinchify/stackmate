@@ -1,0 +1,27 @@
+import type { MetadataRoute } from 'next';
+
+const BLOG_SLUGS = [
+  'ai-automation-perth-small-business',
+  'why-mining-companies-need-custom-software',
+  'best-business-automation-tools-australia-2026',
+  'ai-agents-vs-chatbots-whats-the-difference',
+  'how-to-choose-a-systems-integrator-perth',
+];
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const base = 'https://stackmate.com.au';
+
+  const pages = [
+    { url: base, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 1.0 },
+    { url: `${base}/blog`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.8 },
+  ];
+
+  const blogPages = BLOG_SLUGS.map((slug) => ({
+    url: `${base}/blog/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
+
+  return [...pages, ...blogPages];
+}
