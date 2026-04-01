@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search } from 'lucide-react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package } from 'lucide-react';
 
 interface Quote {
   id: string; companyName: string; industry: string; employees: string; services: string[];
@@ -28,6 +28,15 @@ interface Project {
 
 interface Client { id: string; name: string; url: string; logoUrl: string; heroUrl: string; createdAt: string; }
 
+interface Portal {
+  id: string; accessCode: string; clientName: string; clientEmail: string;
+  projectTitle: string; projectDescription: string; status: string;
+  deliverables: { id: string; type: string; title: string; description?: string; url?: string }[];
+  updates: { date: string; message: string }[];
+  handoverChecklist: { item: string; done: boolean }[];
+  createdAt: string;
+}
+
 interface Audit {
   id: string; companyName: string; contactName?: string; email: string; phone?: string;
   website?: string; industry: string; employees: string; description: string;
@@ -48,8 +57,12 @@ const inputClass = 'w-full px-4 py-3 bg-sm-dark border border-sm-border rounded-
 export default function AdminPage() {
   const [secret, setSecret] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
-  const [tab, setTab] = useState<'quotes' | 'audits' | 'invoices' | 'recurring' | 'projects' | 'clients'>('quotes');
+  const [tab, setTab] = useState<'quotes' | 'audits' | 'invoices' | 'recurring' | 'projects' | 'portals' | 'clients'>('quotes');
   const [audits, setAudits] = useState<Audit[]>([]);
+  const [portalsList, setPortalsList] = useState<Portal[]>([]);
+  const [newPortal, setNewPortal] = useState({ clientName: '', clientEmail: '', projectTitle: '', projectDescription: '' });
+  const [newDeliverable, setNewDeliverable] = useState({ portalId: '', type: 'website', title: '', description: '', url: '' });
+  const [newUpdate, setNewUpdate] = useState({ portalId: '', message: '' });
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [recurring, setRecurring] = useState<RecurringService[]>([]);
@@ -83,10 +96,12 @@ export default function AdminPage() {
       setRecurring(results[2].services || []);
       setProjects(results[3].projects || []);
       setClients(results[4].clients || []);
-      // Fetch audits
+      // Fetch audits + portals
       try {
         const aRes = await fetch('/api/admin/audits', { headers: h });
         if (aRes.ok) { const aData = await aRes.json(); setAudits(aData.audits || []); }
+        const pRes2 = await fetch('/api/admin/portals', { headers: h });
+        if (pRes2.ok) { const pData2 = await pRes2.json(); setPortalsList(pData2.portals || []); }
       } catch {}
     } catch { alert('Failed to fetch'); }
     finally { setLoading(false); }
@@ -189,6 +204,7 @@ export default function AdminPage() {
             ['invoices', Receipt, `Invoices (${invoices.length})`],
             ['recurring', Repeat, `Recurring (${recurring.length})`],
             ['projects', FolderKanban, `Projects (${projects.length})`],
+            ['portals', Package, `Delivery (${portalsList.length})`],
             ['clients', Users, `Clients (${clients.length})`],
           ] as const).map(([key, Icon, label]) => (
             <button key={key} onClick={() => setTab(key)}
@@ -451,6 +467,118 @@ export default function AdminPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ====== PORTALS/DELIVERY TAB ====== */}
+        {tab === 'portals' && (
+          <div>
+            <div className="p-6 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+              <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Plus className="w-4 h-4" /> Create Delivery Portal</h3>
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <input value={newPortal.clientName} onChange={e => setNewPortal({ ...newPortal, clientName: e.target.value })} className={inputClass} placeholder="Client name *" />
+                <input value={newPortal.clientEmail} onChange={e => setNewPortal({ ...newPortal, clientEmail: e.target.value })} className={inputClass} placeholder="Client email" />
+                <input value={newPortal.projectTitle} onChange={e => setNewPortal({ ...newPortal, projectTitle: e.target.value })} className={inputClass} placeholder="Project title *" />
+                <input value={newPortal.projectDescription} onChange={e => setNewPortal({ ...newPortal, projectDescription: e.target.value })} className={inputClass} placeholder="Description" />
+              </div>
+              <button onClick={async () => {
+                if (!newPortal.clientName || !newPortal.projectTitle) return alert('Fill required fields');
+                const res = await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'create', ...newPortal }) });
+                const data = await res.json();
+                if (data.viewUrl) alert(`Portal created! Client link: stackmate.digital${data.viewUrl}`);
+                setNewPortal({ clientName: '', clientEmail: '', projectTitle: '', projectDescription: '' });
+                fetchAll();
+              }} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Create Portal</button>
+            </div>
+
+            {/* Add deliverable */}
+            {portalsList.length > 0 && (
+              <div className="p-6 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+                <h3 className="font-display font-bold mb-4 flex items-center gap-2"><Send className="w-4 h-4" /> Add Deliverable</h3>
+                <div className="grid md:grid-cols-3 gap-4 mb-4">
+                  <select value={newDeliverable.portalId} onChange={e => setNewDeliverable({ ...newDeliverable, portalId: e.target.value })} className={inputClass}>
+                    <option value="">Select portal *</option>
+                    {portalsList.map(p => <option key={p.id} value={p.id}>{p.clientName} — {p.projectTitle}</option>)}
+                  </select>
+                  <select value={newDeliverable.type} onChange={e => setNewDeliverable({ ...newDeliverable, type: e.target.value })} className={inputClass}>
+                    <option value="website">Website / Live URL</option>
+                    <option value="repo">GitHub Repo</option>
+                    <option value="credentials">Credentials</option>
+                    <option value="design">Design Files</option>
+                    <option value="document">Document</option>
+                    <option value="api">API / Integration</option>
+                    <option value="agent">AI Agent</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <input value={newDeliverable.title} onChange={e => setNewDeliverable({ ...newDeliverable, title: e.target.value })} className={inputClass} placeholder="Title *" />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                  <input value={newDeliverable.url} onChange={e => setNewDeliverable({ ...newDeliverable, url: e.target.value })} className={inputClass} placeholder="URL (live site, repo, file link)" />
+                  <input value={newDeliverable.description} onChange={e => setNewDeliverable({ ...newDeliverable, description: e.target.value })} className={inputClass} placeholder="Description" />
+                </div>
+                <button onClick={async () => {
+                  if (!newDeliverable.portalId || !newDeliverable.title) return alert('Select portal and add title');
+                  await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'add-deliverable', portalId: newDeliverable.portalId, deliverable: { type: newDeliverable.type, title: newDeliverable.title, description: newDeliverable.description, url: newDeliverable.url, projectId: newDeliverable.portalId } }) });
+                  setNewDeliverable({ portalId: '', type: 'website', title: '', description: '', url: '' });
+                  fetchAll();
+                }} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add Deliverable</button>
+              </div>
+            )}
+
+            {/* Add update */}
+            {portalsList.length > 0 && (
+              <div className="p-6 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
+                <h3 className="font-display font-bold mb-4">Post Status Update</h3>
+                <div className="grid md:grid-cols-3 gap-4 mb-4">
+                  <select value={newUpdate.portalId} onChange={e => setNewUpdate({ ...newUpdate, portalId: e.target.value })} className={inputClass}>
+                    <option value="">Select portal *</option>
+                    {portalsList.map(p => <option key={p.id} value={p.id}>{p.clientName} — {p.projectTitle}</option>)}
+                  </select>
+                  <input value={newUpdate.message} onChange={e => setNewUpdate({ ...newUpdate, message: e.target.value })} className={`${inputClass} md:col-span-2`} placeholder="Update message *" />
+                </div>
+                <button onClick={async () => {
+                  if (!newUpdate.portalId || !newUpdate.message) return alert('Fill fields');
+                  await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'add-update', portalId: newUpdate.portalId, message: newUpdate.message }) });
+                  setNewUpdate({ portalId: '', message: '' });
+                  fetchAll();
+                }} className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Post Update</button>
+              </div>
+            )}
+
+            {/* Portal list */}
+            {portalsList.length === 0 ? <div className="text-center py-12 text-sm-muted">No delivery portals yet.</div> : (
+              <div className="space-y-4">
+                {portalsList.map(portal => (
+                  <div key={portal.id} className="p-5 rounded-sm border border-sm-border bg-sm-card/30">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold">{portal.projectTitle}</h3>
+                        <p className="text-xs text-sm-muted">{portal.clientName} {portal.clientEmail && `— ${portal.clientEmail}`}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex gap-1">
+                          {(['in-progress', 'review', 'delivered', 'completed'] as const).map(s => (
+                            <button key={s} onClick={async () => { await fetch('/api/admin/portals', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'update', id: portal.id, updates: { status: s } }) }); fetchAll(); }}
+                              className={`px-2 py-1 rounded-sm text-xs border capitalize ${portal.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
+                            >{s}</button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-orange-400 mt-2 cursor-pointer" onClick={() => { navigator.clipboard.writeText(`stackmate.digital/portal/${portal.accessCode}`); alert('Link copied!'); }}>Copy client link</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-sm-muted">
+                      <span>{portal.deliverables.length} deliverables</span>
+                      <span>{portal.updates.length} updates</span>
+                      <span>{portal.handoverChecklist.filter(h => h.done).length}/{portal.handoverChecklist.length} handover</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 p-4 rounded-sm border border-sm-border bg-sm-card/20">
+              <p className="text-xs text-sm-muted"><a href="/admin/playbooks" className="text-orange-400 hover:underline">Open Playbooks</a> for step-by-step delivery checklists.</p>
+            </div>
           </div>
         )}
 
