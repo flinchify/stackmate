@@ -379,7 +379,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                     <button onClick={() => setStep((s) => Math.min(3, s + 1))} disabled={!canAdvance()}
                       className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      Continue <ArrowRight className="w-4 h-4" />
+                      Continue
                     </button>
                   ) : (
                     <button onClick={handleSubmit} disabled={!canAdvance() || submitting}
