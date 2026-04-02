@@ -36,7 +36,6 @@ export default function Header({ onQuoteClick }: HeaderProps) {
 
   const navItems = [
     { label: 'ENTERPRISE', href: '/services' },
-    { label: 'PROCESS', href: '#process' },
     { label: 'CLIENTS', href: '/clients' },
     { label: 'TOOLS', href: '/tools' },
     { label: 'BLOG', href: '/blog' },

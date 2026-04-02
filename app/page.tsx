@@ -834,7 +834,6 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-6 font-mono text-xs uppercase tracking-wider text-sm-muted">
               <a href="/services" className="hover:text-sm-accent transition-colors">ENTERPRISE</a>
-              <a href="#process" className="hover:text-sm-accent transition-colors">PROCESS</a>
               <a href="/clients" className="hover:text-sm-accent transition-colors">CLIENTS</a>
               <a href="/tools" className="hover:text-sm-accent transition-colors">TOOLS</a>
               <a href="/blog" className="hover:text-sm-accent transition-colors">BLOG</a>
