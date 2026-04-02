@@ -204,3 +204,31 @@ section[id] {
 .dash-flow {
   animation: dash-flow 2s linear infinite;
 }
+
+/* Corner bracket button — agentmail.to "Docs" style */
+.corner-bracket-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+}
+
+.corner-bracket-btn .bracket {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: rgba(255, 255, 255, 0.35);
+  border-style: solid;
+  transition: border-color 0.2s;
+}
+
+.corner-bracket-btn .bracket.tl { top: 0; left: 0; border-width: 1.5px 0 0 1.5px; }
+.corner-bracket-btn .bracket.tr { top: 0; right: 0; border-width: 1.5px 1.5px 0 0; }
+.corner-bracket-btn .bracket.bl { bottom: 0; left: 0; border-width: 0 0 1.5px 1.5px; }
+.corner-bracket-btn .bracket.br { bottom: 0; right: 0; border-width: 0 1.5px 1.5px 0; }
+
+.corner-bracket-btn:hover .bracket {
+  border-color: #FF7A00;
+}

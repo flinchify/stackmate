@@ -50,8 +50,8 @@ export default function Header({ onQuoteClick }: HeaderProps) {
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Floating header container */}
-      <div className="mx-auto max-w-6xl mt-4 px-6">
-        <div className="shimmer-border-subtle rounded-xl p-4 bg-sm-bg/90 backdrop-blur-xl border border-white/[0.06]">
+      <div className="mx-auto max-w-7xl mt-4 px-6">
+        <div className="rounded-xl px-6 py-4 bg-sm-bg/90 backdrop-blur-xl border border-white/[0.06]">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <a href="/" className="flex items-center gap-3 group">

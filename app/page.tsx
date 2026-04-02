@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
-import Counter from '@/components/Counter';
+// Counter no longer used in By The Numbers
 import LogoMarquee from '@/components/LogoMarquee';
 import ClientLogoStrip from '@/components/ClientLogoStrip';
 import dynamic from 'next/dynamic';
@@ -30,6 +30,9 @@ const INTEGRATIONS_ROW1 = [
   { name: 'Square', icon: 'square' },
   { name: 'Twilio', icon: 'twilio' },
   { name: 'AWS', icon: 'amazonaws' },
+  { name: 'Stripe', icon: 'stripe' },
+  { name: 'Xero', icon: 'xero' },
+  { name: 'HubSpot', icon: 'hubspot' },
 ];
 
 const INTEGRATIONS_ROW2 = [
@@ -46,6 +49,26 @@ const INTEGRATIONS_ROW2 = [
   { name: 'Airtable', icon: 'airtable' },
   { name: 'Intercom', icon: 'intercom' },
   { name: 'Mailchimp', icon: 'mailchimp' },
+  { name: 'Monday', icon: 'monday' },
+  { name: 'Jira', icon: 'jira' },
+];
+
+const INTEGRATIONS_ROW3 = [
+  { name: 'Resend', icon: 'resend' },
+  { name: 'Docker', icon: 'docker' },
+  { name: 'Redis', icon: 'redis' },
+  { name: 'MongoDB', icon: 'mongodb' },
+  { name: 'Prisma', icon: 'prisma' },
+  { name: 'Tailwind', icon: 'tailwindcss' },
+  { name: 'React', icon: 'react' },
+  { name: 'Next.js', icon: 'nextdotjs' },
+  { name: 'TypeScript', icon: 'typescript' },
+  { name: 'Node.js', icon: 'nodedotjs' },
+  { name: 'Python', icon: 'python' },
+  { name: 'Sentry', icon: 'sentry' },
+  { name: 'Linear', icon: 'linear' },
+  { name: 'Datadog', icon: 'datadog' },
+  { name: 'Plaid', icon: 'plaid' },
 ];
 
 const SERVICES = [
@@ -220,6 +243,55 @@ function StaggerItem({ children, className = '', index = 0 }: { children: React.
   );
 }
 
+// Speed comparison animation
+function SpeedComparison() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+
+  const competitors = [
+    { name: 'Traditional Agency', weeks: 10, color: 'rgba(255,255,255,0.15)' },
+    { name: 'Freelancer', weeks: 6, color: 'rgba(255,255,255,0.15)' },
+    { name: 'Offshore Team', weeks: 8, color: 'rgba(255,255,255,0.15)' },
+    { name: 'Stackmate', weeks: 0.3, color: '#FF7A00' },
+  ];
+
+  const maxWeeks = 10;
+
+  return (
+    <div ref={ref} className="shimmer-border border border-white/[0.06] rounded-2xl p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <div className="font-mono text-xs uppercase tracking-wider text-sm-muted mb-1">Delivery speed</div>
+          <div className="font-display font-bold text-xl">How fast we ship vs the rest</div>
+        </div>
+        <div className="font-mono text-xs text-sm-muted">Time to launch (weeks)</div>
+      </div>
+      <div className="space-y-4">
+        {competitors.map((comp, i) => (
+          <div key={comp.name} className="flex items-center gap-4">
+            <div className={`w-40 shrink-0 text-sm font-mono ${comp.name === 'Stackmate' ? 'text-sm-accent font-bold' : 'text-sm-muted'}`}>
+              {comp.name}
+            </div>
+            <div className="flex-1 relative h-8 bg-white/[0.03] rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full flex items-center justify-end pr-3"
+                style={{ backgroundColor: comp.color }}
+                initial={{ width: 0 }}
+                animate={isInView ? { width: `${Math.max((comp.weeks / maxWeeks) * 100, 5)}%` } : {}}
+                transition={{ duration: 1.2, delay: i * 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <span className={`text-xs font-mono font-bold ${comp.name === 'Stackmate' ? 'text-sm-bg' : 'text-sm-muted'}`}>
+                  {comp.name === 'Stackmate' ? '2 days' : `${comp.weeks} weeks`}
+                </span>
+              </motion.div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -282,15 +354,6 @@ export default function Home() {
 
       {/* ====== HERO ====== */}
       <section className="relative pt-40 pb-20 px-6 max-w-7xl mx-auto">
-        {/* Announcement pill */}
-        <AnimatedSection>
-          <div className="flex items-center gap-2 mb-8">
-            <div className="px-4 py-2 rounded-full border border-green-500/20 bg-green-500/10 text-green-400 text-sm font-mono flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              Now accepting new clients in Perth
-            </div>
-          </div>
-        </AnimatedSection>
 
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           {/* Left side - Content */}
@@ -315,7 +378,11 @@ export default function Home() {
                 >
                   GET A QUOTE
                 </button>
-                <button className="px-8 py-4 shimmer-border-subtle border border-white/[0.06] text-sm-accent font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent/10 transition-all duration-200">
+                <button className="corner-bracket-btn px-8 py-4 text-sm-text font-mono text-sm uppercase tracking-wider hover:text-sm-accent transition-all duration-200">
+                  <span className="bracket tl"></span>
+                  <span className="bracket tr"></span>
+                  <span className="bracket bl"></span>
+                  <span className="bracket br"></span>
                   FREE AUDIT
                 </button>
               </div>
@@ -346,40 +413,31 @@ export default function Home() {
       {/* ====== BY THE NUMBERS ====== */}
       <section className="py-24 px-6 max-w-7xl mx-auto">
         <AnimatedSection>
-          <div className="shimmer-border border border-white/[0.06] rounded-2xl p-8">
-            <p className="eyebrow mb-8">By the numbers</p>
-            
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Left - Main stat */}
-              <div>
-                <div className="text-6xl font-display font-bold mb-4">
-                  <Counter target={50} suffix="+" />
-                </div>
-                <div className="font-mono text-sm uppercase tracking-wider text-sm-accent mb-4">PROJECTS DELIVERED</div>
-                <p className="text-sm-muted">Across Perth, Western Australia and beyond.</p>
-              </div>
+          <p className="eyebrow mb-4 text-center">By the numbers</p>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
+            Built different. Built faster.
+          </h2>
+        </AnimatedSection>
 
-              {/* Right - Australia map */}
-              <div>
-                <AustraliaMap />
-                {/* Stats row */}
-                <div className="grid grid-cols-3 gap-4 mt-6 text-center">
-                  <div className="border-r border border-white/[0.06] pr-4">
-                    <div className="font-mono text-lg font-bold">98%</div>
-                    <div className="text-xs text-sm-muted">satisfaction</div>
-                  </div>
-                  <div className="border-r border border-white/[0.06] pr-4">
-                    <div className="font-mono text-lg font-bold">10x</div>
-                    <div className="text-xs text-sm-muted">faster</div>
-                  </div>
-                  <div>
-                    <div className="font-mono text-lg font-bold">24/7</div>
-                    <div className="text-xs text-sm-muted">support</div>
-                  </div>
-                </div>
+        <div className="grid md:grid-cols-4 gap-6 mb-16">
+          {[
+            { value: '50+', label: 'Projects delivered' },
+            { value: '98%', label: 'Client satisfaction' },
+            { value: '1-2d', label: 'Average delivery' },
+            { value: '24/7', label: 'Support & monitoring' },
+          ].map((stat, i) => (
+            <StaggerItem key={stat.label} index={i}>
+              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 text-center bg-sm-surface/20">
+                <div className="text-4xl font-display font-bold text-sm-accent mb-2">{stat.value}</div>
+                <div className="text-sm text-sm-muted font-mono uppercase tracking-wider">{stat.label}</div>
               </div>
-            </div>
-          </div>
+            </StaggerItem>
+          ))}
+        </div>
+
+        {/* Speed comparison animation */}
+        <AnimatedSection>
+          <SpeedComparison />
         </AnimatedSection>
       </section>
 
@@ -435,7 +493,6 @@ export default function Home() {
       {/* ====== OUR PROCESS ====== */}
       <section id="process" className="py-24 px-6 max-w-7xl mx-auto">
         <AnimatedSection>
-          <p className="eyebrow mb-4 text-center">Our process</p>
           <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
             From quote to launch in days, not months
           </h2>
@@ -643,6 +700,7 @@ export default function Home() {
         <div className="space-y-4">
           <LogoMarquee items={INTEGRATIONS_ROW1} direction="left" speed={35} />
           <LogoMarquee items={INTEGRATIONS_ROW2} direction="right" speed={40} />
+          <LogoMarquee items={INTEGRATIONS_ROW3} direction="left" speed={45} />
         </div>
       </section>
 
@@ -750,8 +808,7 @@ export default function Home() {
                 <a href="/blog" className="hover:text-sm-accent transition-colors">BLOG</a>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="font-mono text-xs text-green-400">All systems online</span>
+                <span className="font-mono text-xs text-sm-muted">Perth, Australia</span>
               </div>
             </div>
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border border-white/[0.06] text-xs text-sm-muted">
