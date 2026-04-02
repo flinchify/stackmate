@@ -411,13 +411,13 @@ export default function Home() {
                 >
                   GET A QUOTE
                 </button>
-                <button onClick={() => setQuoteOpen(true)} className="corner-bracket-btn px-8 py-4 text-sm-text font-mono text-sm uppercase tracking-wider hover:text-sm-accent transition-all duration-200">
+                <a href="/audit" className="corner-bracket-btn px-8 py-4 text-sm-text font-mono text-sm uppercase tracking-wider hover:text-sm-accent transition-all duration-200 inline-flex items-center justify-center">
                   <span className="bracket tl"></span>
                   <span className="bracket tr"></span>
                   <span className="bracket bl"></span>
                   <span className="bracket br"></span>
                   FREE AUDIT
-                </button>
+                </a>
               </div>
             </AnimatedSection>
 
@@ -799,12 +799,12 @@ export default function Home() {
             <p className="text-lg text-sm-muted max-w-2xl mx-auto mb-8">
               We&apos;ll analyse your business operations and show you exactly where AI and automation can save time, cut costs, and help you scale. No cost, no obligation. We respond within 48 hours.
             </p>
-            <button
-              onClick={() => setQuoteOpen(true)}
-              className="px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
+            <a
+              href="/audit"
+              className="inline-block px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider hover:bg-sm-accent-light transition-all duration-200 font-medium"
             >
               GET YOUR FREE AI AUDIT
-            </button>
+            </a>
           </div>
         </AnimatedSection>
       </section>
