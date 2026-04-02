@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import {
   Bot, Workflow, Code2, Globe, Link2, Palette, BarChart3, MessageSquare,
-  ArrowRight, Zap, Shield, Clock,
-  ChevronRight, CheckCircle2, X as XIcon,
-  MapPin
+  ArrowRight, Zap, Shield, Clock, MapPin,
+  ChevronRight, CheckCircle2, X as XIcon, ChevronDown
 } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
@@ -17,7 +16,7 @@ import ClientLogoStrip from '@/components/ClientLogoStrip';
 import dynamic from 'next/dynamic';
 const MatrixBg = dynamic(() => import('@/components/MatrixBg'), { ssr: false });
 
-
+// Keep all existing data arrays
 const INTEGRATIONS_ROW1 = [
   { name: 'Stripe', icon: 'stripe' },
   { name: 'Xero', icon: 'xero' },
@@ -75,6 +74,120 @@ const COMPETITORS = [
 
 const STACKMATE = { name: 'Stackmate', delivery: '1-2 days', ai: true, perth: 'Always', support: '24/7 + AI', price: 'Fair' };
 
+// CodeBlock component for hero
+function CodeBlock({ lines }: { lines: string[] }) {
+  const [displayedLines, setDisplayedLines] = useState<string[]>([]);
+  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [currentCharIndex, setCurrentCharIndex] = useState(0);
+  const [showCursor, setShowCursor] = useState(true);
+
+  useEffect(() => {
+    if (currentLineIndex < lines.length) {
+      const currentLine = lines[currentLineIndex];
+      if (currentCharIndex < currentLine.length) {
+        const timeout = setTimeout(() => {
+          const updatedLines = [...displayedLines];
+          if (updatedLines[currentLineIndex]) {
+            updatedLines[currentLineIndex] = currentLine.substring(0, currentCharIndex + 1);
+          } else {
+            updatedLines[currentLineIndex] = currentLine[0];
+          }
+          setDisplayedLines(updatedLines);
+          setCurrentCharIndex(currentCharIndex + 1);
+        }, 30);
+        return () => clearTimeout(timeout);
+      } else {
+        const timeout = setTimeout(() => {
+          setCurrentLineIndex(currentLineIndex + 1);
+          setCurrentCharIndex(0);
+        }, 200);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [currentLineIndex, currentCharIndex, displayedLines, lines]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowCursor(prev => !prev);
+    }, 600);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="bg-sm-surface rounded-lg border border-sm-border font-mono text-sm overflow-hidden">
+      {/* Terminal header */}
+      <div className="flex items-center gap-2 px-4 py-3 bg-sm-card border-b border-sm-border">
+        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+        <span className="text-sm-muted text-xs ml-2">stackmate.config.ts</span>
+      </div>
+      
+      {/* Code content */}
+      <div className="p-4 text-sm-text">
+        {displayedLines.map((line, i) => (
+          <div key={i} className="leading-relaxed">
+            {line}
+            {i === displayedLines.length - 1 && currentLineIndex < lines.length && showCursor && (
+              <span className="bg-sm-accent w-2 h-5 inline-block ml-0.5 cursor-blink"></span>
+            )}
+          </div>
+        ))}
+        {currentLineIndex >= lines.length && showCursor && (
+          <span className="bg-sm-accent w-2 h-5 inline-block cursor-blink"></span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Australia Map component
+function AustraliaMap() {
+  return (
+    <div className="relative w-full h-48">
+      <svg viewBox="0 0 400 300" className="w-full h-full">
+        {/* Australia outline */}
+        <path
+          d="M 150,50 C 200,30 250,40 280,60 C 310,80 330,110 340,150 C 350,190 340,230 320,260 C 300,290 270,310 240,320 C 210,330 180,320 160,300 C 140,280 120,250 110,220 C 100,190 90,160 100,130 C 110,100 130,70 150,50 Z"
+          fill="none"
+          stroke="rgba(255,122,0,0.3)"
+          strokeWidth="1"
+          className="transition-colors duration-300"
+        />
+        
+        {/* Perth dot */}
+        <circle
+          cx="120"
+          cy="160"
+          r="4"
+          fill="#FF7A00"
+          className="animate-pulse-dot"
+        />
+        
+        {/* Sydney dot */}
+        <circle
+          cx="310"
+          cy="180"
+          r="3"
+          fill="#FF7A00"
+          className="animate-pulse-dot"
+          style={{ animationDelay: '0.5s' }}
+        />
+        
+        {/* Melbourne dot */}
+        <circle
+          cx="285"
+          cy="220"
+          r="3"
+          fill="#FF7A00"
+          className="animate-pulse-dot"
+          style={{ animationDelay: '1s' }}
+        />
+      </svg>
+    </div>
+  );
+}
+
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
@@ -109,23 +222,58 @@ function StaggerItem({ children, className = '', index = 0 }: { children: React.
 
 export default function Home() {
   const [quoteOpen, setQuoteOpen] = useState(false);
-  const heroRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const [activeTab, setActiveTab] = useState(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const codeLines = [
+    '// stackmate.config.ts',
+    'export const project = {',
+    '  client: "Acme Mining",',
+    '  services: ["ai-agent", "automation"],',
+    '  delivery: "2 days",',
+    '  status: "building..."',
+    '}'
+  ];
 
-  // Typewriter for hero
-  const [heroText, setHeroText] = useState('');
-  const fullText = 'We build systems that run your business.';
-  useEffect(() => {
-    let i = 0;
-    const interval = setInterval(() => {
-      setHeroText(fullText.slice(0, i + 1));
-      i++;
-      if (i >= fullText.length) clearInterval(interval);
-    }, 35);
-    return () => clearInterval(interval);
-  }, []);
+  const tabGroups = [
+    {
+      title: 'AI & Agents',
+      services: [
+        { icon: Bot, title: 'AI Agents & Chatbots', desc: 'Custom AI agents that handle customer support, lead qualification, and internal operations 24/7.' },
+        { icon: MessageSquare, title: 'AI Consulting', desc: 'Not sure where AI fits? We\'ll audit your operations and show you exactly where to automate.' },
+      ]
+    },
+    {
+      title: 'Software',
+      services: [
+        { icon: Code2, title: 'Custom Software', desc: 'Bespoke applications built for your exact needs. Dashboards, portals, internal tools, and more.' },
+        { icon: Globe, title: 'Websites & Web Apps', desc: 'Lightning-fast, conversion-optimized websites that make your business look as good as it runs.' },
+      ]
+    },
+    {
+      title: 'Integration',
+      services: [
+        { icon: Workflow, title: 'Business Automation', desc: 'Eliminate manual processes. Automate invoicing, scheduling, reporting, and workflows end-to-end.' },
+        { icon: Link2, title: 'System Integrations', desc: 'Connect your CRM, ERP, accounting, and tools into one unified system. No more copy-pasting.' },
+      ]
+    },
+    {
+      title: 'Strategy',
+      services: [
+        { icon: Palette, title: 'Branding & Design', desc: 'Logos, brand identity, and design systems that make your business unmistakable.' },
+        { icon: BarChart3, title: 'Data & Analytics', desc: 'Turn your business data into decisions. Custom dashboards, reporting, and AI-powered insights.' },
+      ]
+    }
+  ];
+
+  const faqs = [
+    { q: 'How fast does Stackmate deliver projects?', a: 'Most projects are delivered within 1-2 business days. We use AI-accelerated development to build 10x faster than traditional agencies.' },
+    { q: 'What industries does Stackmate work with?', a: 'We work with mining and resources companies, local businesses (trades, hospitality, retail), agencies, and enterprises across Western Australia and beyond.' },
+    { q: 'Is Stackmate based in Perth?', a: 'Yes. Stackmate is based in Perth, Western Australia. We offer in-person meetings, same-timezone support, and deep understanding of WA business and mining regulations.' },
+    { q: 'What does the free AI audit include?', a: 'Our free AI audit includes an operations scan, AI opportunity map, ROI projection, and a prioritised action plan showing exactly where automation can save your business time and money. We respond within 48 hours.' },
+    { q: 'Do I own the code Stackmate builds?', a: 'Yes. Upon full payment, you own 100% of the code, designs, and systems we build. No lock-in, no proprietary platforms. Everything is yours.' },
+    { q: 'What technologies does Stackmate use?', a: 'We build with Next.js, React, TypeScript, Node.js, PostgreSQL, and integrate with Stripe, Xero, HubSpot, OpenAI, and 100+ other platforms. Modern stack, no legacy tech.' },
+  ];
 
   return (
     <main className="relative">
@@ -133,366 +281,361 @@ export default function Home() {
       <QuoteModal isOpen={quoteOpen} onClose={() => setQuoteOpen(false)} />
 
       {/* ====== HERO ====== */}
-      <motion.section
-        ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        style={{ opacity: heroOpacity }}
-      >
-        <MatrixBg />
-        {/* Orange gradient orb */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-32 pb-20">
-          <div className="mb-8">
-            <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-display font-bold tracking-tight leading-[1.05]">
-              {heroText}
-              <motion.span
-                className="inline-block w-[3px] h-[0.8em] bg-white ml-1 align-middle"
-                animate={{ opacity: [1, 0] }}
-                transition={{ duration: 0.6, repeat: Infinity, repeatType: 'reverse' }}
-              />
-            </h1>
+      <section className="relative pt-40 pb-20 px-6 max-w-7xl mx-auto">
+        {/* Announcement pill */}
+        <AnimatedSection>
+          <div className="flex items-center gap-2 mb-8">
+            <div className="px-4 py-2 rounded-full border border-green-500/20 bg-green-500/10 text-green-400 text-sm font-mono flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              Now accepting new clients in Perth
+            </div>
           </div>
+        </AnimatedSection>
 
-          <motion.p
-            className="text-lg md:text-xl text-sm-light max-w-2xl mx-auto mb-14 leading-relaxed"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1.5 }}
-          >
-            AI agents. Custom software. Full business automation. Delivered in 1-2 days, not months. Perth&apos;s fastest systems integrator.
-          </motion.p>
-
-          <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1.8 }}
-          >
-            <button
-              onClick={() => setQuoteOpen(true)}
-              className="group relative px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold text-lg rounded-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
-            >
-              <span className="flex items-center gap-2">
-                Get a Quote
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </button>
-            <a
-              href="/audit"
-              className="px-8 py-4 border border-orange-500/30 text-orange-400 font-display font-semibold text-lg rounded-sm hover:border-orange-500/60 hover:bg-orange-500/5 transition-all duration-200"
-            >
-              Free AI Audit
-            </a>
-          </motion.div>
-
-          <motion.div
-            className="flex items-center justify-center gap-8 mt-16 text-sm-muted"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 2.1 }}
-          >
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-orange-400" />
-              <span className="text-sm">1-2 Day Delivery</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              <span className="text-sm">Perth Based</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span className="text-sm">24/7 Support</span>
-            </div>
-          </motion.div>
-
-          {/* Worked with */}
-          <motion.div
-            className="mt-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 2.4 }}
-          >
-            <p className="text-xs text-sm-muted uppercase tracking-widest mb-4 text-center">Our Clients</p>
-            <ClientLogoStrip />
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* ====== STATS BAR ====== */}
-      <section className="border-y border-sm-border bg-sm-card/30">
-        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <AnimatedSection>
-            <div className="text-3xl md:text-4xl font-display font-bold">
-              <span aria-label="50+ projects delivered"><Counter target={50} suffix="+" /></span>
-            </div>
-            <p className="text-sm text-sm-muted mt-1">Projects Delivered</p>
-            <noscript><span>50+</span></noscript>
-          </AnimatedSection>
-          <AnimatedSection>
-            <div className="text-3xl md:text-4xl font-display font-bold">
-              <span aria-label="98% client satisfaction"><Counter target={98} suffix="%" /></span>
-            </div>
-            <p className="text-sm text-sm-muted mt-1">Client Satisfaction</p>
-            <noscript><span>98%</span></noscript>
-          </AnimatedSection>
-          <AnimatedSection>
-            <div className="text-3xl md:text-4xl font-display font-bold">
-              <span aria-label="10x faster than agencies"><Counter target={10} suffix="x" /></span>
-            </div>
-            <p className="text-sm text-sm-muted mt-1">Faster Than Agencies</p>
-            <noscript><span>10x</span></noscript>
-          </AnimatedSection>
-          <AnimatedSection>
-            <div className="text-3xl md:text-4xl font-display font-bold">
-              <span aria-label="24/7 support and monitoring">24/7</span>
-            </div>
-            <p className="text-sm text-sm-muted mt-1">Support & Monitoring</p>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      {/* ====== SERVICES ====== */}
-      <section id="services" className="py-24 md:py-32">
-        <div className="max-w-7xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">What We Build</p>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-              Everything your business needs to run on autopilot
-            </h2>
-          </AnimatedSection>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {SERVICES.map((service, i) => (
-              <StaggerItem key={service.title} index={i}>
-                <div className="group p-6 rounded-sm border border-sm-border bg-sm-card/30 hover:bg-sm-card/60 hover:border-orange-500/20 transition-all duration-300 h-full hover:-translate-y-1">
-                  <service.icon className="w-8 h-8 text-sm-light mb-4 group-hover:text-orange-400 transition-colors duration-300" />
-                  <h3 className="font-display font-semibold text-lg mb-2">{service.title}</h3>
-                  <p className="text-sm text-sm-muted leading-relaxed">{service.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ====== PROCESS ====== */}
-      <section id="process" className="py-24 md:py-32 bg-sm-card/20">
-        <div className="max-w-5xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">Our Process</p>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-              From quote to launch in days, not months
-            </h2>
-          </AnimatedSection>
-
-          <div className="space-y-0">
-            {PROCESS_STEPS.map((step, i) => (
-              <StaggerItem key={step.num} index={i}>
-                <div className="group flex items-start gap-6 py-8 border-b border-sm-border hover:pl-4 transition-all duration-300">
-                  <span className="text-4xl md:text-5xl font-display font-bold text-sm-border group-hover:text-white/20 transition-colors duration-300 shrink-0">
-                    {step.num}
-                  </span>
-                  <div>
-                    <h3 className="text-xl md:text-2xl font-display font-bold mb-2">{step.title}</h3>
-                    <p className="text-sm-muted">{step.desc}</p>
-                  </div>
-                </div>
-              </StaggerItem>
-            ))}
-          </div>
-
-          <AnimatedSection className="text-center mt-12">
-            <button
-              onClick={() => setQuoteOpen(true)}
-              className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold rounded-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
-            >
-              Start Your Project
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      {/* ====== COMPARISON ====== */}
-      <section id="compare" className="py-24 md:py-32">
-        <div className="max-w-5xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">Why Stackmate</p>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-              See how we stack up
-            </h2>
-          </AnimatedSection>
-
-          <div className="space-y-3">
-            <div className="hidden md:grid grid-cols-6 gap-4 px-6 text-sm text-sm-muted">
-              <div className="col-span-1"></div>
-              <div>Delivery</div>
-              <div>AI-Powered</div>
-              <div>Perth Based</div>
-              <div>Support</div>
-              <div>Pricing</div>
-            </div>
+        <div className="grid lg:grid-cols-2 gap-16 items-start">
+          {/* Left side - Content */}
+          <div>
+            <AnimatedSection>
+              <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight leading-[1.05] mb-6">
+                We build systems that run your business.
+              </h1>
+            </AnimatedSection>
 
             <AnimatedSection>
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 p-6 rounded-sm border-2 border-white/20 bg-white/5">
+              <p className="text-lg text-sm-muted max-w-lg mb-8 leading-relaxed">
+                AI agents. Custom software. Full business automation. Delivered in 1-2 days, not months. Perth&apos;s fastest systems integrator.
+              </p>
+            </AnimatedSection>
+
+            <AnimatedSection>
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <button
+                  onClick={() => setQuoteOpen(true)}
+                  className="px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
+                >
+                  GET A QUOTE
+                </button>
+                <button className="px-8 py-4 shimmer-border-subtle border border-white/[0.06] text-sm-accent font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent/10 transition-all duration-200">
+                  FREE AUDIT
+                </button>
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection>
+              <p className="text-xs text-sm-subtle">No obligation required</p>
+            </AnimatedSection>
+          </div>
+
+          {/* Right side - Code block */}
+          <div className="lg:mt-16">
+            <AnimatedSection>
+              <CodeBlock lines={codeLines} />
+            </AnimatedSection>
+          </div>
+        </div>
+
+        {/* Client logos */}
+        <AnimatedSection>
+          <div className="mt-20">
+            <p className="text-xs font-mono text-sm-muted uppercase tracking-widest mb-6 text-center">Businesses we&apos;ve built for</p>
+            <ClientLogoStrip />
+          </div>
+        </AnimatedSection>
+      </section>
+
+      {/* ====== BY THE NUMBERS ====== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <div className="shimmer-border border border-white/[0.06] rounded-2xl p-8">
+            <p className="eyebrow mb-8">By the numbers</p>
+            
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left - Main stat */}
+              <div>
+                <div className="text-6xl font-display font-bold mb-4">
+                  <Counter target={50} suffix="+" />
+                </div>
+                <div className="font-mono text-sm uppercase tracking-wider text-sm-accent mb-4">PROJECTS DELIVERED</div>
+                <p className="text-sm-muted">Across Perth, Western Australia and beyond.</p>
+              </div>
+
+              {/* Right - Australia map */}
+              <div>
+                <AustraliaMap />
+                {/* Stats row */}
+                <div className="grid grid-cols-3 gap-4 mt-6 text-center">
+                  <div className="border-r border border-white/[0.06] pr-4">
+                    <div className="font-mono text-lg font-bold">98%</div>
+                    <div className="text-xs text-sm-muted">satisfaction</div>
+                  </div>
+                  <div className="border-r border border-white/[0.06] pr-4">
+                    <div className="font-mono text-lg font-bold">10x</div>
+                    <div className="text-xs text-sm-muted">faster</div>
+                  </div>
+                  <div>
+                    <div className="font-mono text-lg font-bold">24/7</div>
+                    <div className="text-xs text-sm-muted">support</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </AnimatedSection>
+      </section>
+
+      {/* ====== WHAT WE BUILD ====== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <p className="eyebrow mb-4 text-center">What we build</p>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
+            Everything your business needs to run on autopilot
+          </h2>
+        </AnimatedSection>
+
+        {/* Tab navigation */}
+        <AnimatedSection>
+          <div className="flex flex-wrap justify-center gap-2 mb-12">
+            {tabGroups.map((tab, i) => (
+              <button
+                key={tab.title}
+                onClick={() => setActiveTab(i)}
+                className={`px-6 py-3 font-mono text-sm uppercase tracking-wider transition-all duration-200 ${
+                  activeTab === i
+                    ? 'text-sm-accent border-b-2 border-sm-accent'
+                    : 'text-sm-muted hover:text-sm-accent'
+                }`}
+              >
+                {tab.title}
+              </button>
+            ))}
+          </div>
+        </AnimatedSection>
+
+        {/* Tab content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="grid md:grid-cols-2 gap-6"
+          >
+            {tabGroups[activeTab].services.map((service, i) => (
+              <div key={service.title} className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/30 hover:bg-sm-surface/50 transition-all duration-200">
+                <service.icon className="w-8 h-8 text-sm-accent mb-4" />
+                <h3 className="font-display font-semibold text-xl mb-3">{service.title}</h3>
+                <p className="text-sm text-sm-muted leading-relaxed">{service.desc}</p>
+              </div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </section>
+
+      {/* ====== OUR PROCESS ====== */}
+      <section id="process" className="py-24 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <p className="eyebrow mb-4 text-center">Our process</p>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
+            From quote to launch in days, not months
+          </h2>
+        </AnimatedSection>
+
+        <AnimatedSection>
+          <div className="shimmer-border-subtle border border-white/[0.06] rounded-2xl p-8">
+            {/* Desktop flow */}
+            <div className="hidden md:block">
+              <div className="relative flex items-center justify-between mb-12">
+                {/* Connecting line */}
+                <div className="absolute top-8 left-8 right-8 h-px border-t border border-white/[0.08] dash-flow"></div>
+                
+                {PROCESS_STEPS.map((step, i) => (
+                  <div key={step.num} className="relative flex-1 text-center">
+                    <div className="w-16 h-16 rounded-full bg-sm-accent text-sm-bg flex items-center justify-center font-mono font-bold text-lg mx-auto mb-4">
+                      {step.num}
+                    </div>
+                    <h3 className="font-display font-semibold text-lg mb-2">{step.title}</h3>
+                    <p className="text-sm text-sm-muted max-w-48 mx-auto">{step.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile flow */}
+            <div className="md:hidden space-y-8">
+              {PROCESS_STEPS.map((step, i) => (
+                <div key={step.num} className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-sm-accent text-sm-bg flex items-center justify-center font-mono font-bold shrink-0">
+                    {step.num}
+                  </div>
+                  <div>
+                    <h3 className="font-display font-semibold text-lg mb-2">{step.title}</h3>
+                    <p className="text-sm text-sm-muted">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </AnimatedSection>
+      </section>
+
+      {/* ====== WHY STACKMATE ====== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <p className="eyebrow mb-4 text-center">Why Stackmate</p>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
+            See how we stack up
+          </h2>
+        </AnimatedSection>
+
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="hidden md:grid grid-cols-6 gap-4 px-6 font-mono text-xs uppercase tracking-wider text-sm-muted">
+            <div></div>
+            <div>DELIVERY</div>
+            <div>AI</div>
+            <div>PERTH</div>
+            <div>SUPPORT</div>
+            <div>PRICE</div>
+          </div>
+
+          {/* Stackmate row */}
+          <AnimatedSection>
+            <div className="shimmer-border border border-white/[0.06] rounded-xl p-6 bg-sm-accent/5">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-center">
                 <div className="col-span-2 md:col-span-1 font-display font-bold text-lg flex items-center gap-2">
                   <Image src="/logo.png" alt="" width={24} height={24} className="invert" />
                   Stackmate
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="md:hidden text-sm-muted text-sm">Delivery:</span>
-                  <span className="text-orange-400 font-semibold">{STACKMATE.delivery}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="md:hidden text-sm-muted text-sm">AI:</span>
-                  <CheckCircle2 className="w-5 h-5 text-orange-400" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="md:hidden text-sm-muted text-sm">Perth:</span>
-                  <span className="text-orange-400 font-semibold">{STACKMATE.perth}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="md:hidden text-sm-muted text-sm">Support:</span>
-                  <span className="text-orange-400 font-semibold">{STACKMATE.support}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="md:hidden text-sm-muted text-sm">Price:</span>
-                  <span className="text-orange-400 font-semibold">{STACKMATE.price}</span>
+                <div className="text-sm-accent font-mono font-semibold">{STACKMATE.delivery}</div>
+                <div><CheckCircle2 className="w-5 h-5 text-sm-accent" /></div>
+                <div className="text-sm-accent font-mono font-semibold">{STACKMATE.perth}</div>
+                <div className="text-sm-accent font-mono font-semibold">{STACKMATE.support}</div>
+                <div className="text-sm-accent font-mono font-semibold">{STACKMATE.price}</div>
+              </div>
+            </div>
+          </AnimatedSection>
+
+          {/* Competitor rows */}
+          {COMPETITORS.map((comp, i) => (
+            <StaggerItem key={comp.name} index={i}>
+              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-center">
+                  <div className="col-span-2 md:col-span-1 font-semibold text-sm-muted">{comp.name}</div>
+                  <div className="text-sm-muted font-mono">{comp.delivery}</div>
+                  <div><XIcon className="w-5 h-5 text-red-400/50" /></div>
+                  <div className="text-sm-muted font-mono">{comp.perth}</div>
+                  <div className="text-sm-muted font-mono">{comp.support}</div>
+                  <div className="text-sm-muted font-mono">{comp.price}</div>
                 </div>
               </div>
-            </AnimatedSection>
-
-            {COMPETITORS.map((comp, i) => (
-              <StaggerItem key={comp.name} index={i}>
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 p-6 rounded-sm border border-sm-border bg-sm-card/30">
-                  <div className="col-span-2 md:col-span-1 font-semibold text-sm-light">{comp.name}</div>
-                  <div className="flex items-center gap-2">
-                    <span className="md:hidden text-sm-muted text-sm">Delivery:</span>
-                    <span className="text-sm-muted">{comp.delivery}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="md:hidden text-sm-muted text-sm">AI:</span>
-                    <XIcon className="w-5 h-5 text-red-400/50" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="md:hidden text-sm-muted text-sm">Perth:</span>
-                    <span className="text-sm-muted">{comp.perth}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="md:hidden text-sm-muted text-sm">Support:</span>
-                    <span className="text-sm-muted">{comp.support}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="md:hidden text-sm-muted text-sm">Price:</span>
-                    <span className="text-sm-muted">{comp.price}</span>
-                  </div>
-                </div>
-              </StaggerItem>
-            ))}
-          </div>
+            </StaggerItem>
+          ))}
         </div>
       </section>
 
       {/* ====== INDUSTRIES ====== */}
-      <section className="py-24 md:py-32 bg-sm-card/20">
-        <div className="max-w-7xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">Industries We Serve</p>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-              Built for businesses that move fast
-            </h2>
-          </AnimatedSection>
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <p className="eyebrow mb-4 text-center">Industries</p>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
+            Built for businesses that move fast
+          </h2>
+        </AnimatedSection>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                title: 'Mining & Resources',
-                desc: 'Fleet tracking, safety compliance, automated reporting, and operational dashboards built for WA mining operations.',
-                highlights: ['Safety compliance automation', 'Fleet & asset tracking', 'Real-time operational dashboards'],
-              },
-              {
-                title: 'Local Businesses',
-                desc: 'Booking systems, AI receptionists, automated marketing, and customer management that runs itself.',
-                highlights: ['AI phone & chat agents', 'Automated booking & invoicing', 'Customer lifecycle management'],
-              },
-              {
-                title: 'Agencies & Enterprises',
-                desc: 'White-label tools, client portals, workflow automation, and data pipelines that scale with you.',
-                highlights: ['White-label platforms', 'Client reporting portals', 'Multi-team workflow automation'],
-              },
-            ].map((ind, i) => (
-              <StaggerItem key={ind.title} index={i}>
-                <div className="p-8 rounded-sm border border-sm-border bg-sm-dark h-full hover:border-orange-500/20 transition-all duration-300 hover:-translate-y-1">
-                  <h3 className="text-xl font-display font-bold mb-3">{ind.title}</h3>
-                  <p className="text-sm text-sm-muted mb-6">{ind.desc}</p>
-                  <ul className="space-y-2">
-                    {ind.highlights.map((h) => (
-                      <li key={h} className="flex items-center gap-2 text-sm text-sm-light">
-                        <ChevronRight className="w-3 h-3 text-sm-muted" />
-                        {h}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </StaggerItem>
-            ))}
-          </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            {
+              title: 'Mining & Resources',
+              desc: 'Fleet tracking, safety compliance, automated reporting, and operational dashboards built for WA mining operations.',
+              highlights: ['Safety compliance automation', 'Fleet & asset tracking', 'Real-time operational dashboards'],
+            },
+            {
+              title: 'Local Businesses',
+              desc: 'Booking systems, AI receptionists, automated marketing, and customer management that runs itself.',
+              highlights: ['AI phone & chat agents', 'Automated booking & invoicing', 'Customer lifecycle management'],
+            },
+            {
+              title: 'Agencies & Enterprises',
+              desc: 'White-label tools, client portals, workflow automation, and data pipelines that scale with you.',
+              highlights: ['White-label platforms', 'Client reporting portals', 'Multi-team workflow automation'],
+            },
+          ].map((ind, i) => (
+            <StaggerItem key={ind.title} index={i}>
+              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 h-full hover:border-sm-accent/20 transition-all duration-300">
+                <h3 className="text-xl font-display font-bold mb-3">{ind.title}</h3>
+                <p className="text-sm text-sm-muted mb-6 leading-relaxed">{ind.desc}</p>
+                <ul className="space-y-2">
+                  {ind.highlights.map((h) => (
+                    <li key={h} className="flex items-center gap-2 text-sm">
+                      <div className="w-1.5 h-1.5 bg-sm-accent rounded-full"></div>
+                      {h}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </StaggerItem>
+          ))}
         </div>
       </section>
 
-      {/* ====== WHAT WE DELIVER ====== */}
-      <section className="py-24 md:py-32">
-        <div className="max-w-5xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">What You Get</p>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
-              Custom logos, AI agents, backend flows. You name it, we build it.
-            </h2>
-          </AnimatedSection>
+      {/* ====== WHAT YOU GET ====== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <p className="eyebrow mb-4 text-center">What you get</p>
+          <div className="font-mono text-xs uppercase tracking-wider text-center text-sm-accent mb-8">INCLUDED</div>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
+            Custom logos, AI agents, backend flows. You name it, we build it.
+          </h2>
+        </AnimatedSection>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            {[
-              'Custom-designed logos and brand identity',
-              'AI agents that handle calls, chats, and emails',
-              'Backend automation workflows',
-              'Admin dashboards and analytics',
-              'Payment systems and invoicing',
-              'CRM and client management tools',
-              'API integrations with existing systems',
-              'Mobile-responsive web applications',
-            ].map((item, i) => (
-              <StaggerItem key={item} index={i}>
-                <div className="flex items-center gap-3 p-4 rounded-lg border border-sm-border bg-sm-card/30 hover:bg-sm-card/50 transition-all duration-200">
-                  <CheckCircle2 className="w-5 h-5 text-orange-400 shrink-0" />
-                  <span className="text-sm-light">{item}</span>
-                </div>
-              </StaggerItem>
-            ))}
-          </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          {[
+            'Custom-designed logos and brand identity',
+            'AI agents that handle calls, chats, and emails',
+            'Backend automation workflows',
+            'Admin dashboards and analytics',
+            'Payment systems and invoicing',
+            'CRM and client management tools',
+            'API integrations with existing systems',
+            'Mobile-responsive web applications',
+          ].map((item, i) => (
+            <StaggerItem key={item} index={i}>
+              <div className="shimmer-border-subtle border border-white/[0.06] rounded-lg p-4 bg-sm-surface/20 flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0" />
+                <span className="text-sm">{item}</span>
+              </div>
+            </StaggerItem>
+          ))}
         </div>
       </section>
 
-      {/* ====== NEW ERA ====== */}
-      <section className="py-24 md:py-32">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <AnimatedSection>
-            <p className="text-sm text-sm-muted uppercase tracking-widest mb-6">The Stackmate Effect</p>
+      {/* ====== THE STACKMATE EFFECT ====== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto relative">
+        {/* Giant quote marks */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-[20rem] font-serif text-sm-accent opacity-[0.05] leading-none">&ldquo;</div>
+        </div>
+        
+        <AnimatedSection>
+          <div className="text-center relative z-10">
+            <p className="eyebrow mb-6">The Stackmate Effect</p>
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight leading-[1.1] mb-6">
               When you become a Stackmate, you enter a new era of AI adoption and API integration.
             </h2>
-            <p className="text-lg text-sm-light max-w-2xl mx-auto">
+            <p className="text-lg text-sm-muted max-w-2xl mx-auto">
               Your business stops running on manual effort and starts running on systems that think, connect, and scale without you.
             </p>
-          </AnimatedSection>
-        </div>
+          </div>
+        </AnimatedSection>
       </section>
 
       {/* ====== INTEGRATIONS ====== */}
-      <section className="py-24 md:py-32 overflow-hidden">
-        <div className="max-w-5xl mx-auto px-6 mb-12">
-          <AnimatedSection className="text-center">
-            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">Integrations</p>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight">
+      <section className="py-24 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 mb-12">
+          <AnimatedSection>
+            <p className="eyebrow mb-4 text-center">Integrations</p>
+            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center">
               We connect with everything you already use
             </h2>
           </AnimatedSection>
@@ -504,122 +647,126 @@ export default function Home() {
       </section>
 
       {/* ====== FAQ ====== */}
-      <section className="py-24 md:py-32">
-        <div className="max-w-3xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-12">
-            <p className="text-sm text-sm-muted uppercase tracking-widest mb-4">FAQ</p>
-            <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight">Common questions</h2>
-          </AnimatedSection>
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: [
-              { '@type': 'Question', name: 'How fast does Stackmate deliver projects?', acceptedAnswer: { '@type': 'Answer', text: 'Most projects are delivered within 1-2 business days. We use AI-accelerated development to build 10x faster than traditional agencies.' } },
-              { '@type': 'Question', name: 'What industries does Stackmate work with?', acceptedAnswer: { '@type': 'Answer', text: 'We work with mining and resources companies, local businesses (trades, hospitality, retail), agencies, and enterprises across Western Australia and beyond.' } },
-              { '@type': 'Question', name: 'Is Stackmate based in Perth?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Stackmate is based in Perth, Western Australia. We offer in-person meetings, same-timezone support, and deep understanding of WA business and mining regulations.' } },
-              { '@type': 'Question', name: 'What does the free AI audit include?', acceptedAnswer: { '@type': 'Answer', text: 'Our free AI audit includes an operations scan, AI opportunity map, ROI projection, and a prioritised action plan showing exactly where automation can save your business time and money. We respond within 48 hours.' } },
-              { '@type': 'Question', name: 'Do I own the code Stackmate builds?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Upon full payment, you own 100% of the code, designs, and systems we build. No lock-in, no proprietary platforms. Everything is yours.' } },
-              { '@type': 'Question', name: 'What technologies does Stackmate use?', acceptedAnswer: { '@type': 'Answer', text: 'We build with Next.js, React, TypeScript, Node.js, PostgreSQL, and integrate with Stripe, Xero, HubSpot, OpenAI, and 100+ other platforms. Modern stack, no legacy tech.' } },
-            ]
-          }) }} />
-          <div className="space-y-4">
-            {[
-              { q: 'How fast does Stackmate deliver projects?', a: 'Most projects are delivered within 1-2 business days. We use AI-accelerated development to build 10x faster than traditional agencies.' },
-              { q: 'What industries does Stackmate work with?', a: 'We work with mining and resources companies, local businesses (trades, hospitality, retail), agencies, and enterprises across Western Australia and beyond.' },
-              { q: 'Is Stackmate based in Perth?', a: 'Yes. Stackmate is based in Perth, Western Australia. We offer in-person meetings, same-timezone support, and deep understanding of WA business and mining regulations.' },
-              { q: 'What does the free AI audit include?', a: 'Our free AI audit includes an operations scan, AI opportunity map, ROI projection, and a prioritised action plan showing exactly where automation can save your business time and money. We respond within 48 hours.' },
-              { q: 'Do I own the code Stackmate builds?', a: 'Yes. Upon full payment, you own 100% of the code, designs, and systems we build. No lock-in, no proprietary platforms. Everything is yours.' },
-              { q: 'What technologies does Stackmate use?', a: 'We build with Next.js, React, TypeScript, Node.js, PostgreSQL, and integrate with Stripe, Xero, HubSpot, OpenAI, and 100+ other platforms. Modern stack, no legacy tech.' },
-            ].map((faq) => (
-              <details key={faq.q} className="group p-5 rounded-sm border border-sm-border bg-sm-card/30 cursor-pointer">
-                <summary className="font-display font-semibold text-white list-none flex items-center justify-between">
-                  {faq.q}
-                  <span className="text-sm-muted group-open:rotate-45 transition-transform duration-200 text-xl">+</span>
-                </summary>
-                <p className="mt-3 text-sm text-sm-light leading-relaxed">{faq.a}</p>
-              </details>
-            ))}
-          </div>
+      <section className="py-24 px-6 max-w-4xl mx-auto">
+        <AnimatedSection>
+          <p className="eyebrow mb-4 text-center">FAQ</p>
+          <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-center mb-12">
+            Common questions
+          </h2>
+        </AnimatedSection>
+        
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs.map(faq => ({
+            '@type': 'Question',
+            name: faq.q,
+            acceptedAnswer: { '@type': 'Answer', text: faq.a }
+          }))
+        }) }} />
+
+        <div className="space-y-4">
+          {faqs.map((faq, i) => (
+            <StaggerItem key={faq.q} index={i}>
+              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full text-left p-6 flex items-center justify-between hover:bg-sm-surface/20 transition-all duration-200"
+                >
+                  <span className="font-display font-semibold text-lg pr-4">{faq.q}</span>
+                  <ChevronDown className={`w-5 h-5 text-sm-muted transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {openFaq === i && (
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: 'auto' }}
+                      exit={{ height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-6 pb-6">
+                        <p className="text-sm text-sm-muted leading-relaxed">{faq.a}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </StaggerItem>
+          ))}
         </div>
       </section>
 
-      {/* ====== FREE AUDIT ====== */}
-      <section className="py-24 md:py-32 bg-sm-card/30">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="p-10 md:p-14 rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-transparent">
-            <AnimatedSection className="text-center">
-              <p className="text-sm text-orange-400 uppercase tracking-widest mb-4">Free for every business</p>
-              <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-4">
-                Not sure where AI fits? Get a free audit.
-              </h2>
-              <p className="text-sm-light max-w-2xl mx-auto mb-8">
-                We&apos;ll analyse your business operations and show you exactly where AI and automation can save time, cut costs, and help you scale. No cost, no obligation. We respond within 48 hours.
-              </p>
-              <a
-                href="/audit"
-                className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold rounded-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
-              >
-                Get Your Free AI Audit
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </a>
-            </AnimatedSection>
-          </div>
-        </div>
-      </section>
-
-      {/* ====== CTA ====== */}
-      <section className="py-24 md:py-32 bg-white text-black">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <AnimatedSection>
-            <Image src="/logo.png" alt="Stackmate" width={60} height={60} className="mx-auto mb-8" />
-          </AnimatedSection>
-          <AnimatedSection>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight mb-6">
-              Ready to build something that actually works?
+      {/* ====== FREE AUDIT CTA ====== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <div className="shimmer-border border border-white/[0.06] rounded-2xl p-12 bg-sm-accent/5 text-center">
+            <p className="eyebrow mb-6">Free Audit</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-6">
+              Not sure where AI fits? Get a free audit.
             </h2>
-          </AnimatedSection>
-          <AnimatedSection>
-            <p className="text-lg text-black/60 max-w-2xl mx-auto mb-10">
-              Get a custom quote in 60 seconds. No fluff, no sales calls unless you want one. Just tell us what you need and we&apos;ll scope it.
+            <p className="text-lg text-sm-muted max-w-2xl mx-auto mb-8">
+              We&apos;ll analyse your business operations and show you exactly where AI and automation can save time, cut costs, and help you scale. No cost, no obligation. We respond within 48 hours.
             </p>
-          </AnimatedSection>
-          <AnimatedSection>
             <button
               onClick={() => setQuoteOpen(true)}
-              className="group inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-display font-bold text-lg rounded-sm transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_40px_rgba(249,115,22,0.3)]"
+              className="px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
             >
-              Get Your Free Quote
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              GET YOUR FREE AI AUDIT
             </button>
-          </AnimatedSection>
-        </div>
+          </div>
+        </AnimatedSection>
+      </section>
+
+      {/* ====== FINAL CTA ====== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto text-center">
+        <AnimatedSection>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight mb-8">
+            Ready to build something that actually works?
+          </h2>
+          <button
+            onClick={() => setQuoteOpen(true)}
+            className="px-10 py-5 bg-sm-accent text-sm-bg font-mono text-lg uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
+          >
+            GET YOUR FREE QUOTE
+          </button>
+        </AnimatedSection>
       </section>
 
       {/* ====== FOOTER ====== */}
-      <footer className="py-12 border-t border-sm-border">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <Image src="/logo.png" alt="Stackmate" width={28} height={28} className="invert" />
-              <span className="font-display font-bold">stackmate</span>
+      <footer className="py-12 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <div className="shimmer-border-subtle border border-white/[0.06] rounded-2xl p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
+              <div className="flex items-center gap-3">
+                <Image src="/logo.png" alt="Stackmate" width={32} height={32} className="invert" />
+                <span className="font-display font-bold text-lg">stackmate</span>
+              </div>
+              <div className="flex items-center gap-6 font-mono text-xs uppercase tracking-wider text-sm-muted">
+                <a href="/services" className="hover:text-sm-accent transition-colors">ENTERPRISE</a>
+                <a href="#process" className="hover:text-sm-accent transition-colors">PROCESS</a>
+                <a href="/clients" className="hover:text-sm-accent transition-colors">CLIENTS</a>
+                <a href="/tools" className="hover:text-sm-accent transition-colors">TOOLS</a>
+                <a href="/blog" className="hover:text-sm-accent transition-colors">BLOG</a>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="font-mono text-xs text-green-400">All systems online</span>
+              </div>
             </div>
-            <div className="flex items-center gap-6 text-sm text-sm-muted">
-              <a href="/services" className="hover:text-white transition-colors">Services</a>
-              <a href="/process" className="hover:text-white transition-colors">Process</a>
-              <a href="/why-us" className="hover:text-white transition-colors">Why Us</a>
-              <a href="/blog" className="hover:text-white transition-colors">Blog</a>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-sm-muted">
-              <MapPin className="w-3.5 h-3.5" />
-              Perth, WA
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border border-white/[0.06] text-xs text-sm-muted">
+              <div className="flex items-center gap-4">
+                <a href="/privacy" className="hover:text-sm-accent transition-colors">Privacy Policy</a>
+                <a href="/terms" className="hover:text-sm-accent transition-colors">Terms of Service</a>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5" />
+                Perth, WA
+              </div>
+              <div>&copy; {new Date().getFullYear()} Stackmate. All rights reserved.</div>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-4 mt-8 pt-8 border-t border-sm-border">
-            <a href="/privacy" className="text-xs text-sm-muted hover:text-white transition-colors">Privacy Policy</a>
-            <a href="/terms" className="text-xs text-sm-muted hover:text-white transition-colors">Terms of Service</a>
-            <span className="text-xs text-sm-muted">&copy; {new Date().getFullYear()} Stackmate. All rights reserved.</span>
-          </div>
-        </div>
+        </AnimatedSection>
       </footer>
     </main>
   );
