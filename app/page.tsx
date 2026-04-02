@@ -393,7 +393,7 @@ export default function Home() {
           <div>
             <AnimatedSection>
               <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight leading-[1.05] mb-6">
-                We build systems that run your<br className="hidden md:block" /> <TypingRotator words={heroWords} />
+                We build systems that run your<br /> <TypingRotator words={heroWords} />
               </h1>
             </AnimatedSection>
 
