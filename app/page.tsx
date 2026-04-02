@@ -302,14 +302,14 @@ function TypingRotator({ words }: { words: string[] }) {
     let timeout: ReturnType<typeof setTimeout>;
 
     if (!isDeleting && displayText === currentWord) {
-      timeout = setTimeout(() => setIsDeleting(true), 2000);
+      timeout = setTimeout(() => setIsDeleting(true), 3000);
     } else if (isDeleting && displayText === '') {
       setIsDeleting(false);
       setCurrentIndex((prev) => (prev + 1) % words.length);
     } else if (isDeleting) {
-      timeout = setTimeout(() => setDisplayText(currentWord.substring(0, displayText.length - 1)), 40);
+      timeout = setTimeout(() => setDisplayText(currentWord.substring(0, displayText.length - 1)), 60);
     } else {
-      timeout = setTimeout(() => setDisplayText(currentWord.substring(0, displayText.length + 1)), 80);
+      timeout = setTimeout(() => setDisplayText(currentWord.substring(0, displayText.length + 1)), 120);
     }
 
     return () => clearTimeout(timeout);
@@ -393,7 +393,7 @@ export default function Home() {
           <div>
             <AnimatedSection>
               <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight leading-[1.05] mb-6">
-                We build systems that run your <TypingRotator words={heroWords} />
+                We build systems that run your<br className="hidden md:block" /> <TypingRotator words={heroWords} />
               </h1>
             </AnimatedSection>
 
