@@ -9,20 +9,19 @@ const config: Config = {
     extend: {
       colors: {
         sm: {
-          black: '#000000',
-          dark: '#0a0a0a',
-          card: '#111111',
-          border: '#1a1a1a',
-          muted: '#666666',
-          light: '#999999',
-          accent: '#ffffff',
-          orange: '#f97316',
-          'orange-light': '#fb923c',
-          'orange-dark': '#ea580c',
+          bg: '#09090b',
+          surface: '#18181b',
+          card: '#1c1c21',
+          border: 'rgba(255,255,255,0.08)',
+          text: '#fafafa',
+          muted: '#a1a1aa',
+          subtle: '#52525b',
+          accent: '#FF7A00',
+          'accent-light': '#FF9D3D',
         },
       },
       fontFamily: {
-        display: ['var(--font-space-grotesk)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-satoshi)', 'system-ui', 'sans-serif'],
         body: ['var(--font-inter)', 'system-ui', 'sans-serif'],
       },
       animation: {
@@ -30,6 +29,12 @@ const config: Config = {
         'slide-up': 'slideUp 0.6s ease-out forwards',
         'pulse-slow': 'pulse 3s ease-in-out infinite',
         'grain': 'grain 8s steps(10) infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'float-reverse': 'floatReverse 8s ease-in-out infinite',
+        'shimmer': 'shimmer 2s ease-in-out infinite alternate',
+        'gradient-move': 'gradientMove 3s ease infinite',
+        'marquee-left': 'marqueeLeft 40s linear infinite',
+        'marquee-right': 'marqueeRight 40s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -51,6 +56,31 @@ const config: Config = {
           '70%': { transform: 'translate(0%, 15%)' },
           '80%': { transform: 'translate(3%, 35%)' },
           '90%': { transform: 'translate(-10%, 10%)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+          '50%': { transform: 'translateY(-20px) rotate(1deg)' },
+        },
+        floatReverse: {
+          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+          '50%': { transform: 'translateY(20px) rotate(-1deg)' },
+        },
+        shimmer: {
+          '0%': { opacity: '0.5' },
+          '100%': { opacity: '1' },
+        },
+        gradientMove: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
+        marqueeLeft: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+        marqueeRight: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0%)' },
         },
       },
     },

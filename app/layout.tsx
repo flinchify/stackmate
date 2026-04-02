@@ -4,7 +4,7 @@ import './globals.css';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-space-grotesk',
+  variable: '--font-satoshi',
   display: 'swap',
 });
 
@@ -99,7 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="font-body">{children}</body>
+      <body className="font-body bg-sm-bg text-sm-text antialiased">{children}</body>
     </html>
   );
 }
