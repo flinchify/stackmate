@@ -184,7 +184,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
             exit={{ opacity: 0, y: 40, scale: 0.96 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Close">
+            <button onClick={onClose} className="absolute top-8 right-6 z-10 p-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Close">
               <X className="w-5 h-5 text-sm-muted" />
             </button>
 
@@ -198,7 +198,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
             ) : (
               <div className="p-8">
                 {/* Progress */}
-                <div className="flex items-center gap-2 mb-8">
+                <div className="flex items-center gap-2 mb-8 pr-10">
                   {steps.map((label, i) => (
                     <div key={label} className="flex-1">
                       <div className={`h-1 rounded-full transition-colors duration-300 ${i <= step ? 'bg-white' : 'bg-sm-border'}`} />
