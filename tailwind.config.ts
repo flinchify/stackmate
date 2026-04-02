@@ -9,16 +9,17 @@ const config: Config = {
     extend: {
       colors: {
         sm: {
-          black: '#000000',
-          dark: '#0a0a0a',
-          card: '#111111',
-          border: '#1a1a1a',
-          muted: '#666666',
-          light: '#999999',
-          accent: '#ffffff',
-          orange: '#f97316',
-          'orange-light': '#fb923c',
-          'orange-dark': '#ea580c',
+          bg: '#050505',
+          surface: '#0a0a0a',
+          card: '#0a0a0a',
+          border: 'rgba(255, 255, 255, 0.06)',
+          'border-hover': 'rgba(255, 255, 255, 0.12)',
+          text: '#FAFAFA',
+          muted: '#888888',
+          subtle: '#555555',
+          amber: '#F59E0B',
+          'amber-dark': '#D97706',
+          glass: 'rgba(255, 255, 255, 0.03)',
         },
       },
       fontFamily: {
@@ -30,6 +31,8 @@ const config: Config = {
         'slide-up': 'slideUp 0.6s ease-out forwards',
         'pulse-slow': 'pulse 3s ease-in-out infinite',
         'grain': 'grain 8s steps(10) infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'float-slow': 'floatSlow 8s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -51,6 +54,15 @@ const config: Config = {
           '70%': { transform: 'translate(0%, 15%)' },
           '80%': { transform: 'translate(3%, 35%)' },
           '90%': { transform: 'translate(-10%, 10%)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        floatSlow: {
+          '0%, 100%': { transform: 'translateY(0px) translateX(0px)' },
+          '33%': { transform: 'translateY(-15px) translateX(10px)' },
+          '66%': { transform: 'translateY(10px) translateX(-10px)' },
         },
       },
     },
