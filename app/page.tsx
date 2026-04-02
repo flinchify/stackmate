@@ -411,7 +411,7 @@ export default function Home() {
                 >
                   GET A QUOTE
                 </button>
-                <button className="corner-bracket-btn px-8 py-4 text-sm-text font-mono text-sm uppercase tracking-wider hover:text-sm-accent transition-all duration-200">
+                <button onClick={() => setQuoteOpen(true)} className="corner-bracket-btn px-8 py-4 text-sm-text font-mono text-sm uppercase tracking-wider hover:text-sm-accent transition-all duration-200">
                   <span className="bracket tl"></span>
                   <span className="bracket tr"></span>
                   <span className="bracket bl"></span>

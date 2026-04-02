@@ -161,7 +161,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
 
   const steps = ['Company', 'Services', 'Details', 'Contact'];
 
-  const inputClass = 'w-full px-4 py-3 bg-sm-dark border border-sm-border rounded-lg text-white placeholder-sm-muted focus:outline-none focus:border-white/30 transition-colors';
+  const inputClass = 'w-full px-4 py-3 bg-sm-surface border border-sm-border rounded-lg text-white placeholder-sm-muted focus:outline-none focus:border-white/30 transition-colors';
 
   return (
     <AnimatePresence>

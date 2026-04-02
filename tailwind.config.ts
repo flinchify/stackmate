@@ -10,10 +10,12 @@ const config: Config = {
       colors: {
         sm: {
           bg: '#09090b',
+          dark: '#0f0f12',
           surface: '#18181b',
           card: '#1c1c21',
           border: 'rgba(255,255,255,0.08)',
           text: '#fafafa',
+          light: '#d4d4d8',
           muted: '#a1a1aa',
           subtle: '#52525b',
           accent: '#FF7A00',
