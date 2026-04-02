@@ -274,16 +274,15 @@ function SpeedComparison() {
             </div>
             <div className="flex-1 relative h-8 bg-white/[0.03] rounded-full overflow-hidden">
               <motion.div
-                className="h-full rounded-full flex items-center justify-end pr-3"
+                className="h-full rounded-full"
                 style={{ backgroundColor: comp.color }}
                 initial={{ width: 0 }}
                 animate={isInView ? { width: `${Math.max((comp.weeks / maxWeeks) * 100, 5)}%` } : {}}
                 transition={{ duration: 1.2, delay: i * 0.2, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <span className={`text-xs font-mono font-bold ${comp.name === 'Stackmate' ? 'text-sm-bg' : 'text-sm-muted'}`}>
-                  {comp.name === 'Stackmate' ? '2 days' : `${comp.weeks} weeks`}
-                </span>
-              </motion.div>
+              />
+              <span className={`text-xs font-mono font-bold shrink-0 ml-3 ${comp.name === 'Stackmate' ? 'text-sm-accent' : 'text-sm-muted'}`}>
+                {comp.name === 'Stackmate' ? '2 days' : `${comp.weeks} weeks`}
+              </span>
             </div>
           </div>
         ))}
@@ -292,10 +291,44 @@ function SpeedComparison() {
   );
 }
 
+// Typing word rotator for hero
+function TypingRotator({ words }: { words: string[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentWord = words[currentIndex];
+    let timeout: ReturnType<typeof setTimeout>;
+
+    if (!isDeleting && displayText === currentWord) {
+      timeout = setTimeout(() => setIsDeleting(true), 2000);
+    } else if (isDeleting && displayText === '') {
+      setIsDeleting(false);
+      setCurrentIndex((prev) => (prev + 1) % words.length);
+    } else if (isDeleting) {
+      timeout = setTimeout(() => setDisplayText(currentWord.substring(0, displayText.length - 1)), 40);
+    } else {
+      timeout = setTimeout(() => setDisplayText(currentWord.substring(0, displayText.length + 1)), 80);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, currentIndex, words]);
+
+  return (
+    <span className="text-sm-accent">
+      {displayText}
+      <span className="inline-block w-[3px] h-[0.85em] bg-sm-accent ml-0.5 align-middle cursor-blink"></span>
+    </span>
+  );
+}
+
 export default function Home() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const heroWords = ['business', 'company', 'startup', 'operation', 'enterprise', 'agency', 'practice', 'venture'];
 
   const codeLines = [
     '// stackmate.config.ts',
@@ -353,14 +386,14 @@ export default function Home() {
       <QuoteModal isOpen={quoteOpen} onClose={() => setQuoteOpen(false)} />
 
       {/* ====== HERO ====== */}
-      <section className="relative pt-40 pb-20 px-6 max-w-7xl mx-auto">
+      <section className="relative pt-48 pb-20 px-6 max-w-7xl mx-auto">
 
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           {/* Left side - Content */}
           <div>
             <AnimatedSection>
               <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight leading-[1.05] mb-6">
-                We build systems that run your business.
+                We build systems that run your <TypingRotator words={heroWords} />
               </h1>
             </AnimatedSection>
 
@@ -374,7 +407,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <button
                   onClick={() => setQuoteOpen(true)}
-                  className="px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
+                  className="px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider hover:bg-sm-accent-light transition-all duration-200 font-medium"
                 >
                   GET A QUOTE
                 </button>
@@ -794,34 +827,29 @@ export default function Home() {
       {/* ====== FOOTER ====== */}
       <footer className="py-12 px-6 max-w-7xl mx-auto">
         <AnimatedSection>
-          <div className="shimmer-border-subtle border border-white/[0.06] rounded-2xl p-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
-              <div className="flex items-center gap-3">
-                <Image src="/logo.png" alt="Stackmate" width={32} height={32} className="invert" />
-                <span className="font-display font-bold text-lg">stackmate</span>
-              </div>
-              <div className="flex items-center gap-6 font-mono text-xs uppercase tracking-wider text-sm-muted">
-                <a href="/services" className="hover:text-sm-accent transition-colors">ENTERPRISE</a>
-                <a href="#process" className="hover:text-sm-accent transition-colors">PROCESS</a>
-                <a href="/clients" className="hover:text-sm-accent transition-colors">CLIENTS</a>
-                <a href="/tools" className="hover:text-sm-accent transition-colors">TOOLS</a>
-                <a href="/blog" className="hover:text-sm-accent transition-colors">BLOG</a>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-sm-muted">Perth, Australia</span>
-              </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+            <div className="flex items-center gap-3">
+              <Image src="/logo.png" alt="Stackmate" width={28} height={28} className="invert" />
+              <span className="font-display font-bold text-lg">stackmate</span>
             </div>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border border-white/[0.06] text-xs text-sm-muted">
-              <div className="flex items-center gap-4">
-                <a href="/privacy" className="hover:text-sm-accent transition-colors">Privacy Policy</a>
-                <a href="/terms" className="hover:text-sm-accent transition-colors">Terms of Service</a>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5" />
-                Perth, WA
-              </div>
-              <div>&copy; {new Date().getFullYear()} Stackmate. All rights reserved.</div>
+            <div className="flex items-center gap-6 font-mono text-xs uppercase tracking-wider text-sm-muted">
+              <a href="/services" className="hover:text-sm-accent transition-colors">ENTERPRISE</a>
+              <a href="#process" className="hover:text-sm-accent transition-colors">PROCESS</a>
+              <a href="/clients" className="hover:text-sm-accent transition-colors">CLIENTS</a>
+              <a href="/tools" className="hover:text-sm-accent transition-colors">TOOLS</a>
+              <a href="/blog" className="hover:text-sm-accent transition-colors">BLOG</a>
             </div>
+          </div>
+          <div className="border-t border-white/[0.06] pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-sm-muted">
+            <div className="flex items-center gap-4">
+              <a href="/privacy" className="hover:text-sm-accent transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-sm-accent transition-colors">Terms of Service</a>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-3.5 h-3.5" />
+              Perth, WA
+            </div>
+            <div>&copy; {new Date().getFullYear()} Stackmate. All rights reserved.</div>
           </div>
         </AnimatedSection>
       </footer>
