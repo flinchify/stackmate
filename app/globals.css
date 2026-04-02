@@ -3,18 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --sm-bg: #050505;
-  --sm-surface: #0a0a0a;
-  --sm-card: #0a0a0a;
-  --sm-border: rgba(255, 255, 255, 0.06);
-  --sm-border-hover: rgba(255, 255, 255, 0.12);
-  --sm-text: #FAFAFA;
-  --sm-muted: #888888;
-  --sm-subtle: #555555;
-  --sm-amber: #F59E0B;
-  --sm-amber-dark: #D97706;
-  --sm-glass: rgba(255, 255, 255, 0.03);
-  --sm-glass-border: rgba(255, 255, 255, 0.06);
+  --sm-black: #000000;
+  --sm-dark: #0a0a0a;
+  --sm-card: #111111;
+  --sm-border: #1a1a1a;
+  --sm-muted: #666666;
+  --sm-light: #999999;
+  --sm-accent: #ffffff;
 }
 
 * {
@@ -28,115 +23,31 @@ html {
 }
 
 body {
-  background: var(--sm-bg);
-  color: var(--sm-text);
+  background: var(--sm-dark);
+  color: var(--sm-accent);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
-/* Grain overlay */
-body::before {
-  content: '';
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  right: -50%;
-  bottom: -50%;
-  width: 200%;
-  height: 200%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 9999;
-  animation: grain 8s steps(10) infinite;
-  opacity: 0.4;
-}
-
 /* Smooth scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--sm-bg);
+  background: var(--sm-dark);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: var(--sm-border);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--sm-muted);
 }
 
 ::selection {
-  background: rgba(245, 158, 11, 0.3);
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
-}
-
-/* Glass card utility */
-.glass-card {
-  background: var(--sm-glass);
-  border: 1px solid var(--sm-glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.glass-card-hover:hover {
-  border-color: var(--sm-border-hover);
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateY(-2px);
-}
-
-/* Gradient text */
-.text-gradient-amber {
-  background: linear-gradient(135deg, #F59E0B, #D97706);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Amber glow */
-.amber-glow {
-  box-shadow: 0 0 40px rgba(245, 158, 11, 0.15), 0 0 80px rgba(245, 158, 11, 0.05);
-}
-
-.amber-glow-sm {
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
-}
-
-/* Gradient border card */
-.gradient-border {
-  position: relative;
-  background: var(--sm-surface);
-  border-radius: 16px;
-}
-
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: 17px;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.1), transparent);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* Floating orbs */
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  pointer-events: none;
-}
-
-.orb-amber {
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.05) 50%, transparent 70%);
-}
-
-.orb-white {
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -148,24 +59,8 @@ body::before {
   html {
     scroll-behavior: auto;
   }
-  body::before {
-    animation: none;
-  }
 }
 
 section[id] {
   scroll-margin-top: 80px;
-}
-
-@keyframes grain {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-5%, -10%); }
-  20% { transform: translate(-15%, 5%); }
-  30% { transform: translate(7%, -25%); }
-  40% { transform: translate(-5%, 25%); }
-  50% { transform: translate(-15%, 10%); }
-  60% { transform: translate(15%, 0%); }
-  70% { transform: translate(0%, 15%); }
-  80% { transform: translate(3%, 35%); }
-  90% { transform: translate(-10%, 10%); }
 }
