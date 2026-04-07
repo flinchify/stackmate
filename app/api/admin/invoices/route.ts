@@ -44,3 +44,12 @@ export async function PATCH(req: NextRequest) {
   }
   return NextResponse.json({ success: true, invoice });
 }
+
+export async function DELETE(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await req.json();
+  if (!id) return NextResponse.json({ error: 'Missing invoice id' }, { status: 400 });
+  const deleted = await deleteInvoice(id);
+  if (!deleted) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ success: true });
+}

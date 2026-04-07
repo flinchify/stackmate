@@ -572,6 +572,12 @@ export default function AdminPage() {
                           setEditingInvoice(inv.id);
                           setInvoiceEdits({ items: [...inv.items], notes: inv.notes || '', dueAt: inv.dueAt ? new Date(inv.dueAt).toISOString().split('T')[0] : '', clientAddress: inv.clientAddress || '', clientName: inv.clientName, clientEmail: inv.clientEmail });
                         }} className={`flex items-center gap-1 px-2 py-1 rounded-sm text-xs border transition-colors ${editingInvoice === inv.id ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400'}`}><Settings className="w-3 h-3" /> Edit</button>
+                        <button onClick={async () => {
+                          if (!confirm(`Delete invoice ${inv.id}? This cannot be undone.`)) return;
+                          await fetch('/api/admin/invoices', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: inv.id }) });
+                          logActivity(`Invoice deleted: ${inv.id}`);
+                          fetchAll();
+                        }} className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"><Trash2 className="w-3 h-3" /> Delete</button>
                         <div className="text-right ml-2">
                           <p className="font-display font-bold text-lg text-orange-400">${inv.total.toLocaleString()}</p>
                           <p className="text-xs text-sm-muted">incl. ${inv.gst.toLocaleString()} GST</p>

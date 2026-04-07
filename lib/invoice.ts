@@ -83,6 +83,12 @@ export async function updateInvoice(id: string, updates: Partial<{ items: Invoic
   return mapInvoiceRow(rows[0]);
 }
 
+export async function deleteInvoice(id: string): Promise<boolean> {
+  await ensureTables();
+  const rows = await sql`DELETE FROM invoices WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
 export async function updateInvoiceStatus(id: string, status: string): Promise<Invoice | null> {
   await ensureTables();
   const paidAt = status === 'paid' ? new Date().toISOString() : null;
