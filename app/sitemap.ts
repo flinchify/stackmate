@@ -35,5 +35,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/blog/seo-perth`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
   ];
 
-  return [...pages, ...blogPages, ...geoPages];
+  const industryPages = [
+    { url: `${base}/tradies`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/restaurants`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/real-estate`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/ecommerce`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/mining`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+  ];
+
+  return [...pages, ...industryPages, ...blogPages, ...geoPages];
 }
