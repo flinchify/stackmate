@@ -29,6 +29,12 @@ export async function getQuotes(): Promise<StoredQuote[]> {
   }));
 }
 
+export async function deleteQuote(id: string): Promise<boolean> {
+  await ensureTables();
+  const rows = await sql`DELETE FROM quotes WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
 export async function updateQuoteStatus(id: string, status: string): Promise<StoredQuote | null> {
   await ensureTables();
   const rows = await sql`UPDATE quotes SET status = ${status} WHERE id = ${id} RETURNING *`;

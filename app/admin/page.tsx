@@ -406,6 +406,18 @@ export default function AdminPage() {
                   ))}
                 </div>
                 {selected.status === 'paid' && <p className="text-xs text-orange-400 mt-2">Invoice auto-generated</p>}
+                <button
+                  onClick={async () => {
+                    if (!confirm(`Delete quote from ${selected.companyName}? This cannot be undone.`)) return;
+                    await fetch('/api/admin/quotes', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: selected.id }) });
+                    logActivity(`Quote deleted: ${selected.companyName} (${selected.id})`);
+                    setSelected(null);
+                    fetchAll();
+                  }}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-sm text-xs border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" /> Delete Quote
+                </button>
               </div>
             )}
           </div>
