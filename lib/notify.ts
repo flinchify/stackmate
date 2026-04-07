@@ -1,6 +1,16 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('RESEND_API_KEY not set — email notifications disabled');
+      return null;
+    }
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 
 const ADMIN_EMAIL = 'stackmatedigital@gmail.com';
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'notifications@stackmate.digital';
@@ -16,6 +26,8 @@ export async function notifyNewQuote(data: {
   website?: string;
 }) {
   try {
+    const resend = getResend();
+    if (!resend) return;
     await resend.emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
@@ -56,6 +68,8 @@ export async function notifyNewAudit(data: {
   description: string;
 }) {
   try {
+    const resend = getResend();
+    if (!resend) return;
     await resend.emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
