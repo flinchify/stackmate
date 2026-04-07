@@ -29,6 +29,7 @@ interface RecurringService {
 interface Project {
   id: string; clientName: string; clientEmail: string; title: string; description: string;
   status: string; priority: string; startDate?: string; dueDate?: string; completedDate?: string; notes?: string;
+  depositAmount: number; mrrAmount: number; costAmount: number;
 }
 
 interface Client { id: string; name: string; url: string; logoUrl: string; heroUrl: string; createdAt: string; }
@@ -70,6 +71,7 @@ export default function AdminPage() {
   // Persistent auth
   const [secret, setSecret] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [tab, setTab] = useState<string>('quotes');
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -83,7 +85,9 @@ export default function AdminPage() {
 
   const [newClient, setNewClient] = useState({ name: '', url: '', logoUrl: '', heroUrl: '' });
   const [newRecurring, setNewRecurring] = useState({ clientName: '', clientEmail: '', services: [{ service: '', amount: 0 }] as { service: string; amount: number }[], startDate: '', notes: '' });
-  const [newProject, setNewProject] = useState({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '' });
+  const [newProject, setNewProject] = useState({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '', depositAmount: 0, mrrAmount: 0, costAmount: 0 });
+  const [editingFinancials, setEditingFinancials] = useState<string | null>(null);
+  const [financialEdits, setFinancialEdits] = useState({ depositAmount: 0, mrrAmount: 0, costAmount: 0 });
   const [newPortal, setNewPortal] = useState({ clientName: '', clientEmail: '', projectTitle: '', projectDescription: '' });
   const [newDeliverable, setNewDeliverable] = useState({ portalId: '', type: 'website', title: '', description: '', url: '' });
   const [newUpdate, setNewUpdate] = useState({ portalId: '', message: '' });
@@ -112,6 +116,7 @@ export default function AdminPage() {
   useEffect(() => {
     const saved = localStorage.getItem('sm_admin_secret');
     if (saved) { setSecret(saved); }
+    setChecking(false);
   }, []);
 
   const headers = () => ({ 'x-admin-secret': secret, 'Content-Type': 'application/json' });
@@ -220,7 +225,7 @@ export default function AdminPage() {
     if (!newProject.clientName || !newProject.title) return alert('Fill required fields');
     await fetch('/api/admin/projects', { method: 'POST', headers: headers(), body: JSON.stringify(newProject) });
     logActivity(`Project: ${newProject.title} for ${newProject.clientName}`);
-    setNewProject({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '' });
+    setNewProject({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '', depositAmount: 0, mrrAmount: 0, costAmount: 0 });
     fetchAll();
   };
 
@@ -275,6 +280,15 @@ export default function AdminPage() {
       `  Custom software:     $5,000-15,000 setup + $599-1,799/mo`;
     setAuditResult(result);
   };
+
+  // LOADING CHECK
+  if (checking) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <RefreshCw className="w-6 h-6 animate-spin text-orange-500" />
+      </main>
+    );
+  }
 
   // LOGIN
   if (!authenticated) {
@@ -367,17 +381,33 @@ export default function AdminPage() {
                 const config = STATUS_CONFIG[quote.status] || STATUS_CONFIG.new;
                 const Icon = config.icon;
                 return (
-                  <button key={quote.id} onClick={() => setSelected(quote)}
-                    className={`w-full text-left p-4 rounded-sm border transition-all ${selected?.id === quote.id ? 'border-orange-500/30 bg-sm-card/60' : 'border-sm-border bg-sm-card/30 hover:bg-sm-card/50'}`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div><h3 className="font-semibold">{quote.companyName}</h3><p className="text-xs text-sm-muted">{quote.email}</p></div>
-                      <div className={`flex items-center gap-1.5 px-2 py-1 rounded-sm text-xs ${config.bg} ${config.color}`}><Icon className="w-3 h-3" /> {quote.status}</div>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-sm-muted">
-                      <span>{quote.industry}</span><span>{quote.employees}</span><span>{new Date(quote.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </button>
+                  <div key={quote.id} className={`relative w-full text-left p-4 rounded-sm border transition-all ${selected?.id === quote.id ? 'border-orange-500/30 bg-sm-card/60' : 'border-sm-border bg-sm-card/30 hover:bg-sm-card/50'}`}>
+                    <button onClick={() => setSelected(quote)} className="w-full text-left">
+                      <div className="flex items-start justify-between mb-2">
+                        <div><h3 className="font-semibold">{quote.companyName}</h3><p className="text-xs text-sm-muted">{quote.email}</p></div>
+                        <div className="flex items-center gap-2">
+                          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-sm text-xs ${config.bg} ${config.color}`}><Icon className="w-3 h-3" /> {quote.status}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-sm-muted">
+                        <span>{quote.industry}</span><span>{quote.employees}</span><span>{new Date(quote.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!confirm(`Delete quote from ${quote.companyName}?`)) return;
+                        await fetch('/api/admin/quotes', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: quote.id }) });
+                        logActivity(`Quote deleted: ${quote.companyName} (${quote.id})`);
+                        if (selected?.id === quote.id) setSelected(null);
+                        fetchAll();
+                      }}
+                      className="absolute top-3 right-3 p-1.5 rounded-sm text-sm-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      title="Delete quote"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -571,14 +601,46 @@ export default function AdminPage() {
                 <input value={newProject.title} onChange={e => setNewProject({ ...newProject, title: e.target.value })} className={inputClass} placeholder="Title *" />
                 <input type="date" value={newProject.dueDate} onChange={e => setNewProject({ ...newProject, dueDate: e.target.value })} className={inputClass} />
               </div>
+              <div className="grid md:grid-cols-3 gap-4 mb-4">
+                <input type="number" value={newProject.depositAmount || ''} onChange={e => setNewProject({ ...newProject, depositAmount: Number(e.target.value) })} className={inputClass} placeholder="Deposit ($)" />
+                <input type="number" value={newProject.mrrAmount || ''} onChange={e => setNewProject({ ...newProject, mrrAmount: Number(e.target.value) })} className={inputClass} placeholder="MRR ($/mo)" />
+                <input type="number" value={newProject.costAmount || ''} onChange={e => setNewProject({ ...newProject, costAmount: Number(e.target.value) })} className={inputClass} placeholder="Cost ($)" />
+              </div>
               <button onClick={addProjectFn} className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add</button>
             </div>
-            {projects.map(proj => (
+            {projects.map(proj => {
+              const profit = (proj.depositAmount + proj.mrrAmount) - proj.costAmount;
+              return (
               <div key={proj.id} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 mb-3">
                 <div className="flex justify-between mb-2">
-                  <div><h3 className="font-semibold">{proj.title}</h3><p className="text-xs text-sm-muted">{proj.clientName}</p></div>
-                  <span className={`text-xs px-2 py-1 rounded-sm ${proj.priority === 'urgent' ? 'bg-red-500/10 text-red-400' : proj.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : 'bg-sm-border text-sm-light'}`}>{proj.priority}</span>
+                  <div>
+                    <h3 className="font-semibold">{proj.title}</h3>
+                    <p className="text-xs text-sm-muted">{proj.clientName}</p>
+                    <div className="flex gap-4 text-xs mt-1">
+                      <span className="text-sm-muted">Deposit: <strong className="text-orange-400">${proj.depositAmount.toLocaleString()}</strong></span>
+                      <span className="text-sm-muted">MRR: <strong className="text-orange-400">${proj.mrrAmount.toLocaleString()}/mo</strong></span>
+                      <span className="text-sm-muted">Cost: <strong className="text-red-400">${proj.costAmount.toLocaleString()}</strong></span>
+                      <span className="text-sm-muted">Profit: <strong className={profit >= 0 ? 'text-green-400' : 'text-red-400'}>${profit.toLocaleString()}</strong></span>
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-sm h-fit ${proj.priority === 'urgent' ? 'bg-red-500/10 text-red-400' : proj.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : 'bg-sm-border text-sm-light'}`}>{proj.priority}</span>
                 </div>
+                {editingFinancials === proj.id ? (
+                  <div className="flex gap-3 items-end mb-3">
+                    <div><label className="text-xs text-sm-muted">Deposit ($)</label><input type="number" value={financialEdits.depositAmount || ''} onChange={e => setFinancialEdits(p => ({ ...p, depositAmount: Number(e.target.value) }))} className={`${inputClass} w-28`} /></div>
+                    <div><label className="text-xs text-sm-muted">MRR ($/mo)</label><input type="number" value={financialEdits.mrrAmount || ''} onChange={e => setFinancialEdits(p => ({ ...p, mrrAmount: Number(e.target.value) }))} className={`${inputClass} w-28`} /></div>
+                    <div><label className="text-xs text-sm-muted">Cost ($)</label><input type="number" value={financialEdits.costAmount || ''} onChange={e => setFinancialEdits(p => ({ ...p, costAmount: Number(e.target.value) }))} className={`${inputClass} w-28`} /></div>
+                    <button onClick={async () => {
+                      await fetch('/api/admin/projects', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: proj.id, ...financialEdits }) });
+                      logActivity(`Updated financials for ${proj.title}: deposit=$${financialEdits.depositAmount}, mrr=$${financialEdits.mrrAmount}, cost=$${financialEdits.costAmount}`);
+                      setEditingFinancials(null);
+                      fetchAll();
+                    }} className="px-3 py-3 bg-orange-500 text-white rounded-sm text-xs shrink-0">Save</button>
+                    <button onClick={() => setEditingFinancials(null)} className="px-3 py-3 border border-sm-border text-sm-muted rounded-sm text-xs shrink-0">Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={() => { setEditingFinancials(proj.id); setFinancialEdits({ depositAmount: proj.depositAmount, mrrAmount: proj.mrrAmount, costAmount: proj.costAmount }); }} className="text-xs text-orange-400 hover:underline mb-2 block">Edit Financials</button>
+                )}
                 <div className="flex gap-1.5">
                   {['queued', 'in-progress', 'review', 'delivered', 'completed'].map(s => (
                     <button key={s} onClick={() => updateProjectStatus(proj.id, s)}
@@ -587,7 +649,8 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -748,8 +811,36 @@ export default function AdminPage() {
           });
           const netMonthly = monthlyRecurring - monthlyExpenses;
 
+          // Project-level financials
+          const totalProjectDeposits = projects.reduce((s, p) => s + p.depositAmount, 0);
+          const totalProjectMRR = projects.reduce((s, p) => s + p.mrrAmount, 0);
+          const totalProjectCosts = projects.reduce((s, p) => s + p.costAmount, 0);
+          const projectNetProfit = (totalProjectDeposits + totalProjectMRR) - totalProjectCosts;
+
           return (
           <div>
+            {/* Project-level financial summary */}
+            <h3 className="font-display font-bold mb-3">Project Financials</h3>
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
+              <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
+                <p className="text-xs text-sm-muted">Total Deposits</p>
+                <p className="text-2xl font-display font-bold text-orange-400">${totalProjectDeposits.toLocaleString()}</p>
+              </div>
+              <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
+                <p className="text-xs text-sm-muted">Total Project MRR</p>
+                <p className="text-2xl font-display font-bold text-orange-400">${totalProjectMRR.toLocaleString()}/mo</p>
+              </div>
+              <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
+                <p className="text-xs text-sm-muted">Total Project Costs</p>
+                <p className="text-2xl font-display font-bold text-red-400">${totalProjectCosts.toLocaleString()}</p>
+              </div>
+              <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
+                <p className="text-xs text-sm-muted">Project Net Profit</p>
+                <p className={`text-2xl font-display font-bold ${projectNetProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>${projectNetProfit.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <h3 className="font-display font-bold mb-3">Invoice & Recurring Summary</h3>
             <div className="grid md:grid-cols-4 gap-4 mb-6">
               <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 text-center">
                 <p className="text-xs text-sm-muted">Total Revenue</p>

@@ -90,6 +90,11 @@ export async function ensureTables() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
 
+  // Add financial columns to projects (safe if already exist)
+  await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS deposit_amount NUMERIC DEFAULT 0`;
+  await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS mrr_amount NUMERIC DEFAULT 0`;
+  await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS cost_amount NUMERIC DEFAULT 0`;
+
   await sql`CREATE TABLE IF NOT EXISTS expenses (
     id TEXT PRIMARY KEY,
     client_name TEXT,

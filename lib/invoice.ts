@@ -13,6 +13,7 @@ export interface RecurringService {
 export interface Project {
   id: string; clientName: string; clientEmail: string; title: string; description: string;
   status: string; priority: string; startDate?: string; dueDate?: string; completedDate?: string; notes?: string;
+  depositAmount: number; mrrAmount: number; costAmount: number;
 }
 
 // ---- INVOICES ----
@@ -95,24 +96,27 @@ export async function deleteRecurringService(id: string): Promise<boolean> {
 export async function addProject(params: Omit<Project, 'id'>): Promise<Project> {
   await ensureTables();
   const id = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-  await sql`INSERT INTO projects (id, client_name, client_email, title, description, status, priority, due_date, notes)
-    VALUES (${id}, ${params.clientName}, ${params.clientEmail}, ${params.title}, ${params.description}, ${params.status}, ${params.priority}, ${params.dueDate || null}, ${params.notes || null})`;
+  await sql`INSERT INTO projects (id, client_name, client_email, title, description, status, priority, due_date, notes, deposit_amount, mrr_amount, cost_amount)
+    VALUES (${id}, ${params.clientName}, ${params.clientEmail}, ${params.title}, ${params.description}, ${params.status}, ${params.priority}, ${params.dueDate || null}, ${params.notes || null}, ${params.depositAmount || 0}, ${params.mrrAmount || 0}, ${params.costAmount || 0})`;
   return { ...params, id };
 }
 
 export async function getProjects(): Promise<Project[]> {
   await ensureTables();
   const rows = await sql`SELECT * FROM projects ORDER BY created_at DESC`;
-  return rows.map(r => ({ id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes }));
+  return rows.map(r => ({ id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes, depositAmount: Number(r.deposit_amount) || 0, mrrAmount: Number(r.mrr_amount) || 0, costAmount: Number(r.cost_amount) || 0 }));
 }
 
 export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
   await ensureTables();
   if (updates.status) await sql`UPDATE projects SET status = ${updates.status} WHERE id = ${id}`;
+  if (updates.depositAmount !== undefined) await sql`UPDATE projects SET deposit_amount = ${updates.depositAmount} WHERE id = ${id}`;
+  if (updates.mrrAmount !== undefined) await sql`UPDATE projects SET mrr_amount = ${updates.mrrAmount} WHERE id = ${id}`;
+  if (updates.costAmount !== undefined) await sql`UPDATE projects SET cost_amount = ${updates.costAmount} WHERE id = ${id}`;
   const rows = await sql`SELECT * FROM projects WHERE id = ${id}`;
   if (rows.length === 0) return null;
   const r = rows[0];
-  return { id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes };
+  return { id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes, depositAmount: Number(r.deposit_amount) || 0, mrrAmount: Number(r.mrr_amount) || 0, costAmount: Number(r.cost_amount) || 0 };
 }
 
 export async function deleteProject(id: string): Promise<boolean> {
