@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar, LayoutDashboard, Copy, ExternalLink, Tag, Puzzle, Settings } from 'lucide-react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar, LayoutDashboard, Copy, ExternalLink, Tag, Puzzle, Settings, TrendingUp, Zap, ArrowUpRight, ArrowDownRight, Minus, ChevronDown } from 'lucide-react';
 
 interface Expense {
   id: string; clientName?: string; category: string; description: string;
@@ -115,6 +115,21 @@ export default function AdminPage() {
   const [pricingConfig, setPricingConfig] = useState<{ key: string; value: Record<string, number> }[]>([]);
   const [configEditing, setConfigEditing] = useState<string | null>(null);
   const [configEditValues, setConfigEditValues] = useState<Record<string, number>>({});
+  // Feature 1: Auto invoicing
+  const [invoicingDue, setInvoicingDue] = useState(false);
+  const [invoicingResult, setInvoicingResult] = useState<{ count: number; invoices: Invoice[] } | null>(null);
+  // Feature 2/6: Package/addon/recurring picker on invoice
+  const [pkgPickerOpen, setPkgPickerOpen] = useState(false);
+  // Feature 3: Full package editor
+  const [pkgFullEditing, setPkgFullEditing] = useState<string | null>(null);
+  const [pkgFullEditValues, setPkgFullEditValues] = useState<{ tierLabel: string; features: string; includesDescription: string; upfrontPrice: number; monthlyPrice: number }>({ tierLabel: '', features: '', includesDescription: '', upfrontPrice: 0, monthlyPrice: 0 });
+  // Feature 4: SEO/GEO hub
+  const [pagespeedLoading, setPagespeedLoading] = useState<string | null>(null);
+  const [pagespeedResults, setPagespeedResults] = useState<Record<string, { score: number; metrics: { fcp: string; lcp: string; cls: string; tbt: string } }>>({});
+  // Feature 5: Email sending
+  const [emailModal, setEmailModal] = useState<{ projectId: string; clientName: string; clientEmail: string; seoScores: { date: string; score: number }[]; geoScores: { date: string; platform: string; score: number }[] } | null>(null);
+  const [emailForm, setEmailForm] = useState({ template: 'monthly-report', subject: '', body: '', recommendations: '', issues: '', actionItems: '', working: '', toImprove: '' });
+  const [emailSending, setEmailSending] = useState(false);
 
   // Load saved auth
   useEffect(() => {
@@ -338,6 +353,7 @@ export default function AdminPage() {
     { key: 'mailing', icon: Mail, label: 'Mailing List' },
     { key: 'monitoring', icon: Radar, label: '24/7 Monitoring' },
     { key: 'dashboards', icon: LayoutDashboard, label: `Dashboards (${dashboards.length})` },
+    { key: 'seo-geo', icon: TrendingUp, label: 'SEO/GEO' },
     { key: 'packages', icon: Tag, label: `Packages (${pkgList.length})` },
     { key: 'terminal', icon: Terminal, label: 'Activity' },
   ];
@@ -574,6 +590,73 @@ export default function AdminPage() {
                           <label className="text-xs text-sm-muted block mb-1">Client Address</label>
                           <input value={invoiceEdits.clientAddress} onChange={e => setInvoiceEdits(p => ({ ...p, clientAddress: e.target.value }))} className={inputClass} placeholder="Street, City, State, Postcode" />
                         </div>
+                        {/* Package/Addon/Recurring Picker */}
+                        <div className="mb-3 flex gap-2 flex-wrap">
+                          <div className="relative">
+                            <button onClick={() => setPkgPickerOpen(!pkgPickerOpen)} className="flex items-center gap-1 px-3 py-1.5 rounded-sm text-xs border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-colors"><Package className="w-3 h-3" /> Add from Package <ChevronDown className="w-3 h-3" /></button>
+                            {pkgPickerOpen && (
+                              <div className="absolute z-20 top-full left-0 mt-1 w-80 max-h-64 overflow-y-auto bg-sm-dark border border-sm-border rounded-sm shadow-xl">
+                                {pkgList.length > 0 && <p className="px-3 py-1.5 text-xs text-sm-muted font-bold border-b border-sm-border">Packages</p>}
+                                {['tradies', 'restaurants', 'ecommerce', 'local-services', 'corporate', 'enterprise'].map(ind => {
+                                  const pkgs = pkgList.filter(p => p.industry === ind);
+                                  if (pkgs.length === 0) return null;
+                                  return (
+                                    <div key={ind}>
+                                      <p className="px-3 py-1 text-xs text-sm-muted capitalize bg-sm-card/30">{ind.replace('-', ' ')}</p>
+                                      {pkgs.map(pkg => (
+                                        <button key={pkg.id} onClick={() => {
+                                          const items = [...invoiceEdits.items];
+                                          if (pkg.upfrontPrice > 0) items.push({ description: `${pkg.tierLabel} (Setup)`, quantity: 1, unitPrice: pkg.upfrontPrice / 100, total: pkg.upfrontPrice / 100 });
+                                          if (pkg.monthlyPrice > 0) items.push({ description: `${pkg.tierLabel} (Monthly)`, quantity: 1, unitPrice: pkg.monthlyPrice / 100, total: pkg.monthlyPrice / 100 });
+                                          setInvoiceEdits(p => ({ ...p, items }));
+                                          setPkgPickerOpen(false);
+                                        }} className="w-full text-left px-3 py-1.5 text-xs text-sm-light hover:bg-orange-500/10 hover:text-orange-400">
+                                          {pkg.tierLabel} — A${(pkg.upfrontPrice / 100).toLocaleString()} + A${(pkg.monthlyPrice / 100).toLocaleString()}/mo
+                                        </button>
+                                      ))}
+                                    </div>
+                                  );
+                                })}
+                                {addonList.length > 0 && <p className="px-3 py-1.5 text-xs text-sm-muted font-bold border-t border-b border-sm-border">Add-ons</p>}
+                                {['core_build', 'ai', 'integrations', 'growth'].map(cat => {
+                                  const addons = addonList.filter(a => a.category === cat);
+                                  if (addons.length === 0) return null;
+                                  const catLabel: Record<string, string> = { core_build: 'Core Build', ai: 'AI', integrations: 'Integrations', growth: 'Growth' };
+                                  return (
+                                    <div key={cat}>
+                                      <p className="px-3 py-1 text-xs text-sm-muted bg-sm-card/30">{catLabel[cat]}</p>
+                                      {addons.map(addon => (
+                                        <button key={addon.id} onClick={() => {
+                                          const items = [...invoiceEdits.items];
+                                          const price = addon.upfrontPrice > 0 ? addon.upfrontPrice / 100 : addon.monthlyPrice / 100;
+                                          items.push({ description: addon.name, quantity: 1, unitPrice: price, total: price });
+                                          setInvoiceEdits(p => ({ ...p, items }));
+                                          setPkgPickerOpen(false);
+                                        }} className="w-full text-left px-3 py-1.5 text-xs text-sm-light hover:bg-orange-500/10 hover:text-orange-400">
+                                          {addon.name} — A${((addon.upfrontPrice || addon.monthlyPrice) / 100).toLocaleString()}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          {/* Add from Recurring (Feature 6) */}
+                          <div className="relative group">
+                            <button onClick={() => {
+                              const clientRecurring = recurring.filter(r => r.status === 'active' && (r.clientName === invoiceEdits.clientName || r.clientEmail === invoiceEdits.clientEmail));
+                              if (clientRecurring.length === 0) { alert('No active recurring services for this client'); return; }
+                              const items = [...invoiceEdits.items];
+                              const monthName = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+                              clientRecurring.forEach(r => {
+                                items.push({ description: `${r.service} \u2014 ${monthName}`, quantity: 1, unitPrice: r.monthlyAmount, total: r.monthlyAmount });
+                              });
+                              setInvoiceEdits(p => ({ ...p, items }));
+                            }} className="flex items-center gap-1 px-3 py-1.5 rounded-sm text-xs border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors"><Repeat className="w-3 h-3" /> Add from Recurring</button>
+                          </div>
+                        </div>
+
                         <div className="mb-3">
                           <label className="text-xs text-sm-muted block mb-2">Line Items</label>
                           {invoiceEdits.items.map((item, i) => (
@@ -633,6 +716,56 @@ export default function AdminPage() {
         {/* ====== RECURRING ====== */}
         {tab === 'recurring' && (
           <div>
+            {/* Auto Invoice Due Banner */}
+            {(() => {
+              const dueServices = recurring.filter(r => r.status === 'active' && r.nextBillingDate && new Date(r.nextBillingDate) <= new Date());
+              if (dueServices.length === 0 && !invoicingResult) return null;
+              return (
+                <div className="p-4 rounded-sm border border-orange-500/30 bg-gradient-to-r from-orange-500/10 to-blue-500/10 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Zap className="w-5 h-5 text-orange-400" />
+                      <div>
+                        <p className="font-display font-bold text-white">{dueServices.length} service{dueServices.length !== 1 ? 's' : ''} due for invoicing</p>
+                        <p className="text-xs text-sm-muted">These recurring services have billing dates on or before today</p>
+                      </div>
+                    </div>
+                    {dueServices.length > 0 && (
+                      <button
+                        disabled={invoicingDue}
+                        onClick={async () => {
+                          setInvoicingDue(true);
+                          try {
+                            const res = await fetch('/api/admin/recurring', { method: 'POST', headers: headers(), body: JSON.stringify({ action: 'invoice-due' }) });
+                            const data = await res.json();
+                            setInvoicingResult({ count: data.count, invoices: data.invoices || [] });
+                            logActivity(`Auto-invoiced ${data.count} invoice(s) from recurring services`);
+                            fetchAll();
+                          } catch { alert('Failed to generate invoices'); }
+                          finally { setInvoicingDue(false); }
+                        }}
+                        className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm disabled:opacity-50 flex items-center gap-2"
+                      >
+                        <Receipt className="w-4 h-4" /> {invoicingDue ? 'Generating...' : 'Invoice All Due'}
+                      </button>
+                    )}
+                  </div>
+                  {invoicingResult && (
+                    <div className="mt-3 pt-3 border-t border-orange-500/20">
+                      <p className="text-sm text-green-400 font-semibold mb-2">Generated {invoicingResult.count} invoice(s):</p>
+                      {invoicingResult.invoices.map(inv => (
+                        <div key={inv.id} className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-sm-light">{inv.id} — {inv.clientName}</span>
+                          <span className="text-orange-400 font-bold">${inv.total.toLocaleString()} AUD</span>
+                        </div>
+                      ))}
+                      <button onClick={() => setInvoicingResult(null)} className="text-xs text-sm-muted hover:text-white mt-2">Dismiss</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="p-5 rounded-sm border border-sm-border bg-sm-card/30 mb-6">
               <h3 className="font-display font-bold mb-4">Add Recurring Services (multiple at once)</h3>
               <div className="grid md:grid-cols-3 gap-4 mb-4">
@@ -660,11 +793,16 @@ export default function AdminPage() {
                 {recurring.map(svc => {
                   const linkedProj = svc.linkedProjectId ? projects.find(p => p.id === svc.linkedProjectId) : null;
                   return (
-                  <div key={svc.id} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 flex items-center justify-between">
+                  <div key={svc.id} className={`p-4 rounded-sm border bg-sm-card/30 flex items-center justify-between ${svc.nextBillingDate && new Date(svc.nextBillingDate) <= new Date() && svc.status === 'active' ? 'border-orange-500/40' : 'border-sm-border'}`}>
                     <div>
                       <h3 className="font-semibold">{svc.clientName} — <span className="text-orange-400">{svc.service}</span></h3>
-                      <p className="text-xs text-sm-muted">Next: {svc.nextBillingDate ? new Date(svc.nextBillingDate).toLocaleDateString() : 'TBD'}</p>
-                      {linkedProj && <p className="text-xs text-sm-muted">Project: <span className="text-orange-400">{linkedProj.title}</span></p>}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-sm font-semibold ${svc.nextBillingDate && new Date(svc.nextBillingDate) <= new Date() && svc.status === 'active' ? 'bg-orange-500/20 text-orange-400' : 'bg-sm-border text-sm-light'}`}>
+                          Next: {svc.nextBillingDate ? new Date(svc.nextBillingDate).toLocaleDateString() : 'TBD'}
+                        </span>
+                        {svc.nextBillingDate && new Date(svc.nextBillingDate) <= new Date() && svc.status === 'active' && <span className="text-xs text-orange-400 font-bold">DUE</span>}
+                      </div>
+                      {linkedProj && <p className="text-xs text-sm-muted mt-1">Project: <span className="text-orange-400">{linkedProj.title}</span></p>}
                     </div>
                     <div className="flex items-center gap-3">
                       <p className="font-display font-bold text-orange-400">${svc.monthlyAmount}/mo</p>
@@ -1519,43 +1657,86 @@ export default function AdminPage() {
                           <div key={pkg.id} className={`border rounded-lg p-4 ${pkg.visible ? 'border-orange-500/40 bg-orange-500/5' : 'border-sm-border bg-sm-dark'}`}>
                             <div className="flex items-center justify-between mb-2">
                               <span className="font-display font-bold">{pkg.tierLabel}</span>
-                              <button
-                                onClick={async () => {
-                                  await fetch('/api/admin/packages', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: pkg.id, visible: !pkg.visible }) });
-                                  logActivity(`${pkg.tierLabel} (${industry}) → ${!pkg.visible ? 'visible' : 'hidden'}`);
-                                  fetchAll();
-                                }}
-                                className={`text-xs px-2 py-1 rounded ${pkg.visible ? 'bg-green-500/20 text-green-400' : 'bg-sm-surface text-sm-muted'}`}
-                              >
-                                {pkg.visible ? 'Visible' : 'Hidden'}
-                              </button>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={async () => {
+                                    await fetch('/api/admin/packages', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: pkg.id, visible: !pkg.visible }) });
+                                    logActivity(`${pkg.tierLabel} (${industry}) → ${!pkg.visible ? 'visible' : 'hidden'}`);
+                                    fetchAll();
+                                  }}
+                                  className={`text-xs px-2 py-1 rounded ${pkg.visible ? 'bg-green-500/20 text-green-400' : 'bg-sm-surface text-sm-muted'}`}
+                                >
+                                  {pkg.visible ? 'Visible' : 'Hidden'}
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm(`Delete ${pkg.tierLabel}? This cannot be undone.`)) return;
+                                    await fetch('/api/admin/packages', { method: 'DELETE', headers: headers(), body: JSON.stringify({ id: pkg.id }) });
+                                    logActivity(`Deleted package: ${pkg.tierLabel}`);
+                                    fetchAll();
+                                  }}
+                                  className="text-xs px-2 py-1 rounded text-red-400 hover:bg-red-500/10"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
                             </div>
                             <p className="text-xs text-sm-muted mb-1">Tier: {pkg.tier}</p>
-                            {pkgEditing === pkg.id ? (
+                            {pkgFullEditing === pkg.id ? (
                               <div className="space-y-2 my-2">
                                 <div>
+                                  <label className="text-xs text-sm-muted">Display Name</label>
+                                  <input value={pkgFullEditValues.tierLabel} onChange={e => setPkgFullEditValues(p => ({ ...p, tierLabel: e.target.value }))} className={inputClass} />
+                                </div>
+                                <div>
                                   <label className="text-xs text-sm-muted">Upfront (cents)</label>
-                                  <input type="number" value={pkgEditValues.upfrontPrice} onChange={e => setPkgEditValues(p => ({ ...p, upfrontPrice: Number(e.target.value) }))} className={inputClass} />
+                                  <input type="number" value={pkgFullEditValues.upfrontPrice} onChange={e => setPkgFullEditValues(p => ({ ...p, upfrontPrice: Number(e.target.value) }))} className={inputClass} />
                                 </div>
                                 <div>
                                   <label className="text-xs text-sm-muted">Monthly (cents)</label>
-                                  <input type="number" value={pkgEditValues.monthlyPrice} onChange={e => setPkgEditValues(p => ({ ...p, monthlyPrice: Number(e.target.value) }))} className={inputClass} />
+                                  <input type="number" value={pkgFullEditValues.monthlyPrice} onChange={e => setPkgFullEditValues(p => ({ ...p, monthlyPrice: Number(e.target.value) }))} className={inputClass} />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-sm-muted">Includes Description</label>
+                                  <input value={pkgFullEditValues.includesDescription} onChange={e => setPkgFullEditValues(p => ({ ...p, includesDescription: e.target.value }))} className={inputClass} placeholder="e.g. Everything in Starter plus..." />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-sm-muted">Features (one per line)</label>
+                                  <textarea value={pkgFullEditValues.features} onChange={e => setPkgFullEditValues(p => ({ ...p, features: e.target.value }))} className={`${inputClass} h-28`} placeholder="Feature 1\nFeature 2\nFeature 3" />
                                 </div>
                                 <div className="flex gap-2">
                                   <button onClick={async () => {
-                                    await fetch('/api/admin/packages', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: pkg.id, upfrontPrice: pkgEditValues.upfrontPrice, monthlyPrice: pkgEditValues.monthlyPrice }) });
-                                    logActivity(`Updated prices for ${pkg.tierLabel}: upfront=${pkgEditValues.upfrontPrice}, monthly=${pkgEditValues.monthlyPrice}`);
-                                    setPkgEditing(null);
+                                    const features = pkgFullEditValues.features.split('\n').filter(f => f.trim());
+                                    await fetch('/api/admin/packages', { method: 'PATCH', headers: headers(), body: JSON.stringify({
+                                      id: pkg.id,
+                                      tierLabel: pkgFullEditValues.tierLabel,
+                                      upfrontPrice: pkgFullEditValues.upfrontPrice,
+                                      monthlyPrice: pkgFullEditValues.monthlyPrice,
+                                      includesDescription: pkgFullEditValues.includesDescription,
+                                      features,
+                                    }) });
+                                    logActivity(`Updated package ${pkgFullEditValues.tierLabel}`);
+                                    setPkgFullEditing(null);
                                     fetchAll();
                                   }} className="px-3 py-1 bg-orange-500 text-white rounded text-xs">Save</button>
-                                  <button onClick={() => setPkgEditing(null)} className="px-3 py-1 border border-sm-border text-sm-muted rounded text-xs">Cancel</button>
+                                  <button onClick={() => setPkgFullEditing(null)} className="px-3 py-1 border border-sm-border text-sm-muted rounded text-xs">Cancel</button>
                                 </div>
                               </div>
                             ) : (
                               <div className="my-2">
                                 <p className="text-sm font-bold">A${(pkg.upfrontPrice / 100).toLocaleString()} <span className="text-xs text-sm-muted font-normal">upfront</span></p>
                                 <p className="text-sm font-bold">A${(pkg.monthlyPrice / 100).toLocaleString()}<span className="text-xs text-sm-muted font-normal">/mo</span></p>
-                                <button onClick={() => { setPkgEditing(pkg.id); setPkgEditValues({ upfrontPrice: pkg.upfrontPrice, monthlyPrice: pkg.monthlyPrice }); }} className="text-xs text-orange-400 hover:text-orange-300 mt-1">Edit Prices</button>
+                                {pkg.includesDescription && <p className="text-xs text-sm-muted mt-1 italic">{pkg.includesDescription}</p>}
+                                <button onClick={() => {
+                                  setPkgFullEditing(pkg.id);
+                                  setPkgFullEditValues({
+                                    tierLabel: pkg.tierLabel,
+                                    upfrontPrice: pkg.upfrontPrice,
+                                    monthlyPrice: pkg.monthlyPrice,
+                                    includesDescription: pkg.includesDescription || '',
+                                    features: pkg.features.join('\n'),
+                                  });
+                                }} className="text-xs text-orange-400 hover:text-orange-300 mt-1">Edit Package</button>
                               </div>
                             )}
                             <div className="mt-2 space-y-1">
@@ -1705,6 +1886,242 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ====== SEO/GEO HUB ====== */}
+        {tab === 'seo-geo' && (
+          <div>
+            <h3 className="font-display font-bold mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-orange-400" /> SEO/GEO Management Hub</h3>
+            <p className="text-xs text-sm-muted mb-6">All projects with client websites. Run audits, track scores, send reports.</p>
+            {(() => {
+              const websiteProjects = projects.filter(p => p.clientWebsite);
+              if (websiteProjects.length === 0) return <div className="text-center py-16 text-sm-muted">No projects with client websites. Add a website URL to a project first.</div>;
+              return (
+                <div className="space-y-4">
+                  {websiteProjects.map(proj => {
+                    const url = proj.clientWebsite!.startsWith('http') ? proj.clientWebsite! : `https://${proj.clientWebsite!}`;
+                    const domain = proj.clientWebsite!.replace(/^https?:\/\//, '').replace(/\/$/, '');
+                    const latestSeo = proj.seoScores && proj.seoScores.length > 0 ? proj.seoScores[proj.seoScores.length - 1] : null;
+                    const prevSeo = proj.seoScores && proj.seoScores.length > 1 ? proj.seoScores[proj.seoScores.length - 2] : null;
+                    const seoTrend = latestSeo && prevSeo ? (latestSeo.score > prevSeo.score ? 'up' : latestSeo.score < prevSeo.score ? 'down' : 'stable') : 'stable';
+                    const latestGeo: Record<string, { date: string; platform: string; score: number }> = {};
+                    (proj.geoScores || []).forEach(g => { latestGeo[g.platform] = g; });
+                    const psResult = pagespeedResults[proj.id];
+                    return (
+                      <div key={proj.id} className="p-5 rounded-sm border border-sm-border bg-sm-card/30">
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <h4 className="font-display font-bold text-white">{proj.clientName}</h4>
+                            <a href={url} target="_blank" rel="noopener" className="text-xs text-orange-400 hover:underline">{domain}</a>
+                            <p className="text-xs text-sm-muted mt-1">{proj.title}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              disabled={pagespeedLoading === proj.id}
+                              onClick={async () => {
+                                setPagespeedLoading(proj.id);
+                                try {
+                                  const res = await fetch('/api/admin/pagespeed', { method: 'POST', headers: headers(), body: JSON.stringify({ url: proj.clientWebsite, projectId: proj.id, existingSeoScores: proj.seoScores }) });
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    setPagespeedResults(p => ({ ...p, [proj.id]: { score: data.score, metrics: data.metrics } }));
+                                    logActivity(`PageSpeed auto-audit for ${proj.clientName}: ${data.score}/100`);
+                                    fetchAll();
+                                  } else { alert(data.error || 'PageSpeed audit failed'); }
+                                } catch { alert('Failed to run PageSpeed audit'); }
+                                finally { setPagespeedLoading(null); }
+                              }}
+                              className="px-3 py-1.5 rounded-sm text-xs border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-1 disabled:opacity-50"
+                            >
+                              <Zap className="w-3 h-3" /> {pagespeedLoading === proj.id ? 'Running...' : 'Auto Audit'}
+                            </button>
+                            <button onClick={() => {
+                              setEmailModal({ projectId: proj.id, clientName: proj.clientName, clientEmail: proj.clientEmail, seoScores: proj.seoScores || [], geoScores: proj.geoScores || [] });
+                              const latestScore = proj.seoScores?.length ? proj.seoScores[proj.seoScores.length - 1].score : 0;
+                              setEmailForm({ template: 'monthly-report', subject: `Monthly Performance Report — ${proj.clientName}`, body: '', recommendations: '', issues: '', actionItems: '', working: '', toImprove: '' });
+                            }} className="px-3 py-1.5 rounded-sm text-xs border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 transition-colors flex items-center gap-1"><Send className="w-3 h-3" /> Send Report</button>
+                            <a href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(url)}`} target="_blank" rel="noopener" className="px-3 py-1.5 rounded-sm text-xs border border-sm-border text-sm-light hover:border-white/30">PageSpeed →</a>
+                            <a href="https://geoptie.com/free-geo-audit" target="_blank" rel="noopener" className="px-3 py-1.5 rounded-sm text-xs border border-sm-border text-sm-light hover:border-white/30">GEO →</a>
+                          </div>
+                        </div>
+                        {/* Scores Grid */}
+                        <div className="grid grid-cols-6 gap-3 mb-3">
+                          <div className="p-3 rounded-sm bg-sm-dark border border-sm-border text-center">
+                            <p className="text-xs text-sm-muted">SEO Score</p>
+                            <p className={`text-xl font-display font-bold ${latestSeo ? (latestSeo.score >= 80 ? 'text-green-400' : latestSeo.score >= 60 ? 'text-orange-400' : 'text-red-400') : 'text-sm-muted'}`}>{latestSeo ? latestSeo.score : '—'}</p>
+                            <div className="flex items-center justify-center gap-1 mt-1">
+                              {seoTrend === 'up' && <ArrowUpRight className="w-3 h-3 text-green-400" />}
+                              {seoTrend === 'down' && <ArrowDownRight className="w-3 h-3 text-red-400" />}
+                              {seoTrend === 'stable' && <Minus className="w-3 h-3 text-sm-muted" />}
+                              <span className={`text-xs ${seoTrend === 'up' ? 'text-green-400' : seoTrend === 'down' ? 'text-red-400' : 'text-sm-muted'}`}>{seoTrend}</span>
+                            </div>
+                          </div>
+                          {['ChatGPT', 'Perplexity', 'Gemini', 'Claude', 'Copilot'].map(platform => {
+                            const geo = latestGeo[platform];
+                            return (
+                              <div key={platform} className="p-3 rounded-sm bg-sm-dark border border-sm-border text-center">
+                                <p className="text-xs text-sm-muted">{platform}</p>
+                                <p className={`text-xl font-display font-bold ${geo ? (geo.score >= 80 ? 'text-green-400' : geo.score >= 60 ? 'text-orange-400' : 'text-red-400') : 'text-sm-muted'}`}>{geo ? geo.score : '—'}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* PageSpeed Detailed Result */}
+                        {psResult && (
+                          <div className="p-3 rounded-sm bg-sm-dark border border-orange-500/20 mb-3">
+                            <p className="text-xs text-sm-muted mb-2">Latest PageSpeed Audit</p>
+                            <div className="grid grid-cols-5 gap-3 text-center text-xs">
+                              <div><p className="text-sm-muted">Score</p><p className={`font-bold text-lg ${psResult.score >= 80 ? 'text-green-400' : psResult.score >= 60 ? 'text-orange-400' : 'text-red-400'}`}>{psResult.score}</p></div>
+                              <div><p className="text-sm-muted">FCP</p><p className="text-sm-light font-bold">{psResult.metrics.fcp}</p></div>
+                              <div><p className="text-sm-muted">LCP</p><p className="text-sm-light font-bold">{psResult.metrics.lcp}</p></div>
+                              <div><p className="text-sm-muted">CLS</p><p className="text-sm-light font-bold">{psResult.metrics.cls}</p></div>
+                              <div><p className="text-sm-muted">TBT</p><p className="text-sm-light font-bold">{psResult.metrics.tbt}</p></div>
+                            </div>
+                          </div>
+                        )}
+                        {/* Manual Score Logging */}
+                        <div className="flex gap-2">
+                          <button onClick={async () => {
+                            const score = prompt('SEO Score (0-100):');
+                            if (!score) return;
+                            const updated = [...(proj.seoScores || []), { date: new Date().toISOString().split('T')[0], score: Number(score) }];
+                            await fetch('/api/admin/projects', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: proj.id, seoScores: updated }) });
+                            logActivity(`SEO score logged for ${proj.title}: ${score}`);
+                            fetchAll();
+                          }} className="px-2 py-1 rounded-sm text-xs border border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400">Log SEO Score</button>
+                          <button onClick={async () => {
+                            const platform = prompt('Platform (ChatGPT/Perplexity/Gemini/Claude/Copilot):');
+                            if (!platform) return;
+                            const score = prompt(`GEO Score for ${platform} (0-100):`);
+                            if (!score) return;
+                            const updated = [...(proj.geoScores || []), { date: new Date().toISOString().split('T')[0], platform, score: Number(score) }];
+                            await fetch('/api/admin/projects', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: proj.id, geoScores: updated }) });
+                            logActivity(`GEO score logged for ${proj.title}: ${platform} ${score}`);
+                            fetchAll();
+                          }} className="px-2 py-1 rounded-sm text-xs border border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400">Log GEO Score</button>
+                        </div>
+                        {/* Score History */}
+                        {((proj.seoScores && proj.seoScores.length > 0) || (proj.geoScores && proj.geoScores.length > 0)) && (
+                          <div className="mt-3 pt-3 border-t border-sm-border text-xs">
+                            {proj.seoScores && proj.seoScores.length > 0 && (
+                              <div className="mb-1">
+                                <span className="text-sm-muted">SEO history: </span>
+                                {proj.seoScores.slice(-5).map((s, i) => (
+                                  <span key={i} className={`ml-1 ${s.score >= 80 ? 'text-green-400' : s.score >= 60 ? 'text-orange-400' : 'text-red-400'}`}>{s.date} ({s.score})</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ====== EMAIL MODAL ====== */}
+        {emailModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setEmailModal(null)}>
+            <div className="w-full max-w-lg bg-sm-dark border border-sm-border rounded-sm p-6 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h3 className="font-display font-bold text-lg mb-1">Send Report to {emailModal.clientName}</h3>
+              <p className="text-xs text-sm-muted mb-4">{emailModal.clientEmail}</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-sm-muted block mb-1">Template</label>
+                  <select value={emailForm.template} onChange={e => {
+                    const t = e.target.value;
+                    setEmailForm(p => ({
+                      ...p, template: t,
+                      subject: t === 'monthly-report' ? `Monthly Performance Report — ${emailModal.clientName}` :
+                        t === 'seo-recommendation' ? `SEO Improvement Opportunities — ${emailModal.clientName}` :
+                        t === 'geo-recommendation' ? `AI Search Visibility Report — ${emailModal.clientName}` :
+                        `Update from Stackmate`,
+                    }));
+                  }} className={inputClass}>
+                    <option value="monthly-report">Monthly Report</option>
+                    <option value="seo-recommendation">SEO Recommendation</option>
+                    <option value="geo-recommendation">GEO Recommendation</option>
+                    <option value="general">General</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-sm-muted block mb-1">Subject</label>
+                  <input value={emailForm.subject} onChange={e => setEmailForm(p => ({ ...p, subject: e.target.value }))} className={inputClass} />
+                </div>
+                {emailForm.template === 'monthly-report' && (
+                  <div>
+                    <label className="text-xs text-sm-muted block mb-1">Recommendations</label>
+                    <textarea value={emailForm.recommendations} onChange={e => setEmailForm(p => ({ ...p, recommendations: e.target.value }))} className={`${inputClass} h-20`} placeholder="Key recommendations for the client..." />
+                  </div>
+                )}
+                {emailForm.template === 'seo-recommendation' && (
+                  <>
+                    <div><label className="text-xs text-sm-muted block mb-1">Issues Found</label><textarea value={emailForm.issues} onChange={e => setEmailForm(p => ({ ...p, issues: e.target.value }))} className={`${inputClass} h-20`} placeholder="List SEO issues..." /></div>
+                    <div><label className="text-xs text-sm-muted block mb-1">Action Items</label><textarea value={emailForm.actionItems} onChange={e => setEmailForm(p => ({ ...p, actionItems: e.target.value }))} className={`${inputClass} h-20`} placeholder="Recommended actions..." /></div>
+                  </>
+                )}
+                {emailForm.template === 'geo-recommendation' && (
+                  <>
+                    <div><label className="text-xs text-sm-muted block mb-1">What's Working</label><textarea value={emailForm.working} onChange={e => setEmailForm(p => ({ ...p, working: e.target.value }))} className={`${inputClass} h-20`} placeholder="What's going well..." /></div>
+                    <div><label className="text-xs text-sm-muted block mb-1">What to Improve</label><textarea value={emailForm.toImprove} onChange={e => setEmailForm(p => ({ ...p, toImprove: e.target.value }))} className={`${inputClass} h-20`} placeholder="Areas for improvement..." /></div>
+                  </>
+                )}
+                {emailForm.template === 'general' && (
+                  <div><label className="text-xs text-sm-muted block mb-1">Email Body</label><textarea value={emailForm.body} onChange={e => setEmailForm(p => ({ ...p, body: e.target.value }))} className={`${inputClass} h-32`} placeholder="Email content..." /></div>
+                )}
+                {/* Score Preview */}
+                <div className="p-3 rounded-sm bg-sm-card/30 border border-sm-border">
+                  <p className="text-xs text-sm-muted font-bold mb-2">Data that will be included:</p>
+                  <div className="text-xs space-y-1">
+                    <p className="text-sm-light">SEO: {emailModal.seoScores.length > 0 ? `${emailModal.seoScores[emailModal.seoScores.length - 1].score}/100` : 'No data'}</p>
+                    <p className="text-sm-light">GEO: {emailModal.geoScores.length > 0 ? emailModal.geoScores.map(g => `${g.platform}: ${g.score}`).join(', ') : 'No data'}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    disabled={emailSending || !emailModal.clientEmail}
+                    onClick={async () => {
+                      setEmailSending(true);
+                      try {
+                        const latestSeo = emailModal.seoScores.length > 0 ? emailModal.seoScores[emailModal.seoScores.length - 1].score : 0;
+                        const latestGeoMap: Record<string, number> = {};
+                        emailModal.geoScores.forEach(g => { latestGeoMap[g.platform] = g.score; });
+                        const geoArr = Object.entries(latestGeoMap).map(([platform, score]) => ({ platform, score }));
+                        const data: Record<string, unknown> = {
+                          clientName: emailModal.clientName,
+                          seoScore: latestSeo,
+                          geoScores: geoArr,
+                          currentScore: latestSeo,
+                          recommendations: emailForm.recommendations,
+                          issues: emailForm.issues,
+                          actionItems: emailForm.actionItems,
+                          working: emailForm.working,
+                          toImprove: emailForm.toImprove,
+                          body: emailForm.body,
+                        };
+                        const res = await fetch('/api/admin/send-email', { method: 'POST', headers: headers(), body: JSON.stringify({ to: emailModal.clientEmail, subject: emailForm.subject, template: emailForm.template, data }) });
+                        const result = await res.json();
+                        if (result.success) {
+                          logActivity(`Email sent to ${emailModal.clientEmail}: ${emailForm.template}`);
+                          alert('Email sent successfully!');
+                          setEmailModal(null);
+                        } else { alert(result.error || 'Failed to send email'); }
+                      } catch { alert('Failed to send email'); }
+                      finally { setEmailSending(false); }
+                    }}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Send className="w-3.5 h-3.5" /> {emailSending ? 'Sending...' : 'Send Email'}
+                  </button>
+                  <button onClick={() => setEmailModal(null)} className="px-4 py-2 border border-sm-border text-sm-muted rounded-sm text-sm">Cancel</button>
+                </div>
+                {!emailModal.clientEmail && <p className="text-xs text-red-400">No email address on file for this client.</p>}
+              </div>
             </div>
           </div>
         )}

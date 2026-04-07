@@ -116,3 +116,9 @@ export async function getPackageCount(): Promise<number> {
   const rows = await sql`SELECT COUNT(*) as count FROM packages`;
   return Number(rows[0].count);
 }
+
+export async function deletePackage(id: string): Promise<boolean> {
+  await ensureTables();
+  const rows = await sql`DELETE FROM packages WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}

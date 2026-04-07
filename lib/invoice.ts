@@ -170,3 +170,65 @@ export async function deleteProject(id: string): Promise<boolean> {
   const rows = await sql`DELETE FROM projects WHERE id = ${id} RETURNING id`;
   return rows.length > 0;
 }
+
+// ---- AUTO RECURRING INVOICING ----
+export async function advanceBillingDate(id: string): Promise<void> {
+  await ensureTables();
+  await sql`UPDATE recurring_services SET next_billing_date = (
+    TO_DATE(next_billing_date, 'YYYY-MM-DD') + INTERVAL '1 month'
+  )::TEXT WHERE id = ${id}`;
+}
+
+export async function generateRecurringInvoices(): Promise<Invoice[]> {
+  await ensureTables();
+  const today = new Date().toISOString().split('T')[0];
+  const dueRows = await sql`SELECT * FROM recurring_services WHERE status = 'active' AND next_billing_date <= ${today}`;
+  if (dueRows.length === 0) return [];
+
+  // Group by clientName + clientEmail
+  const groups: Record<string, { services: RecurringService[]; linkedProjectId?: string }> = {};
+  for (const r of dueRows) {
+    const svc = mapRecurringRow(r);
+    const key = `${svc.clientName}|||${svc.clientEmail}`;
+    if (!groups[key]) groups[key] = { services: [], linkedProjectId: svc.linkedProjectId || undefined };
+    groups[key].services.push(svc);
+    if (svc.linkedProjectId && !groups[key].linkedProjectId) groups[key].linkedProjectId = svc.linkedProjectId;
+  }
+
+  const generated: Invoice[] = [];
+  const monthName = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  for (const [key, group] of Object.entries(groups)) {
+    const [clientName, clientEmail] = key.split('|||');
+    const items: InvoiceItem[] = group.services.map(svc => ({
+      description: `${svc.service} — ${monthName}`,
+      quantity: 1,
+      unitPrice: svc.monthlyAmount,
+      total: svc.monthlyAmount,
+    }));
+
+    const invoice = await generateInvoice({
+      quoteId: '',
+      clientName,
+      clientEmail,
+      items,
+      notes: `Auto-generated recurring invoice for ${monthName}`,
+      linkedProjectId: group.linkedProjectId,
+    });
+    generated.push(invoice);
+
+    // Advance billing dates
+    for (const svc of group.services) {
+      await advanceBillingDate(svc.id);
+    }
+  }
+
+  return generated;
+}
+
+export async function getDueRecurringCount(): Promise<number> {
+  await ensureTables();
+  const today = new Date().toISOString().split('T')[0];
+  const rows = await sql`SELECT COUNT(*) as c FROM recurring_services WHERE status = 'active' AND next_billing_date <= ${today}`;
+  return Number(rows[0].c);
+}
