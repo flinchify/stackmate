@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar, LayoutDashboard, Copy, ExternalLink, Tag } from 'lucide-react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar, LayoutDashboard, Copy, ExternalLink, Tag, Puzzle, Settings } from 'lucide-react';
 
 interface Expense {
   id: string; clientName?: string; category: string; description: string;
@@ -101,6 +101,12 @@ export default function AdminPage() {
   const [pkgList, setPkgList] = useState<{ id: string; industry: string; tier: string; tierLabel: string; upfrontPrice: number; monthlyPrice: number; features: string[]; includesDescription: string | null; visible: boolean; sortOrder: number }[]>([]);
   const [pkgEditing, setPkgEditing] = useState<string | null>(null);
   const [pkgEditValues, setPkgEditValues] = useState<{ upfrontPrice: number; monthlyPrice: number }>({ upfrontPrice: 0, monthlyPrice: 0 });
+  const [addonList, setAddonList] = useState<{ id: string; category: string; name: string; slug: string; description: string | null; upfrontPrice: number; monthlyPrice: number; perUnit: boolean; visible: boolean; sortOrder: number }[]>([]);
+  const [addonEditing, setAddonEditing] = useState<string | null>(null);
+  const [addonEditValues, setAddonEditValues] = useState<{ upfrontPrice: number; monthlyPrice: number }>({ upfrontPrice: 0, monthlyPrice: 0 });
+  const [pricingConfig, setPricingConfig] = useState<{ key: string; value: Record<string, number> }[]>([]);
+  const [configEditing, setConfigEditing] = useState<string | null>(null);
+  const [configEditValues, setConfigEditValues] = useState<Record<string, number>>({});
 
   // Load saved auth
   useEffect(() => {
@@ -146,6 +152,10 @@ export default function AdminPage() {
         if (dbRes.ok) { const dbData = await dbRes.json(); setDashboards(dbData.dashboards || []); }
         const pkgRes = await fetch('/api/admin/packages', { headers: h });
         if (pkgRes.ok) { const pkgData = await pkgRes.json(); setPkgList(pkgData.packages || []); }
+        const addonRes = await fetch('/api/admin/addons', { headers: h });
+        if (addonRes.ok) { const addonData = await addonRes.json(); setAddonList(addonData.addons || []); }
+        const pcRes = await fetch('/api/admin/pricing-config', { headers: h });
+        if (pcRes.ok) { const pcData = await pcRes.json(); setPricingConfig(pcData.config || []); }
       } catch {}
     } catch { alert('Failed to fetch'); }
     finally { setLoading(false); }
@@ -1199,6 +1209,141 @@ export default function AdminPage() {
                 })}
               </div>
             )}
+
+            {/* ── ADD-ONS SECTION ── */}
+            <div className="mt-12 pt-8 border-t border-sm-border">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-display font-bold flex items-center gap-2"><Puzzle className="w-5 h-5 text-orange-400" /> Add-on Management</h3>
+                {addonList.length === 0 && (
+                  <button
+                    onClick={async () => {
+                      const res = await fetch('/api/admin/addons/seed', { method: 'POST', headers: headers() });
+                      const data = await res.json();
+                      if (data.success) { logActivity(`Seeded ${data.seeded} add-ons + pricing config`); fetchAll(); }
+                      else alert(data.error || 'Failed to seed');
+                    }}
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold"
+                  >
+                    Seed Add-ons
+                  </button>
+                )}
+              </div>
+              {addonList.length === 0 ? (
+                <div className="text-center py-10 text-sm-muted">No add-ons yet. Click &quot;Seed Add-ons&quot; to populate all categories.</div>
+              ) : (
+                <div className="space-y-8">
+                  {(['core_build', 'ai', 'integrations', 'growth'] as const).map(cat => {
+                    const catAddons = addonList.filter(a => a.category === cat);
+                    if (catAddons.length === 0) return null;
+                    const catLabel: Record<string, string> = { core_build: 'Core Build', ai: 'AI', integrations: 'Integrations', growth: 'Growth' };
+                    return (
+                      <div key={cat}>
+                        <h4 className="font-display font-bold text-lg mb-3">{catLabel[cat]}</h4>
+                        <div className="grid md:grid-cols-3 gap-4">
+                          {catAddons.map(addon => (
+                            <div key={addon.id} className={`border rounded-lg p-4 ${addon.visible ? 'border-orange-500/40 bg-orange-500/5' : 'border-sm-border bg-sm-dark'}`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-display font-bold text-sm">{addon.name}</span>
+                                <button
+                                  onClick={async () => {
+                                    await fetch('/api/admin/addons', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: addon.id, visible: !addon.visible }) });
+                                    logActivity(`Add-on ${addon.name} → ${!addon.visible ? 'visible' : 'hidden'}`);
+                                    fetchAll();
+                                  }}
+                                  className={`text-xs px-2 py-1 rounded ${addon.visible ? 'bg-green-500/20 text-green-400' : 'bg-sm-surface text-sm-muted'}`}
+                                >
+                                  {addon.visible ? 'Visible' : 'Hidden'}
+                                </button>
+                              </div>
+                              <p className="text-xs text-sm-muted mb-1">{addon.slug}{addon.perUnit ? ' (per unit)' : ''}</p>
+                              {addonEditing === addon.id ? (
+                                <div className="space-y-2 my-2">
+                                  <div>
+                                    <label className="text-xs text-sm-muted">Upfront (cents)</label>
+                                    <input type="number" value={addonEditValues.upfrontPrice} onChange={e => setAddonEditValues(p => ({ ...p, upfrontPrice: Number(e.target.value) }))} className={inputClass} />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-sm-muted">Monthly (cents)</label>
+                                    <input type="number" value={addonEditValues.monthlyPrice} onChange={e => setAddonEditValues(p => ({ ...p, monthlyPrice: Number(e.target.value) }))} className={inputClass} />
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button onClick={async () => {
+                                      await fetch('/api/admin/addons', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: addon.id, upfrontPrice: addonEditValues.upfrontPrice, monthlyPrice: addonEditValues.monthlyPrice }) });
+                                      logActivity(`Updated add-on prices: ${addon.name} upfront=${addonEditValues.upfrontPrice}, monthly=${addonEditValues.monthlyPrice}`);
+                                      setAddonEditing(null);
+                                      fetchAll();
+                                    }} className="px-3 py-1 bg-orange-500 text-white rounded text-xs">Save</button>
+                                    <button onClick={() => setAddonEditing(null)} className="px-3 py-1 border border-sm-border text-sm-muted rounded text-xs">Cancel</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="my-2">
+                                  {addon.upfrontPrice > 0 && <p className="text-sm font-bold">A${(addon.upfrontPrice / 100).toLocaleString()} <span className="text-xs text-sm-muted font-normal">upfront</span></p>}
+                                  {addon.monthlyPrice > 0 && <p className="text-sm font-bold">A${(addon.monthlyPrice / 100).toLocaleString()}<span className="text-xs text-sm-muted font-normal">/mo</span></p>}
+                                  {addon.upfrontPrice === 0 && addon.monthlyPrice === 0 && <p className="text-xs text-sm-muted">No price set</p>}
+                                  <button onClick={() => { setAddonEditing(addon.id); setAddonEditValues({ upfrontPrice: addon.upfrontPrice, monthlyPrice: addon.monthlyPrice }); }} className="text-xs text-orange-400 hover:text-orange-300 mt-1">Edit Prices</button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* ── PRICING CONFIG (MULTIPLIERS) ── */}
+            <div className="mt-12 pt-8 border-t border-sm-border">
+              <h3 className="font-display font-bold flex items-center gap-2 mb-6"><Settings className="w-5 h-5 text-orange-400" /> Pricing Multipliers</h3>
+              {pricingConfig.length === 0 ? (
+                <p className="text-sm text-sm-muted">No pricing config found. Seed add-ons to populate multipliers.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {pricingConfig.map(cfg => (
+                    <div key={cfg.key} className="border border-sm-border rounded-lg p-4 bg-sm-dark">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-display font-bold text-sm capitalize">{cfg.key.replace(/_/g, ' ')}</h4>
+                        {configEditing === cfg.key ? (
+                          <div className="flex gap-2">
+                            <button onClick={async () => {
+                              await fetch('/api/admin/pricing-config', { method: 'PATCH', headers: headers(), body: JSON.stringify({ key: cfg.key, value: configEditValues }) });
+                              logActivity(`Updated ${cfg.key}: ${JSON.stringify(configEditValues)}`);
+                              setConfigEditing(null);
+                              fetchAll();
+                            }} className="px-3 py-1 bg-orange-500 text-white rounded text-xs">Save</button>
+                            <button onClick={() => setConfigEditing(null)} className="px-3 py-1 border border-sm-border text-sm-muted rounded text-xs">Cancel</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => { setConfigEditing(cfg.key); setConfigEditValues({ ...cfg.value }); }} className="text-xs text-orange-400 hover:text-orange-300">Edit</button>
+                        )}
+                      </div>
+                      {configEditing === cfg.key ? (
+                        <div className="space-y-2">
+                          {Object.entries(configEditValues).map(([k, v]) => (
+                            <div key={k} className="flex items-center gap-3">
+                              <span className="text-xs text-sm-muted w-28 capitalize">{k.replace(/_/g, ' ')}</span>
+                              <input type="number" step="0.01" value={v} onChange={e => setConfigEditValues(prev => ({ ...prev, [k]: Number(e.target.value) }))} className={`${inputClass} w-24`} />
+                              <span className="text-xs text-sm-muted">x</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {Object.entries(cfg.value).map(([k, v]) => (
+                            <div key={k} className="flex items-center justify-between text-sm">
+                              <span className="text-sm-muted capitalize">{k.replace(/_/g, ' ')}</span>
+                              <span className="font-mono font-bold">{v}x</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

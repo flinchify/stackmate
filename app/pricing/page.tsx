@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { CheckCircle2, ArrowRight, MapPin } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
+import PricingCalculator from '@/components/PricingCalculator';
 
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
@@ -201,6 +202,21 @@ export default function PricingPage() {
           </div>
         </section>
       )}
+
+      {/* ===== CALCULATOR ===== */}
+      <section className="py-24 bg-sm-card/20">
+        <div className="max-w-5xl mx-auto px-6">
+          <AnimatedSection className="text-center mb-12">
+            <p className="eyebrow mb-4">Calculator</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold">
+              Build your estimate
+            </h2>
+          </AnimatedSection>
+          <AnimatedSection>
+            <PricingCalculator onQuoteClick={() => setQuoteOpen(true)} />
+          </AnimatedSection>
+        </div>
+      </section>
 
       {/* ===== CTA ===== */}
       <section className="py-24">

@@ -204,6 +204,26 @@ export async function ensureTables() {
     updated_at TIMESTAMPTZ DEFAULT NOW()
   )`;
 
+  await sql`CREATE TABLE IF NOT EXISTS addons (
+    id TEXT PRIMARY KEY,
+    category TEXT NOT NULL,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    description TEXT,
+    upfront_price NUMERIC DEFAULT 0,
+    monthly_price NUMERIC DEFAULT 0,
+    per_unit BOOLEAN DEFAULT false,
+    visible BOOLEAN DEFAULT false,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
+
+  await sql`CREATE TABLE IF NOT EXISTS pricing_config (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
+
   await sql`CREATE TABLE IF NOT EXISTS client_dashboards (
     id TEXT PRIMARY KEY,
     access_code TEXT UNIQUE NOT NULL,
