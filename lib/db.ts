@@ -99,6 +99,14 @@ export async function ensureTables() {
   await sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS linked_project_id TEXT`;
   await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS linked_invoice_id TEXT`;
 
+  // Link recurring services to projects
+  await sql`ALTER TABLE recurring_services ADD COLUMN IF NOT EXISTS linked_project_id TEXT`;
+
+  // SEO/GEO tracking per project
+  await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_website TEXT`;
+  await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS seo_scores JSONB DEFAULT '[]'`;
+  await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS geo_scores JSONB DEFAULT '[]'`;
+
   await sql`CREATE TABLE IF NOT EXISTS expenses (
     id TEXT PRIMARY KEY,
     client_name TEXT,

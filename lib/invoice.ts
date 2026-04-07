@@ -8,12 +8,13 @@ export interface Invoice {
 }
 export interface RecurringService {
   id: string; clientName: string; clientEmail: string; service: string; description: string;
-  monthlyAmount: number; startDate: string; nextBillingDate: string; status: string; notes?: string;
+  monthlyAmount: number; startDate: string; nextBillingDate: string; status: string; notes?: string; linkedProjectId?: string;
 }
 export interface Project {
   id: string; clientName: string; clientEmail: string; title: string; description: string;
   status: string; priority: string; startDate?: string; dueDate?: string; completedDate?: string; notes?: string;
   depositAmount: number; mrrAmount: number; costAmount: number; linkedInvoiceId?: string;
+  clientWebsite?: string; seoScores: { date: string; score: number }[]; geoScores: { date: string; platform: string; score: number }[];
 }
 
 // ---- INVOICES ----
@@ -94,24 +95,34 @@ export async function updateInvoiceStatus(id: string, status: string): Promise<I
 export async function addRecurringService(params: Omit<RecurringService, 'id'>): Promise<RecurringService> {
   await ensureTables();
   const id = `rs_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-  await sql`INSERT INTO recurring_services (id, client_name, client_email, service, description, monthly_amount, start_date, next_billing_date, status, notes)
-    VALUES (${id}, ${params.clientName}, ${params.clientEmail}, ${params.service}, ${params.description}, ${params.monthlyAmount}, ${params.startDate}, ${params.nextBillingDate}, ${params.status}, ${params.notes || null})`;
+  await sql`INSERT INTO recurring_services (id, client_name, client_email, service, description, monthly_amount, start_date, next_billing_date, status, notes, linked_project_id)
+    VALUES (${id}, ${params.clientName}, ${params.clientEmail}, ${params.service}, ${params.description}, ${params.monthlyAmount}, ${params.startDate}, ${params.nextBillingDate}, ${params.status}, ${params.notes || null}, ${params.linkedProjectId || null})`;
   return { ...params, id };
+}
+
+function mapRecurringRow(r: Record<string, any>): RecurringService {
+  return { id: r.id, clientName: r.client_name, clientEmail: r.client_email, service: r.service, description: r.description, monthlyAmount: Number(r.monthly_amount), startDate: r.start_date, nextBillingDate: r.next_billing_date, status: r.status, notes: r.notes, linkedProjectId: r.linked_project_id };
 }
 
 export async function getRecurringServices(): Promise<RecurringService[]> {
   await ensureTables();
   const rows = await sql`SELECT * FROM recurring_services ORDER BY created_at DESC`;
-  return rows.map(r => ({ id: r.id, clientName: r.client_name, clientEmail: r.client_email, service: r.service, description: r.description, monthlyAmount: Number(r.monthly_amount), startDate: r.start_date, nextBillingDate: r.next_billing_date, status: r.status, notes: r.notes }));
+  return rows.map(mapRecurringRow);
+}
+
+export async function getRecurringByProjectId(projectId: string): Promise<RecurringService[]> {
+  await ensureTables();
+  const rows = await sql`SELECT * FROM recurring_services WHERE linked_project_id = ${projectId} ORDER BY created_at DESC`;
+  return rows.map(mapRecurringRow);
 }
 
 export async function updateRecurringService(id: string, updates: Partial<RecurringService>): Promise<RecurringService | null> {
   await ensureTables();
   if (updates.status) await sql`UPDATE recurring_services SET status = ${updates.status} WHERE id = ${id}`;
+  if (updates.linkedProjectId !== undefined) await sql`UPDATE recurring_services SET linked_project_id = ${updates.linkedProjectId} WHERE id = ${id}`;
   const rows = await sql`SELECT * FROM recurring_services WHERE id = ${id}`;
   if (rows.length === 0) return null;
-  const r = rows[0];
-  return { id: r.id, clientName: r.client_name, clientEmail: r.client_email, service: r.service, description: r.description, monthlyAmount: Number(r.monthly_amount), startDate: r.start_date, nextBillingDate: r.next_billing_date, status: r.status, notes: r.notes };
+  return mapRecurringRow(rows[0]);
 }
 
 export async function deleteRecurringService(id: string): Promise<boolean> {
@@ -124,13 +135,13 @@ export async function deleteRecurringService(id: string): Promise<boolean> {
 export async function addProject(params: Omit<Project, 'id'>): Promise<Project> {
   await ensureTables();
   const id = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-  await sql`INSERT INTO projects (id, client_name, client_email, title, description, status, priority, due_date, notes, deposit_amount, mrr_amount, cost_amount)
-    VALUES (${id}, ${params.clientName}, ${params.clientEmail}, ${params.title}, ${params.description}, ${params.status}, ${params.priority}, ${params.dueDate || null}, ${params.notes || null}, ${params.depositAmount || 0}, ${params.mrrAmount || 0}, ${params.costAmount || 0})`;
+  await sql`INSERT INTO projects (id, client_name, client_email, title, description, status, priority, due_date, notes, deposit_amount, mrr_amount, cost_amount, client_website, seo_scores, geo_scores)
+    VALUES (${id}, ${params.clientName}, ${params.clientEmail}, ${params.title}, ${params.description}, ${params.status}, ${params.priority}, ${params.dueDate || null}, ${params.notes || null}, ${params.depositAmount || 0}, ${params.mrrAmount || 0}, ${params.costAmount || 0}, ${params.clientWebsite || null}, ${JSON.stringify(params.seoScores || [])}, ${JSON.stringify(params.geoScores || [])})`;
   return { ...params, id };
 }
 
 function mapProjectRow(r: Record<string, any>): Project {
-  return { id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes, depositAmount: Number(r.deposit_amount) || 0, mrrAmount: Number(r.mrr_amount) || 0, costAmount: Number(r.cost_amount) || 0, linkedInvoiceId: r.linked_invoice_id };
+  return { id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes, depositAmount: Number(r.deposit_amount) || 0, mrrAmount: Number(r.mrr_amount) || 0, costAmount: Number(r.cost_amount) || 0, linkedInvoiceId: r.linked_invoice_id, clientWebsite: r.client_website, seoScores: r.seo_scores || [], geoScores: r.geo_scores || [] };
 }
 
 export async function getProjects(): Promise<Project[]> {
@@ -146,6 +157,9 @@ export async function updateProject(id: string, updates: Partial<Project>): Prom
   if (updates.mrrAmount !== undefined) await sql`UPDATE projects SET mrr_amount = ${updates.mrrAmount} WHERE id = ${id}`;
   if (updates.costAmount !== undefined) await sql`UPDATE projects SET cost_amount = ${updates.costAmount} WHERE id = ${id}`;
   if (updates.linkedInvoiceId !== undefined) await sql`UPDATE projects SET linked_invoice_id = ${updates.linkedInvoiceId} WHERE id = ${id}`;
+  if (updates.clientWebsite !== undefined) await sql`UPDATE projects SET client_website = ${updates.clientWebsite} WHERE id = ${id}`;
+  if (updates.seoScores !== undefined) await sql`UPDATE projects SET seo_scores = ${JSON.stringify(updates.seoScores)} WHERE id = ${id}`;
+  if (updates.geoScores !== undefined) await sql`UPDATE projects SET geo_scores = ${JSON.stringify(updates.geoScores)} WHERE id = ${id}`;
   const rows = await sql`SELECT * FROM projects WHERE id = ${id}`;
   if (rows.length === 0) return null;
   return mapProjectRow(rows[0]);

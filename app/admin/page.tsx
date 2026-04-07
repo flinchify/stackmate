@@ -23,13 +23,14 @@ interface Invoice {
 
 interface RecurringService {
   id: string; clientName: string; clientEmail: string; service: string; description: string;
-  monthlyAmount: number; startDate: string; nextBillingDate: string; status: string; notes?: string;
+  monthlyAmount: number; startDate: string; nextBillingDate: string; status: string; notes?: string; linkedProjectId?: string;
 }
 
 interface Project {
   id: string; clientName: string; clientEmail: string; title: string; description: string;
   status: string; priority: string; startDate?: string; dueDate?: string; completedDate?: string; notes?: string;
   depositAmount: number; mrrAmount: number; costAmount: number; linkedInvoiceId?: string;
+  clientWebsite?: string; seoScores: { date: string; score: number }[]; geoScores: { date: string; platform: string; score: number }[];
 }
 
 interface Client { id: string; name: string; url: string; logoUrl: string; heroUrl: string; createdAt: string; }
@@ -85,7 +86,8 @@ export default function AdminPage() {
 
   const [newClient, setNewClient] = useState({ name: '', url: '', logoUrl: '', heroUrl: '' });
   const [newRecurring, setNewRecurring] = useState({ clientName: '', clientEmail: '', services: [{ service: '', amount: 0 }] as { service: string; amount: number }[], startDate: '', notes: '' });
-  const [newProject, setNewProject] = useState({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '', depositAmount: 0, mrrAmount: 0, costAmount: 0 });
+  const [newProject, setNewProject] = useState({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '', depositAmount: 0, mrrAmount: 0, costAmount: 0, clientWebsite: '' });
+  const [expandedMonthlySummary, setExpandedMonthlySummary] = useState<string | null>(null);
   const [editingFinancials, setEditingFinancials] = useState<string | null>(null);
   const [financialEdits, setFinancialEdits] = useState({ depositAmount: 0, mrrAmount: 0, costAmount: 0 });
   const [newPortal, setNewPortal] = useState({ clientName: '', clientEmail: '', projectTitle: '', projectDescription: '' });
@@ -227,7 +229,7 @@ export default function AdminPage() {
     if (!newProject.clientName || !newProject.title) return alert('Fill required fields');
     await fetch('/api/admin/projects', { method: 'POST', headers: headers(), body: JSON.stringify(newProject) });
     logActivity(`Project: ${newProject.title} for ${newProject.clientName}`);
-    setNewProject({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '', depositAmount: 0, mrrAmount: 0, costAmount: 0 });
+    setNewProject({ clientName: '', clientEmail: '', title: '', description: '', status: 'queued', priority: 'medium', dueDate: '', notes: '', depositAmount: 0, mrrAmount: 0, costAmount: 0, clientWebsite: '' });
     fetchAll();
   };
 
@@ -453,6 +455,7 @@ export default function AdminPage() {
                         depositAmount: setupAvg,
                         mrrAmount: mrrAvg,
                         costAmount: 0,
+                        clientWebsite: selected.website || '',
                       };
                       await fetch('/api/admin/projects', { method: 'POST', headers: headers(), body: JSON.stringify(projBody) });
                       if (selected.status !== 'accepted') {
@@ -654,11 +657,14 @@ export default function AdminPage() {
             </div>
             {recurring.length === 0 ? <div className="text-center py-12 text-sm-muted">No recurring services.</div> : (
               <div className="space-y-3">
-                {recurring.map(svc => (
+                {recurring.map(svc => {
+                  const linkedProj = svc.linkedProjectId ? projects.find(p => p.id === svc.linkedProjectId) : null;
+                  return (
                   <div key={svc.id} className="p-4 rounded-sm border border-sm-border bg-sm-card/30 flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold">{svc.clientName} — <span className="text-orange-400">{svc.service}</span></h3>
                       <p className="text-xs text-sm-muted">Next: {svc.nextBillingDate ? new Date(svc.nextBillingDate).toLocaleDateString() : 'TBD'}</p>
+                      {linkedProj && <p className="text-xs text-sm-muted">Project: <span className="text-orange-400">{linkedProj.title}</span></p>}
                     </div>
                     <div className="flex items-center gap-3">
                       <p className="font-display font-bold text-orange-400">${svc.monthlyAmount}/mo</p>
@@ -671,7 +677,8 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -691,6 +698,9 @@ export default function AdminPage() {
                 <input type="number" value={newProject.depositAmount || ''} onChange={e => setNewProject({ ...newProject, depositAmount: Number(e.target.value) })} className={inputClass} placeholder="Deposit ($)" />
                 <input type="number" value={newProject.mrrAmount || ''} onChange={e => setNewProject({ ...newProject, mrrAmount: Number(e.target.value) })} className={inputClass} placeholder="MRR ($/mo)" />
                 <input type="number" value={newProject.costAmount || ''} onChange={e => setNewProject({ ...newProject, costAmount: Number(e.target.value) })} className={inputClass} placeholder="Cost ($)" />
+              </div>
+              <div className="mb-4">
+                <input value={newProject.clientWebsite} onChange={e => setNewProject({ ...newProject, clientWebsite: e.target.value })} className={inputClass} placeholder="Client Website (e.g. example.com.au)" />
               </div>
               <button onClick={addProjectFn} className="px-5 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Add</button>
             </div>
@@ -755,13 +765,148 @@ export default function AdminPage() {
                     <button onClick={async () => {
                       const now = new Date();
                       const nextMonth = new Date(now); nextMonth.setMonth(nextMonth.getMonth() + 1);
-                      await fetch('/api/admin/recurring', { method: 'POST', headers: headers(), body: JSON.stringify({ clientName: proj.clientName, clientEmail: proj.clientEmail, service: proj.title, description: `Recurring service from ${proj.title}`, monthlyAmount: proj.mrrAmount, startDate: now.toISOString().split('T')[0], nextBillingDate: nextMonth.toISOString().split('T')[0], status: 'active' }) });
+                      await fetch('/api/admin/recurring', { method: 'POST', headers: headers(), body: JSON.stringify({ clientName: proj.clientName, clientEmail: proj.clientEmail, service: proj.title, description: `Recurring service from ${proj.title}`, monthlyAmount: proj.mrrAmount, startDate: now.toISOString().split('T')[0], nextBillingDate: nextMonth.toISOString().split('T')[0], status: 'active', linkedProjectId: proj.id }) });
                       logActivity(`Recurring service set up for ${proj.clientName}: ${proj.title} $${proj.mrrAmount}/mo`);
                       alert(`Recurring service ($${proj.mrrAmount}/mo) created for ${proj.clientName}!`);
                       fetchAll();
                     }} className="px-2 py-1 rounded-sm text-xs border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors flex items-center gap-1"><Repeat className="w-3 h-3" /> Set Up Recurring</button>
                   )}
                 </div>
+
+                {/* Linked Recurring Services */}
+                {(() => {
+                  const linkedRecurring = recurring.filter(r => r.linkedProjectId === proj.id);
+                  if (linkedRecurring.length === 0) return null;
+                  return (
+                    <div className="mt-3 pt-3 border-t border-sm-border">
+                      <p className="text-xs text-sm-muted font-semibold mb-2">Linked Recurring Services</p>
+                      {linkedRecurring.map(lr => (
+                        <div key={lr.id} className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-sm-light">{lr.service}</span>
+                          <span className="flex items-center gap-2">
+                            <span className="text-orange-400 font-bold">${lr.monthlyAmount}/mo</span>
+                            <span className={`px-1.5 py-0.5 rounded-sm ${lr.status === 'active' ? 'bg-green-400/10 text-green-400' : lr.status === 'paused' ? 'bg-yellow-400/10 text-yellow-400' : 'bg-red-400/10 text-red-400'}`}>{lr.status}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Monthly Summary */}
+                {(() => {
+                  const linkedRecurring = recurring.filter(r => r.linkedProjectId === proj.id && r.status === 'active');
+                  const projectInvoices = invoices.filter(i => i.linkedProjectId === proj.id);
+                  if (linkedRecurring.length === 0 && projectInvoices.length === 0) return null;
+                  const projectMRR = linkedRecurring.reduce((s, r) => s + r.monthlyAmount, 0);
+                  return (
+                    <div className="mt-3 pt-3 border-t border-sm-border">
+                      <button onClick={() => setExpandedMonthlySummary(expandedMonthlySummary === proj.id ? null : proj.id)} className="text-xs text-orange-400 hover:underline font-semibold flex items-center gap-1">
+                        {expandedMonthlySummary === proj.id ? '▾' : '▸'} Monthly Summary {projectMRR > 0 && `($${projectMRR}/mo)`}
+                      </button>
+                      {expandedMonthlySummary === proj.id && (
+                        <div className="mt-2 p-3 rounded-sm bg-sm-dark border border-sm-border">
+                          {linkedRecurring.length > 0 && (
+                            <>
+                              <p className="text-xs text-sm-muted font-semibold mb-1">Active Recurring</p>
+                              {linkedRecurring.map(lr => (
+                                <div key={lr.id} className="flex justify-between text-xs mb-1"><span className="text-sm-light">{lr.service}</span><span className="text-orange-400">${lr.monthlyAmount}</span></div>
+                              ))}
+                              <div className="flex justify-between text-xs font-bold mt-1 pt-1 border-t border-sm-border"><span>Project MRR</span><span className="text-orange-400">${projectMRR}/mo</span></div>
+                            </>
+                          )}
+                          <button onClick={async () => {
+                            if (linkedRecurring.length === 0) return alert('No active recurring services to invoice');
+                            const now = new Date();
+                            const monthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+                            const items = linkedRecurring.map(lr => ({ description: `${lr.service} — ${monthName}`, quantity: 1, unitPrice: lr.monthlyAmount, total: lr.monthlyAmount }));
+                            const res = await fetch('/api/admin/invoices', { method: 'POST', headers: headers(), body: JSON.stringify({ quoteId: '', clientName: proj.clientName, clientEmail: proj.clientEmail, items, notes: `Monthly invoice for ${proj.title} — ${monthName}`, linkedProjectId: proj.id }) });
+                            const data = await res.json();
+                            if (data.invoice) {
+                              logActivity(`Monthly invoice ${data.invoice.id} generated for ${proj.title}`);
+                              alert(`Invoice ${data.invoice.id} created for ${monthName}!`);
+                              fetchAll();
+                            }
+                          }} className="mt-2 w-full px-3 py-1.5 rounded-sm text-xs bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold flex items-center justify-center gap-1"><Receipt className="w-3 h-3" /> Generate Monthly Invoice</button>
+                          {projectInvoices.length > 0 && (
+                            <div className="mt-3 pt-2 border-t border-sm-border">
+                              <p className="text-xs text-sm-muted font-semibold mb-1">Previous Invoices</p>
+                              {projectInvoices.map(inv => (
+                                <div key={inv.id} className="flex justify-between text-xs mb-1">
+                                  <a href={`/invoice/${inv.id}`} target="_blank" rel="noopener" className="text-orange-400 hover:underline">{inv.id}</a>
+                                  <span className="flex items-center gap-2">
+                                    <span className="text-sm-light">${inv.total.toLocaleString()}</span>
+                                    <span className={`px-1.5 py-0.5 rounded-sm ${inv.status === 'paid' ? 'bg-green-400/10 text-green-400' : inv.status === 'sent' ? 'bg-blue-400/10 text-blue-400' : 'bg-sm-border text-sm-muted'}`}>{inv.status}</span>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* SEO/GEO Audit Section */}
+                {proj.clientWebsite && (() => {
+                  const url = proj.clientWebsite.startsWith('http') ? proj.clientWebsite : `https://${proj.clientWebsite}`;
+                  const domain = proj.clientWebsite.replace(/^https?:\/\//, '').replace(/\/$/, '');
+                  return (
+                    <div className="mt-3 pt-3 border-t border-sm-border">
+                      <p className="text-xs text-sm-muted mb-2">Website: <a href={url} target="_blank" rel="noopener" className="text-orange-400 hover:underline">{domain}</a></p>
+                      <div className="flex gap-1.5 flex-wrap mb-2">
+                        <a href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(url)}`} target="_blank" rel="noopener" className="px-2 py-1 rounded-sm text-xs border border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400 transition-colors">PageSpeed</a>
+                        <a href="https://geoptie.com/free-geo-audit" target="_blank" rel="noopener" className="px-2 py-1 rounded-sm text-xs border border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400 transition-colors">GEO Audit</a>
+                        <a href={`https://validator.schema.org/#url=${encodeURIComponent(url)}`} target="_blank" rel="noopener" className="px-2 py-1 rounded-sm text-xs border border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400 transition-colors">Schema Check</a>
+                        <a href={`https://securityheaders.com/?q=${encodeURIComponent(url)}`} target="_blank" rel="noopener" className="px-2 py-1 rounded-sm text-xs border border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400 transition-colors">Security Headers</a>
+                        <button onClick={async () => {
+                          const score = prompt('SEO Score (0-100):');
+                          if (!score) return;
+                          const updated = [...(proj.seoScores || []), { date: new Date().toISOString().split('T')[0], score: Number(score) }];
+                          await fetch('/api/admin/projects', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: proj.id, seoScores: updated }) });
+                          logActivity(`SEO score logged for ${proj.title}: ${score}`);
+                          fetchAll();
+                        }} className="px-2 py-1 rounded-sm text-xs border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-colors">Log SEO Score</button>
+                        <button onClick={async () => {
+                          const platform = prompt('Platform (ChatGPT/Perplexity/Gemini/Claude/Copilot):');
+                          if (!platform) return;
+                          const score = prompt(`GEO Score for ${platform} (0-100):`);
+                          if (!score) return;
+                          const updated = [...(proj.geoScores || []), { date: new Date().toISOString().split('T')[0], platform, score: Number(score) }];
+                          await fetch('/api/admin/projects', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: proj.id, geoScores: updated }) });
+                          logActivity(`GEO score logged for ${proj.title}: ${platform} ${score}`);
+                          fetchAll();
+                        }} className="px-2 py-1 rounded-sm text-xs border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-colors">Log GEO Score</button>
+                      </div>
+                      {/* Score History */}
+                      {((proj.seoScores && proj.seoScores.length > 0) || (proj.geoScores && proj.geoScores.length > 0)) && (
+                        <div className="p-2 rounded-sm bg-sm-dark border border-sm-border text-xs">
+                          {proj.seoScores && proj.seoScores.length > 0 && (
+                            <div className="mb-1">
+                              <span className="text-sm-muted">SEO: </span>
+                              {proj.seoScores.slice(-3).map((s, i) => (
+                                <span key={i} className={`ml-1 ${s.score >= 80 ? 'text-green-400' : s.score >= 60 ? 'text-orange-400' : 'text-red-400'}`}>{s.date} ({s.score})</span>
+                              ))}
+                            </div>
+                          )}
+                          {proj.geoScores && proj.geoScores.length > 0 && (() => {
+                            const latestByPlatform: Record<string, { date: string; platform: string; score: number }> = {};
+                            proj.geoScores.forEach(g => { latestByPlatform[g.platform] = g; });
+                            return (
+                              <div>
+                                <span className="text-sm-muted">GEO: </span>
+                                {Object.values(latestByPlatform).map((g, i) => (
+                                  <span key={i} className={`ml-1 ${g.score >= 80 ? 'text-green-400' : g.score >= 60 ? 'text-orange-400' : 'text-red-400'}`}>{g.platform} ({g.score})</span>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
               );
             })}

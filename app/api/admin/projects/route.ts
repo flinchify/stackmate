@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id, ...updates } = await req.json();
+  // Allow clientWebsite, seoScores, geoScores updates
   const project = await updateProject(id, updates);
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ success: true, project });
