@@ -3,20 +3,59 @@
 import { useState, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { HardHat, Clock, Shield, Globe, Zap, BarChart3, ChevronDown, MapPin, ArrowRight, CheckCircle2, AlertTriangle, FileText, Radio, Activity } from 'lucide-react';
+import { HardHat, FileText, Activity, Clock, AlertTriangle, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
+
+const PACKAGES = [
+  {
+    tier: 'Starter',
+    subtitle: 'Small Operation',
+    features: [
+      'Safety compliance dashboard',
+      'Incident reporting',
+      'Basic fleet tracking',
+      'Document management',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Growth',
+    subtitle: 'Mid-Size',
+    features: [
+      'Everything in Starter',
+      'Real-time operational dashboards',
+      'Automated shift reporting',
+      'Equipment maintenance scheduling',
+      'Environmental compliance',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Pro',
+    subtitle: 'Enterprise',
+    features: [
+      'Everything in Growth',
+      'AI predictive maintenance',
+      'IoT sensor integration',
+      'Multi-site command centre',
+      'Regulatory automation',
+      'Custom data pipelines',
+    ],
+    highlight: true,
+  },
+];
 
 const PAIN_POINTS = [
   {
     icon: FileText,
     title: 'Spreadsheet-based safety reporting',
-    desc: 'Manual incident tracking in spreadsheets creates audit risk, delays corrective actions, and means critical safety data sits in someone\'s inbox instead of a centralised system. When DMIRS comes knocking, you need answers in minutes, not days.',
+    desc: 'Manual incident tracking in spreadsheets creates audit risk, delays corrective actions, and means critical safety data sits in someone\'s inbox instead of a centralised system.',
   },
   {
     icon: Activity,
     title: 'No real-time visibility across sites',
-    desc: 'Operational decisions are being made on yesterday\'s data. Production figures, equipment status, and workforce allocation are collated manually and reported hours or days after the fact. By the time you see the numbers, the shift is already over.',
+    desc: 'Operational decisions are being made on yesterday\'s data. Production figures, equipment status, and workforce allocation are collated manually and reported hours or days after the fact.',
   },
   {
     icon: Clock,
@@ -26,70 +65,30 @@ const PAIN_POINTS = [
   {
     icon: AlertTriangle,
     title: 'Siloed systems that don\'t talk to each other',
-    desc: 'Fleet management in one system, safety in another, production in a third. No unified operational view means no one has the full picture. Data gets re-entered, errors compound, and reporting takes forever.',
+    desc: 'Fleet management in one system, safety in another, production in a third. No unified operational view means no one has the full picture.',
   },
-];
-
-const DELIVERABLES = [
-  {
-    icon: BarChart3,
-    title: 'Real-time operational dashboards',
-    desc: 'Live production, safety, and equipment data visualised in custom dashboards accessible from the pit to the boardroom. Built for the metrics that matter to your operation.',
-  },
-  {
-    icon: Shield,
-    title: 'Automated safety incident reporting',
-    desc: 'Digital incident capture with automated workflows for investigation, corrective actions, and regulatory notifications. Eliminate paper-based reporting and ensure nothing falls through the cracks.',
-  },
-  {
-    icon: FileText,
-    title: 'Compliance document automation',
-    desc: 'Automated generation and management of compliance documentation, pre-start checklists, and regulatory submissions. Always audit-ready, always up to date.',
-  },
-  {
-    icon: Radio,
-    title: 'Fleet and asset tracking integration',
-    desc: 'Unified view of fleet utilisation, maintenance schedules, and asset location. Integrates with existing telematics and GPS systems to give you one source of truth.',
-  },
-  {
-    icon: Zap,
-    title: 'AI-powered anomaly detection',
-    desc: 'Machine learning models that flag operational anomalies, predict equipment failures, and identify safety risks before they become incidents. Proactive, not reactive.',
-  },
-  {
-    icon: Globe,
-    title: 'Shift handover and communication systems',
-    desc: 'Digital shift handover tools that ensure critical information transfers cleanly between crews. Structured handover logs, action tracking, and real-time communication across remote sites.',
-  },
-];
-
-const STATS = [
-  { value: '15+', label: 'WA mining and resources clients' },
-  { value: '70%', label: 'Reduction in compliance admin time' },
-  { value: 'Real-time', label: 'Operational data across all sites' },
-  { value: '< 1 week', label: 'Dashboard deployment time' },
 ];
 
 const FAQS = [
   {
-    q: 'How do you handle data security for mining operations?',
-    a: 'All systems are built with enterprise-grade security as standard. Data is encrypted at rest and in transit, access is role-based with full audit logging, and we can deploy on-premises or in private cloud environments to meet your security policies. We work within your existing IT governance frameworks and can provide full security documentation for your compliance team.',
+    q: 'Which package is right for my operation?',
+    a: 'Small operations that need safety compliance and basic fleet tracking should start with Starter. Mid-size operations that need real-time dashboards, shift reporting, and maintenance scheduling will benefit from Growth. Enterprise operations requiring AI predictive maintenance, IoT integration, and multi-site command centres should look at Pro. Not sure? Get a free audit and we will recommend the right tier.',
   },
   {
     q: 'Can you integrate with our existing systems like SAP or Pronto?',
-    a: 'Yes. We build custom integrations with SAP, Pronto, Ellipse, and other enterprise systems commonly used in WA mining. Our approach is to work with your existing infrastructure, not replace it. We connect your systems so data flows automatically and you get a unified view without ripping out what already works.',
+    a: 'Yes. We build custom integrations with SAP, Pronto, Ellipse, and other enterprise systems commonly used in WA mining. Our approach is to work with your existing infrastructure, not replace it.',
   },
   {
     q: 'How do you deploy to remote and regional sites?',
-    a: 'We design for the realities of remote operations. Dashboards work on low-bandwidth connections, offline-capable mobile apps ensure data capture continues without connectivity, and we handle deployment to site-based infrastructure. We have deployed systems across the Pilbara, Goldfields, and Mid West regions.',
+    a: 'We design for the realities of remote operations. Dashboards work on low-bandwidth connections, offline-capable mobile apps ensure data capture continues without connectivity, and we handle deployment to site-based infrastructure.',
   },
   {
     q: 'What compliance standards do your systems support?',
-    a: 'Our systems are built to support WA Mine Safety and Inspection Act requirements, DMIRS reporting obligations, and ISO 45001 safety management standards. We work with your safety and compliance teams to ensure every workflow aligns with your regulatory obligations and internal policies.',
+    a: 'Our systems are built to support WA Mine Safety and Inspection Act requirements, DMIRS reporting obligations, and ISO 45001 safety management standards.',
   },
   {
     q: 'What does ongoing support look like?',
-    a: 'Every deployment includes 30 days of full support. After that, we offer monthly support plans that cover system maintenance, updates, user training, and priority response for operational issues. We understand that mining runs around the clock, so our support is structured to match your operational tempo.',
+    a: 'Every deployment includes 30 days of full support. After that, we offer monthly support plans that cover system maintenance, updates, user training, and priority response for operational issues.',
   },
 ];
 
@@ -139,10 +138,10 @@ export default function MiningPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'Service',
-        name: 'Operational Dashboards & Safety Automation for WA Mining',
+        name: 'Mining Packages — Operational Dashboards & Safety Automation',
         provider: { '@type': 'Organization', name: 'Stackmate', url: 'https://stackmate.digital' },
         areaServed: { '@type': 'State', name: 'Western Australia' },
-        description: 'Custom operational dashboards, safety compliance automation, and AI-powered reporting for Western Australian mining companies.',
+        description: 'Packages for WA mining operations — from safety compliance dashboards to enterprise AI predictive maintenance, IoT integration, and multi-site command centres.',
         serviceType: 'Mining Technology and Automation',
       }) }} />
 
@@ -152,12 +151,12 @@ export default function MiningPage() {
       {/* ===== HERO ===== */}
       <section className="pt-32 pb-16 max-w-5xl mx-auto px-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <p className="eyebrow mb-4">Mining &amp; Resources</p>
+          <p className="eyebrow mb-4">Packages for Mining</p>
           <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight mb-6">
-            Operational visibility from the pit to the boardroom
+            Choose the right system for your operation
           </h1>
           <p className="text-lg text-sm-light max-w-2xl mb-8">
-            Western Australian mining operations need more than spreadsheets and end-of-shift reports. We build real-time operational dashboards, safety compliance automation, and AI-powered reporting systems that give you complete visibility across every site, every shift, every day.
+            Western Australian mining operations run on data, compliance, and uptime. Whether you are a single-site operation needing safety compliance or an enterprise running multiple sites across the Pilbara, we have a package built for your scale. No lock-in contracts. Quote-based pricing tailored to your operation.
           </p>
           <div className="flex flex-wrap gap-4">
             <a
@@ -176,8 +175,76 @@ export default function MiningPage() {
         </motion.div>
       </section>
 
-      {/* ===== PAIN POINTS ===== */}
+      {/* ===== PACKAGE CARDS ===== */}
+      <section className="py-24 bg-sm-card/20">
+        <div className="max-w-7xl mx-auto px-6">
+          <AnimatedSection className="text-center mb-16">
+            <p className="eyebrow mb-4">Our Packages</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+              Three tiers. Built for mining.
+            </h2>
+            <p className="text-sm-muted max-w-2xl mx-auto">
+              Every package is quote-based and scoped to your operation. Pick the tier that matches your scale and we will build it to your requirements.
+            </p>
+          </AnimatedSection>
+          <div className="grid md:grid-cols-3 gap-6">
+            {PACKAGES.map((pkg, i) => (
+              <StaggerItem
+                key={pkg.tier}
+                index={i}
+                className={`${pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'} border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 flex flex-col`}
+              >
+                <h3 className="text-2xl font-display font-bold">{pkg.tier}</h3>
+                <p className="text-sm text-sm-muted mb-6">({pkg.subtitle})</p>
+                <div className="space-y-3 flex-1">
+                  {pkg.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
+                      <span className="text-sm text-sm-light">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setQuoteOpen(true)}
+                  className={`mt-8 w-full group inline-flex items-center justify-center gap-2 px-8 py-4 font-display font-bold rounded-xl transition-all hover:scale-[1.03] active:scale-[0.98] ${
+                    pkg.highlight
+                      ? 'bg-sm-accent text-black hover:bg-sm-accent-light'
+                      : 'border border-sm-border text-white hover:bg-white/5'
+                  }`}
+                >
+                  Get a Quote <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </StaggerItem>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CUSTOM SECTION ===== */}
       <section className="py-24">
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimatedSection>
+            <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-10 md:p-14 bg-sm-surface/20 text-center">
+              <p className="eyebrow mb-4">Custom Builds</p>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                Need something different? We build custom.
+              </h2>
+              <p className="text-sm-muted max-w-xl mx-auto mb-8">
+                If none of the packages above fit your operation, we can scope a custom solution from scratch. Multi-system integrations, bespoke reporting pipelines, legacy system modernisation — whatever your operation requires, we will build it.
+              </p>
+              <a
+                href="/packages/custom"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-black font-display font-bold rounded-xl transition-all hover:bg-sm-accent-light hover:scale-[1.03] active:scale-[0.98]"
+              >
+                EXPLORE CUSTOM BUILDS <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ===== PAIN POINTS ===== */}
+      <section className="py-24 bg-sm-card/20">
         <div className="max-w-7xl mx-auto px-6">
           <AnimatedSection className="text-center mb-16">
             <p className="eyebrow mb-4">The Problem</p>
@@ -197,52 +264,8 @@ export default function MiningPage() {
         </div>
       </section>
 
-      {/* ===== WHAT WE BUILD ===== */}
-      <section className="py-24 bg-sm-card/20">
-        <div className="max-w-7xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="eyebrow mb-4">What We Build</p>
-            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Purpose-built systems for mining operations
-            </h2>
-            <p className="text-sm-muted max-w-2xl mx-auto">
-              Not generic enterprise software. Not off-the-shelf dashboards. Custom systems engineered for the realities of Western Australian mining -- remote sites, harsh conditions, and zero tolerance for downtime.
-            </p>
-          </AnimatedSection>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {DELIVERABLES.map((item, i) => (
-              <StaggerItem key={item.title} index={i} className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20">
-                <item.icon className="w-8 h-8 text-sm-accent mb-4" />
-                <h3 className="text-lg font-display font-bold mb-2">{item.title}</h3>
-                <p className="text-sm text-sm-muted leading-relaxed">{item.desc}</p>
-              </StaggerItem>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== STATS ===== */}
-      <section className="py-24">
-        <div className="max-w-5xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="eyebrow mb-4">Results</p>
-            <h2 className="text-3xl md:text-4xl font-display font-bold">
-              Measurable impact on mining operations
-            </h2>
-          </AnimatedSection>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {STATS.map((stat, i) => (
-              <StaggerItem key={stat.label} index={i} className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20 text-center">
-                <p className="text-3xl md:text-4xl font-display font-bold text-sm-accent mb-2">{stat.value}</p>
-                <p className="text-sm text-sm-muted">{stat.label}</p>
-              </StaggerItem>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ===== FAQ ===== */}
-      <section className="py-24 bg-sm-card/20">
+      <section className="py-24">
         <div className="max-w-4xl mx-auto px-6">
           <AnimatedSection className="text-center mb-16">
             <p className="eyebrow mb-4">FAQ</p>
@@ -283,16 +306,16 @@ export default function MiningPage() {
       </section>
 
       {/* ===== FREE AUDIT CTA ===== */}
-      <section className="py-24">
+      <section className="py-24 bg-sm-card/20">
         <div className="max-w-4xl mx-auto px-6">
           <AnimatedSection>
             <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-10 md:p-14 bg-sm-accent/5 text-center">
               <p className="eyebrow mb-4">Free Audit</p>
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                Find out where your operation is losing visibility
+                Not sure which package fits your operation?
               </h2>
               <p className="text-sm-muted max-w-xl mx-auto mb-8">
-                We will audit your current operational systems, identify where data gaps and manual processes are costing you time and money, and deliver a clear roadmap for modernisation. No cost, no obligation.
+                We will audit your current operational systems, identify where manual processes and data gaps are costing you time and compliance risk, and recommend the right package for your operation. No cost, no obligation.
               </p>
               <a
                 href="/audit"
@@ -306,14 +329,14 @@ export default function MiningPage() {
       </section>
 
       {/* ===== FINAL CTA ===== */}
-      <section className="py-24 bg-sm-card/20">
+      <section className="py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <AnimatedSection>
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
               Ready to modernise your mining operations?
             </h2>
             <p className="text-sm-muted max-w-xl mx-auto mb-8">
-              Tell us about your operation and we will show you exactly what we can build. Most dashboards are deployed within a week.
+              Tell us about your operation and we will match you with the right package. Most dashboards are deployed within a week.
             </p>
             <button
               onClick={() => setQuoteOpen(true)}

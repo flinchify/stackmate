@@ -5,12 +5,14 @@ import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-
 import Image from 'next/image';
 import { ChevronDown } from 'lucide-react';
 
-const INDUSTRIES = [
+const PACKAGES = [
+  { label: 'All Packages', href: '/packages' },
   { label: 'Tradies', href: '/tradies' },
   { label: 'Restaurants', href: '/restaurants' },
   { label: 'Real Estate', href: '/real-estate' },
   { label: 'E-Commerce', href: '/ecommerce' },
   { label: 'Mining', href: '/mining' },
+  { label: 'Custom', href: '/packages/custom' },
 ];
 
 interface HeaderProps {
@@ -21,9 +23,9 @@ export default function Header({ onQuoteClick }: HeaderProps) {
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [industriesOpen, setIndustriesOpen] = useState(false);
-  const [mobileIndustriesOpen, setMobileIndustriesOpen] = useState(false);
-  const industriesRef = useRef<HTMLDivElement>(null);
+  const [packagesOpen, setPackagesOpen] = useState(false);
+  const [mobilePackagesOpen, setMobilePackagesOpen] = useState(false);
+  const packagesRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
@@ -46,11 +48,11 @@ export default function Header({ onQuoteClick }: HeaderProps) {
     }
   }, [mobileOpen]);
 
-  // Close industries dropdown when clicking outside
+  // Close packages dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (industriesRef.current && !industriesRef.current.contains(event.target as Node)) {
-        setIndustriesOpen(false);
+      if (packagesRef.current && !packagesRef.current.contains(event.target as Node)) {
+        setPackagesOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -93,17 +95,17 @@ export default function Header({ onQuoteClick }: HeaderProps) {
                 </a>
               ))}
 
-              {/* Industries dropdown */}
-              <div ref={industriesRef} className="relative">
+              {/* Packages dropdown */}
+              <div ref={packagesRef} className="relative">
                 <button
-                  onClick={() => setIndustriesOpen(!industriesOpen)}
+                  onClick={() => setPackagesOpen(!packagesOpen)}
                   className="font-mono text-xs uppercase tracking-wider text-sm-muted hover:text-sm-accent transition-colors duration-200 flex items-center gap-1"
                 >
-                  INDUSTRIES
-                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${industriesOpen ? 'rotate-180' : ''}`} />
+                  PACKAGES
+                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${packagesOpen ? 'rotate-180' : ''}`} />
                 </button>
                 <AnimatePresence>
-                  {industriesOpen && (
+                  {packagesOpen && (
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -111,14 +113,14 @@ export default function Header({ onQuoteClick }: HeaderProps) {
                       transition={{ duration: 0.15 }}
                       className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-48 py-2 bg-sm-bg/95 backdrop-blur-xl border border-white/[0.06] rounded-xl shadow-2xl"
                     >
-                      {INDUSTRIES.map((ind) => (
+                      {PACKAGES.map((pkg) => (
                         <a
-                          key={ind.href}
-                          href={ind.href}
+                          key={pkg.href}
+                          href={pkg.href}
                           className="block px-4 py-2.5 font-mono text-xs uppercase tracking-wider text-sm-muted hover:text-sm-accent hover:bg-sm-surface/30 transition-colors duration-150"
-                          onClick={() => setIndustriesOpen(false)}
+                          onClick={() => setPackagesOpen(false)}
                         >
-                          {ind.label}
+                          {pkg.label}
                         </a>
                       ))}
                     </motion.div>
@@ -191,17 +193,17 @@ export default function Header({ onQuoteClick }: HeaderProps) {
                 ENTERPRISE
               </a>
 
-              {/* Mobile Industries accordion */}
+              {/* Mobile Packages accordion */}
               <div className="flex flex-col items-center">
                 <button
-                  onClick={() => setMobileIndustriesOpen(!mobileIndustriesOpen)}
+                  onClick={() => setMobilePackagesOpen(!mobilePackagesOpen)}
                   className="font-mono text-sm uppercase tracking-wider text-sm-muted hover:text-sm-accent transition-colors flex items-center gap-1"
                 >
-                  INDUSTRIES
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${mobileIndustriesOpen ? 'rotate-180' : ''}`} />
+                  PACKAGES
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${mobilePackagesOpen ? 'rotate-180' : ''}`} />
                 </button>
                 <AnimatePresence>
-                  {mobileIndustriesOpen && (
+                  {mobilePackagesOpen && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
@@ -210,14 +212,14 @@ export default function Header({ onQuoteClick }: HeaderProps) {
                       className="overflow-hidden"
                     >
                       <div className="flex flex-col items-center gap-4 pt-4">
-                        {INDUSTRIES.map((ind) => (
+                        {PACKAGES.map((pkg) => (
                           <a
-                            key={ind.href}
-                            href={ind.href}
+                            key={pkg.href}
+                            href={pkg.href}
                             onClick={() => setMobileOpen(false)}
                             className="font-mono text-xs uppercase tracking-wider text-sm-subtle hover:text-sm-accent transition-colors"
                           >
-                            {ind.label}
+                            {pkg.label}
                           </a>
                         ))}
                       </div>

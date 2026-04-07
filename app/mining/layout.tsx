@@ -1,20 +1,20 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Operational Dashboards & Safety Automation for WA Mining | Stackmate',
-  description: 'Custom operational dashboards, safety compliance automation, and AI-powered reporting for Western Australian mining companies. Built for the Pilbara and beyond.',
-  keywords: ['mining software western australia', 'mining dashboard perth', 'safety automation mining', 'mining compliance software', 'operational dashboard mining WA', 'mining AI automation', 'pilbara mining software'],
+  title: 'Mining Packages — Dashboards, Safety & AI Systems | Stackmate',
+  description: 'Packages for WA mining operations: safety compliance dashboards, operational reporting, AI predictive maintenance, and IoT integration. Choose Starter, Growth, or Pro.',
+  keywords: ['mining packages western australia', 'mining software western australia', 'mining dashboard perth', 'safety automation mining', 'mining compliance software', 'operational dashboard mining WA', 'mining AI automation'],
   openGraph: {
-    title: 'Operational Dashboards & Safety Automation for WA Mining | Stackmate',
-    description: 'Custom dashboards and safety automation for Western Australian mining operations.',
+    title: 'Mining Packages — Dashboards, Safety & AI Systems | Stackmate',
+    description: 'Packages for WA mining operations: safety compliance, operational dashboards, and AI predictive maintenance.',
     url: 'https://stackmate.digital/mining',
     siteName: 'Stackmate',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Operational Dashboards & Safety Automation for WA Mining | Stackmate',
-    description: 'Custom dashboards and safety automation for WA mining operations.',
+    title: 'Mining Packages — Dashboards, Safety & AI Systems | Stackmate',
+    description: 'Packages for WA mining operations: safety compliance, operational dashboards, and AI systems.',
   },
   alternates: { canonical: 'https://stackmate.digital/mining' },
 };

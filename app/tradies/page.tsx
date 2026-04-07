@@ -3,77 +3,77 @@
 import { useState, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { Wrench, Clock, FileText, Phone, Users, Globe, Zap, MessageSquare, BarChart3, ChevronDown, MapPin, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Wrench, Clock, FileText, Globe, MessageSquare, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
+
+const PACKAGES = [
+  {
+    tier: 'Starter',
+    subtitle: 'Solo Tradie',
+    features: [
+      'Professional website',
+      'Mobile-friendly design',
+      'Contact form',
+      'Google Maps integration',
+      'Basic SEO setup',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Growth',
+    subtitle: 'Growing Team',
+    features: [
+      'Everything in Starter',
+      'Online quote/booking system',
+      'Automated follow-ups',
+      'Google review requests',
+      'Job management dashboard',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Pro',
+    subtitle: 'Established Business',
+    features: [
+      'Everything in Growth',
+      'AI receptionist (24/7 calls and texts)',
+      'Automated invoicing',
+      'Fleet and job tracking',
+      'CRM system',
+      'Multi-location support',
+    ],
+    highlight: true,
+  },
+];
 
 const PAIN_POINTS = [
   {
     icon: FileText,
     title: 'Still quoting from the ute?',
-    desc: 'Scribbling estimates on the back of a receipt loses you jobs. By the time you send a proper quote, the customer has already called someone else. Manual quoting is costing you thousands every month.',
+    desc: 'Scribbling estimates on the back of a receipt loses you jobs. By the time you send a proper quote, the customer has already called someone else.',
   },
   {
     icon: Clock,
     title: 'No-shows and double bookings',
-    desc: 'Without a proper scheduling system, jobs overlap, customers get forgotten, and your reputation takes a hit. You need a booking system that works while you are on-site.',
+    desc: 'Without a proper scheduling system, jobs overlap, customers get forgotten, and your reputation takes a hit.',
   },
   {
     icon: Globe,
     title: 'Invisible on Google',
-    desc: 'When someone searches "plumber near me" or "electrician Perth," your competitors show up first. If you do not have a properly optimised website and Google Business profile, you are handing work to the bloke down the road.',
+    desc: 'When someone searches "plumber near me" or "electrician Perth," your competitors show up first. If you do not have a properly optimised website, you are handing work to the bloke down the road.',
   },
   {
     icon: MessageSquare,
     title: 'Chasing invoices at 9pm',
-    desc: 'You finish a 10-hour day on the tools and then spend your evening chasing payments, sending follow-ups, and doing admin. Automated invoicing and payment reminders fix this overnight.',
+    desc: 'You finish a 10-hour day on the tools and then spend your evening chasing payments and doing admin. Automated invoicing and payment reminders fix this overnight.',
   },
-];
-
-const DELIVERABLES = [
-  {
-    icon: Globe,
-    title: 'Mobile-first trade website',
-    desc: 'Fast, professional site built for your trade. Loads in under a second, looks great on every device, and is designed to convert visitors into booked jobs.',
-  },
-  {
-    icon: FileText,
-    title: 'Instant quote calculator',
-    desc: 'Customers select their job type, answer a few questions, and get a ballpark price instantly. You get a qualified lead with all the details before you even pick up the phone.',
-  },
-  {
-    icon: Clock,
-    title: 'Online booking system',
-    desc: 'Let customers book available time slots directly from your website. Syncs with your calendar, sends reminders, and eliminates no-shows.',
-  },
-  {
-    icon: Phone,
-    title: 'AI receptionist',
-    desc: 'Never miss a call again. When you are on a roof or under a house, our AI answers the phone, takes job details, and books the customer in. Works 24/7.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Google Business optimisation',
-    desc: 'We set up and optimise your Google Business Profile so you rank in local searches. Photos, reviews strategy, service areas, and weekly posts handled for you.',
-  },
-  {
-    icon: Zap,
-    title: 'Automated invoicing',
-    desc: 'Job done? Invoice sent automatically. Payment overdue? Follow-up sent. Integrates with Xero, MYOB, or QuickBooks so your bookkeeper stays happy.',
-  },
-];
-
-const STATS = [
-  { value: '40+', label: 'Perth trade businesses helped' },
-  { value: '3x', label: 'Average increase in online enquiries' },
-  { value: '< 2 days', label: 'Typical build time' },
-  { value: '24/7', label: 'AI handles calls while you work' },
 ];
 
 const FAQS = [
   {
-    q: 'How much does a tradie website cost?',
-    a: 'It depends on what you need, but most trade websites start from $1,500. If you want a quote calculator, booking system, or AI receptionist bundled in, we will put together a custom package. No lock-in contracts, no hidden fees. Get a free audit first and we will tell you exactly what you need and what it will cost.',
+    q: 'Which package is right for me?',
+    a: 'If you are a sole trader just getting online, the Starter package covers everything you need. If you are growing and need quoting, booking, and follow-up systems, Growth is the right fit. If you run an established operation and want AI handling calls, invoicing, and job tracking, Pro gives you the full stack. Not sure? Get a free audit and we will recommend the right tier for your business.',
   },
   {
     q: 'How long does it take to build?',
@@ -139,10 +139,10 @@ export default function TradiesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'Service',
-        name: 'Tradie Websites & Business Systems',
+        name: 'Tradie Packages — Websites & Business Systems',
         provider: { '@type': 'Organization', name: 'Stackmate', url: 'https://stackmate.digital' },
         areaServed: { '@type': 'State', name: 'Western Australia' },
-        description: 'Custom websites, automated quoting, and AI-powered business systems for Perth tradies.',
+        description: 'Packages for Perth tradies — from professional websites to full AI-powered business systems with quoting, booking, invoicing, and CRM.',
         serviceType: 'Web Development and Business Automation',
       }) }} />
 
@@ -152,12 +152,12 @@ export default function TradiesPage() {
       {/* ===== HERO ===== */}
       <section className="pt-32 pb-16 max-w-5xl mx-auto px-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <p className="eyebrow mb-4">Websites for Tradies</p>
+          <p className="eyebrow mb-4">Packages for Tradies</p>
           <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight mb-6">
-            Your trade deserves a website that actually books jobs
+            Choose the right package for your trade business
           </h1>
           <p className="text-lg text-sm-light max-w-2xl mb-8">
-            Most Perth tradies lose work every week because they do not have a proper website, quoting system, or way for customers to book online. Your competitors do. We build the digital systems that turn enquiries into jobs — fast, affordable, and built specifically for your trade.
+            Whether you are a sole trader getting online for the first time or an established operation ready for AI-powered automation, we have a package built for how tradies actually work. No lock-in contracts. No hidden fees. Just the systems you need to win more jobs.
           </p>
           <div className="flex flex-wrap gap-4">
             <a
@@ -176,8 +176,76 @@ export default function TradiesPage() {
         </motion.div>
       </section>
 
-      {/* ===== PAIN POINTS ===== */}
+      {/* ===== PACKAGE CARDS ===== */}
+      <section className="py-24 bg-sm-card/20">
+        <div className="max-w-7xl mx-auto px-6">
+          <AnimatedSection className="text-center mb-16">
+            <p className="eyebrow mb-4">Our Packages</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+              Three tiers. One goal. More jobs, less admin.
+            </h2>
+            <p className="text-sm-muted max-w-2xl mx-auto">
+              Every package is quote-based and tailored to your trade. Pick the tier that fits where your business is today, and we will build it to spec.
+            </p>
+          </AnimatedSection>
+          <div className="grid md:grid-cols-3 gap-6">
+            {PACKAGES.map((pkg, i) => (
+              <StaggerItem
+                key={pkg.tier}
+                index={i}
+                className={`${pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'} border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 flex flex-col`}
+              >
+                <h3 className="text-2xl font-display font-bold">{pkg.tier}</h3>
+                <p className="text-sm text-sm-muted mb-6">({pkg.subtitle})</p>
+                <div className="space-y-3 flex-1">
+                  {pkg.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
+                      <span className="text-sm text-sm-light">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setQuoteOpen(true)}
+                  className={`mt-8 w-full group inline-flex items-center justify-center gap-2 px-8 py-4 font-display font-bold rounded-xl transition-all hover:scale-[1.03] active:scale-[0.98] ${
+                    pkg.highlight
+                      ? 'bg-sm-accent text-black hover:bg-sm-accent-light'
+                      : 'border border-sm-border text-white hover:bg-white/5'
+                  }`}
+                >
+                  Get a Quote <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </StaggerItem>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CUSTOM SECTION ===== */}
       <section className="py-24">
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimatedSection>
+            <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-10 md:p-14 bg-sm-surface/20 text-center">
+              <p className="eyebrow mb-4">Custom Builds</p>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                Need something different? We build custom.
+              </h2>
+              <p className="text-sm-muted max-w-xl mx-auto mb-8">
+                If none of the packages above fit your situation, we can scope a custom solution from scratch. Complex quoting engines, trade-specific integrations, multi-business setups — whatever you need, we will build it.
+              </p>
+              <a
+                href="/packages/custom"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-black font-display font-bold rounded-xl transition-all hover:bg-sm-accent-light hover:scale-[1.03] active:scale-[0.98]"
+              >
+                EXPLORE CUSTOM BUILDS <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ===== PAIN POINTS ===== */}
+      <section className="py-24 bg-sm-card/20">
         <div className="max-w-7xl mx-auto px-6">
           <AnimatedSection className="text-center mb-16">
             <p className="eyebrow mb-4">The Problem</p>
@@ -197,52 +265,8 @@ export default function TradiesPage() {
         </div>
       </section>
 
-      {/* ===== WHAT WE BUILD ===== */}
-      <section className="py-24 bg-sm-card/20">
-        <div className="max-w-7xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="eyebrow mb-4">What We Build</p>
-            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Everything a modern trade business needs
-            </h2>
-            <p className="text-sm-muted max-w-2xl mx-auto">
-              Not templates. Not drag-and-drop builders. Custom-built systems designed for how tradies actually work — on-site, on the tools, on the go.
-            </p>
-          </AnimatedSection>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {DELIVERABLES.map((item, i) => (
-              <StaggerItem key={item.title} index={i} className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20">
-                <item.icon className="w-8 h-8 text-sm-accent mb-4" />
-                <h3 className="text-lg font-display font-bold mb-2">{item.title}</h3>
-                <p className="text-sm text-sm-muted leading-relaxed">{item.desc}</p>
-              </StaggerItem>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== STATS ===== */}
-      <section className="py-24">
-        <div className="max-w-5xl mx-auto px-6">
-          <AnimatedSection className="text-center mb-16">
-            <p className="eyebrow mb-4">Results</p>
-            <h2 className="text-3xl md:text-4xl font-display font-bold">
-              Numbers that matter to tradies
-            </h2>
-          </AnimatedSection>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {STATS.map((stat, i) => (
-              <StaggerItem key={stat.label} index={i} className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20 text-center">
-                <p className="text-3xl md:text-4xl font-display font-bold text-sm-accent mb-2">{stat.value}</p>
-                <p className="text-sm text-sm-muted">{stat.label}</p>
-              </StaggerItem>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ===== FAQ ===== */}
-      <section className="py-24 bg-sm-card/20">
+      <section className="py-24">
         <div className="max-w-4xl mx-auto px-6">
           <AnimatedSection className="text-center mb-16">
             <p className="eyebrow mb-4">FAQ</p>
@@ -283,16 +307,16 @@ export default function TradiesPage() {
       </section>
 
       {/* ===== FREE AUDIT CTA ===== */}
-      <section className="py-24">
+      <section className="py-24 bg-sm-card/20">
         <div className="max-w-4xl mx-auto px-6">
           <AnimatedSection>
             <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-10 md:p-14 bg-sm-accent/5 text-center">
               <p className="eyebrow mb-4">Free Audit</p>
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                Find out what is costing you jobs
+                Not sure which package you need?
               </h2>
               <p className="text-sm-muted max-w-xl mx-auto mb-8">
-                We will audit your current online presence, show you where you are losing customers, and give you a clear plan to fix it. No cost, no obligation, no sales pitch.
+                We will audit your current online presence, show you where you are losing customers, and recommend the right package for your trade business. No cost, no obligation.
               </p>
               <a
                 href="/audit"
@@ -306,14 +330,14 @@ export default function TradiesPage() {
       </section>
 
       {/* ===== FINAL CTA ===== */}
-      <section className="py-24 bg-sm-card/20">
+      <section className="py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <AnimatedSection>
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
               Ready to get more jobs without the admin?
             </h2>
             <p className="text-sm-muted max-w-xl mx-auto mb-8">
-              Tell us about your trade and we will show you exactly what we can build. Most systems are live within 48 hours.
+              Tell us about your trade and we will match you with the right package. Most systems are live within 48 hours.
             </p>
             <button
               onClick={() => setQuoteOpen(true)}

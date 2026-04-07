@@ -1,20 +1,20 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'E-Commerce Stores & AI Product Systems | Stackmate',
-  description: 'Custom e-commerce stores, AI-powered product recommendations, and automated inventory systems for Perth businesses. Sell more online with systems that scale.',
-  keywords: ['ecommerce website perth', 'online store perth', 'shopify alternative perth', 'AI product recommendations', 'ecommerce automation perth', 'custom online store western australia', 'ecommerce development perth'],
+  title: 'E-Commerce Packages — Stores, AI & Automation | Stackmate',
+  description: 'Packages for Perth e-commerce businesses: custom storefronts, AI product recommendations, cart recovery, inventory automation, and ERP integration. Choose Starter, Growth, or Pro.',
+  keywords: ['ecommerce packages perth', 'ecommerce website perth', 'online store perth', 'shopify alternative perth', 'AI product recommendations', 'ecommerce automation perth', 'custom online store western australia'],
   openGraph: {
-    title: 'E-Commerce Stores & AI Product Systems | Stackmate',
-    description: 'Custom e-commerce stores and AI-powered product systems for Perth businesses.',
+    title: 'E-Commerce Packages — Stores, AI & Automation | Stackmate',
+    description: 'Packages for Perth e-commerce businesses: custom storefronts, AI recommendations, and inventory automation.',
     url: 'https://stackmate.digital/ecommerce',
     siteName: 'Stackmate',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'E-Commerce Stores & AI Product Systems | Stackmate',
-    description: 'Custom e-commerce stores and AI-powered product systems for Perth businesses.',
+    title: 'E-Commerce Packages — Stores, AI & Automation | Stackmate',
+    description: 'Packages for Perth e-commerce businesses: custom storefronts, AI recommendations, and inventory automation.',
   },
   alternates: { canonical: 'https://stackmate.digital/ecommerce' },
 };

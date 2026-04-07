@@ -1,20 +1,20 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Websites & Quote Systems for Perth Tradies | Stackmate',
-  description: 'Custom websites, automated quoting, and AI-powered systems built for Perth tradies. Get more jobs, less admin. From plumbers to sparkies — Stackmate builds the tech that runs your trade business.',
-  keywords: ['tradie website perth', 'trade business automation', 'quote system tradies', 'plumber website perth', 'electrician website perth', 'tradie booking system', 'perth trade business software', 'AI for tradies'],
+  title: 'Tradie Packages — Websites, Quoting & AI Systems | Stackmate',
+  description: 'Packages for Perth tradies: professional websites, automated quoting, AI receptionists, and job management systems. Choose Starter, Growth, or Pro. Get a quote today.',
+  keywords: ['tradie packages perth', 'tradie website perth', 'trade business packages', 'plumber website perth', 'electrician website perth', 'tradie booking system', 'perth trade business software', 'AI for tradies'],
   openGraph: {
-    title: 'Websites & Quote Systems for Perth Tradies | Stackmate',
-    description: 'Custom websites, automated quoting, and AI-powered systems built for Perth tradies. Get more jobs, less admin.',
+    title: 'Tradie Packages — Websites, Quoting & AI Systems | Stackmate',
+    description: 'Packages for Perth tradies: professional websites, automated quoting, AI receptionists, and job management systems.',
     url: 'https://stackmate.digital/tradies',
     siteName: 'Stackmate',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Websites & Quote Systems for Perth Tradies | Stackmate',
-    description: 'Custom websites, automated quoting, and AI-powered systems built for Perth tradies.',
+    title: 'Tradie Packages — Websites, Quoting & AI Systems | Stackmate',
+    description: 'Packages for Perth tradies: professional websites, automated quoting, AI receptionists, and job management systems.',
   },
   alternates: {
     canonical: 'https://stackmate.digital/tradies',

@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { ShoppingCart, Clock, Package, Globe, Zap, MessageSquare, BarChart3, ChevronDown, MapPin, ArrowRight, CheckCircle2, CreditCard, Search, TrendingUp, Truck } from 'lucide-react';
+import { ShoppingCart, Globe, Package, Search, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
 
@@ -31,6 +31,47 @@ function StaggerItem({ children, className = '', index = 0 }: { children: React.
 
 /* ── Data ── */
 
+const PACKAGES = [
+  {
+    tier: 'Starter',
+    subtitle: 'New Store',
+    features: [
+      'Custom Shopify or headless store',
+      'Product catalog',
+      'Payment processing',
+      'Shipping integration',
+      'Basic analytics',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Growth',
+    subtitle: 'Scaling Store',
+    features: [
+      'Everything in Starter',
+      'AI product recommendations',
+      'Abandoned cart recovery',
+      'Automated email flows',
+      'Inventory management',
+      'Multi-channel selling',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Pro',
+    subtitle: 'Enterprise',
+    features: [
+      'Everything in Growth',
+      'Custom ERP integration',
+      'AI-powered pricing',
+      'Wholesale portal',
+      'Advanced analytics and BI dashboard',
+      'API marketplace',
+    ],
+    highlight: true,
+  },
+];
+
 const PAIN_POINTS = [
   {
     icon: Globe,
@@ -54,66 +95,26 @@ const PAIN_POINTS = [
   },
 ];
 
-const CAPABILITIES = [
-  {
-    icon: Globe,
-    title: 'Custom storefront',
-    desc: 'Headless or full-stack e-commerce built from scratch. No templates, no compromises. Designed to convert and built to scale.',
-  },
-  {
-    icon: Zap,
-    title: 'AI product recommendation engine',
-    desc: 'Machine learning that analyses browsing behaviour and purchase history to surface the right products at the right time.',
-  },
-  {
-    icon: MessageSquare,
-    title: 'Abandoned cart recovery automation',
-    desc: 'Multi-channel recovery flows across email, SMS, and retargeting that bring customers back and close the sale.',
-  },
-  {
-    icon: Package,
-    title: 'Inventory sync across channels',
-    desc: 'Real-time stock synchronisation between your online store, marketplaces, POS, and warehouse. One source of truth.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Customer analytics dashboard',
-    desc: 'Live dashboards tracking revenue, conversion rates, customer lifetime value, and product performance in one place.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Automated email marketing flows',
-    desc: 'Welcome sequences, post-purchase nurture, win-back campaigns, and VIP segmentation that run on autopilot.',
-  },
-];
-
-const STATS = [
-  { value: '35+', label: 'E-commerce stores built' },
-  { value: '2.4x', label: 'Average revenue increase post-launch' },
-  { value: '< 3 days', label: 'Typical store build time' },
-  { value: '67%', label: 'Average cart recovery rate' },
-];
-
 const FAQS = [
   {
-    q: 'Should I use Shopify or a custom-built store?',
-    a: 'It depends on your goals. Shopify is great for getting started quickly, but custom stores give you full control over design, performance, and integrations. If you need AI-powered features, complex product logic, or integrations with Australian systems like Xero and Australia Post, a custom build is almost always the better long-term investment. We build both and can advise based on your specific situation.',
+    q: 'Which package is right for my store?',
+    a: 'If you are launching a new store and need a solid foundation with payments and shipping, Starter is the right starting point. If you are scaling and need AI recommendations, cart recovery, and inventory management, Growth will drive your next phase. Enterprise-level stores that need ERP integration, dynamic pricing, and wholesale capabilities should look at Pro. Not sure? Get a free audit and we will recommend the right tier.',
   },
   {
     q: 'What payment processors do you integrate with?',
-    a: 'We integrate with all major Australian payment gateways including Stripe, Square, PayPal, Afterpay, Zip Pay, and direct bank transfers. We also handle multi-currency setups for stores selling internationally and can integrate with your existing EFTPOS or POS system for unified reporting.',
+    a: 'We integrate with all major Australian payment gateways including Stripe, Square, PayPal, Afterpay, Zip Pay, and direct bank transfers. We also handle multi-currency setups for stores selling internationally.',
   },
   {
     q: 'How long does it take to build an e-commerce store?',
-    a: 'A standard custom store with product catalogue, checkout, and payment processing can be live in under 3 days. More complex builds with AI recommendations, inventory sync across multiple channels, and custom automation flows typically take 5-10 days. Either way, we move significantly faster than traditional agencies.',
+    a: 'A standard custom store with product catalogue, checkout, and payment processing can be live in under 3 days. More complex builds with AI recommendations, inventory sync, and custom automation typically take 5-10 days.',
   },
   {
     q: 'What are the ongoing costs after launch?',
-    a: 'Hosting for a custom store typically runs $20-50/month depending on traffic. There are no Stackmate lock-in fees or recurring platform charges. Payment processing fees are set by your gateway provider (usually 1.5-2.9% per transaction). We offer optional maintenance and support plans if you want ongoing optimisation and updates.',
+    a: 'Hosting for a custom store typically runs $20-50/month depending on traffic. There are no Stackmate lock-in fees or recurring platform charges. We offer optional maintenance and support plans if you want ongoing optimisation.',
   },
   {
     q: 'Will my store be optimised for SEO?',
-    a: 'Every store we build ships with technical SEO baked in from day one: server-side rendering for fast crawlability, structured product data (schema markup), optimised meta tags, image compression, clean URL structures, and mobile-first design. We also set up Google Merchant Centre integration and product feed automation so your products appear in Google Shopping results.',
+    a: 'Every store we build ships with technical SEO baked in from day one: server-side rendering, structured product data, optimised meta tags, image compression, clean URL structures, and mobile-first design.',
   },
 ];
 
@@ -123,200 +124,239 @@ export default function EcommercePage() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQS.map((faq) => ({
+      '@type': 'Question',
+      name: faq.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.a,
+      },
+    })),
+  };
+
   return (
     <main>
-      {/* JSON-LD Service Schema */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Service',
-        name: 'E-Commerce Development',
-        description: 'Custom e-commerce stores, AI-powered product recommendations, and automated inventory systems for Perth businesses.',
-        provider: {
-          '@type': 'Organization',
-          name: 'Stackmate',
-          url: 'https://stackmate.digital',
-          areaServed: {
-            '@type': 'Place',
-            name: 'Perth, Western Australia',
-          },
-        },
-        serviceType: 'E-Commerce Development',
-        areaServed: {
-          '@type': 'GeoCircle',
-          geoMidpoint: { '@type': 'GeoCoordinates', latitude: -31.9505, longitude: 115.8605 },
-          geoRadius: '50000',
-        },
-      }) }} />
-
       <Header onQuoteClick={() => setQuoteOpen(true)} />
       <QuoteModal isOpen={quoteOpen} onClose={() => setQuoteOpen(false)} />
 
-      {/* ====== HERO ====== */}
+      {/* Service Schema */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: 'E-Commerce Packages — Custom Stores & Automation',
+        provider: { '@type': 'Organization', name: 'Stackmate', url: 'https://stackmate.digital' },
+        areaServed: { '@type': 'State', name: 'Western Australia' },
+        description: 'E-commerce packages for Perth businesses — from custom Shopify stores to enterprise platforms with AI recommendations, inventory sync, and ERP integration.',
+        serviceType: 'E-Commerce Development',
+      }) }} />
+
+      {/* FAQ Schema */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+
+      {/* ===== HERO ===== */}
       <section className="pt-32 pb-16 max-w-5xl mx-auto px-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <p className="eyebrow mb-4">E-Commerce</p>
+          <p className="eyebrow mb-4">Packages for E-Commerce</p>
           <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight mb-6">
-            An online store that sells while you sleep
+            Choose the right package for your online store
           </h1>
-          <p className="text-lg text-sm-light max-w-2xl">
-            Perth businesses deserve more than a templated storefront with a &ldquo;buy now&rdquo; button. We build custom e-commerce systems with AI-powered product recommendations, automated inventory management, and checkout flows engineered to convert. Your store works harder than you do.
+          <p className="text-lg text-sm-light max-w-2xl mb-8">
+            Whether you are launching your first store or scaling an enterprise operation, we have a package built for where your business is today. Custom stores, AI-powered selling, and automation that runs while you sleep. No lock-in contracts. No template compromises.
           </p>
+          <div className="flex flex-wrap gap-4">
+            <a
+              href="/audit"
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-black font-display font-bold rounded-xl transition-all hover:bg-sm-accent-light hover:scale-[1.03] active:scale-[0.98]"
+            >
+              GET YOUR FREE AUDIT <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </a>
+            <button
+              onClick={() => setQuoteOpen(true)}
+              className="group inline-flex items-center gap-2 px-8 py-4 border border-sm-border text-white font-display font-bold rounded-xl transition-all hover:bg-white/5 hover:scale-[1.03] active:scale-[0.98]"
+            >
+              GET A QUOTE <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
         </motion.div>
       </section>
 
-      {/* ====== PAIN POINTS ====== */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <AnimatedSection>
-          <p className="eyebrow mb-4 text-center">The Problem</p>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
-            Why most Perth e-commerce stores underperform
-          </h2>
-        </AnimatedSection>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {PAIN_POINTS.map((point, i) => (
-            <StaggerItem key={point.title} index={i}>
-              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20 h-full">
-                <point.icon className="w-8 h-8 text-sm-accent mb-4" />
-                <h3 className="text-lg font-display font-bold mb-2">{point.title}</h3>
-                <p className="text-sm text-sm-muted leading-relaxed">{point.desc}</p>
-              </div>
-            </StaggerItem>
-          ))}
-        </div>
-      </section>
-
-      {/* ====== WHAT WE BUILD ====== */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <AnimatedSection>
-          <p className="eyebrow mb-4 text-center">What We Build</p>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
-            E-commerce systems that think, sell, and scale
-          </h2>
-        </AnimatedSection>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {CAPABILITIES.map((cap, i) => (
-            <StaggerItem key={cap.title} index={i}>
-              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20 h-full hover:border-sm-accent/20 transition-all duration-300">
-                <cap.icon className="w-8 h-8 text-sm-accent mb-4" />
-                <h3 className="text-lg font-display font-bold mb-2">{cap.title}</h3>
-                <p className="text-sm text-sm-muted leading-relaxed">{cap.desc}</p>
-              </div>
-            </StaggerItem>
-          ))}
-        </div>
-      </section>
-
-      {/* ====== STATS ====== */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <AnimatedSection>
-          <p className="eyebrow mb-4 text-center">Results</p>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
-            Numbers that speak for themselves
-          </h2>
-        </AnimatedSection>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {STATS.map((stat, i) => (
-            <StaggerItem key={stat.label} index={i}>
-              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20 text-center">
-                <div className="text-3xl md:text-4xl font-display font-bold text-sm-accent mb-2">{stat.value}</div>
-                <div className="text-sm text-sm-muted">{stat.label}</div>
-              </div>
-            </StaggerItem>
-          ))}
-        </div>
-      </section>
-
-      {/* ====== FAQ ====== */}
-      <section className="py-24 px-6 max-w-4xl mx-auto">
-        <AnimatedSection>
-          <p className="eyebrow mb-4 text-center">FAQ</p>
-          <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-center mb-12">
-            Common questions
-          </h2>
-        </AnimatedSection>
-
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: FAQS.map(faq => ({
-            '@type': 'Question',
-            name: faq.q,
-            acceptedAnswer: { '@type': 'Answer', text: faq.a },
-          })),
-        }) }} />
-
-        <div className="space-y-4">
-          {FAQS.map((faq, i) => (
-            <StaggerItem key={faq.q} index={i}>
-              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full text-left p-6 flex items-center justify-between hover:bg-sm-surface/20 transition-all duration-200"
-                >
-                  <span className="font-display font-semibold text-lg pr-4">{faq.q}</span>
-                  <ChevronDown className={`w-5 h-5 text-sm-muted transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`} />
-                </button>
-                <AnimatePresence>
-                  {openFaq === i && (
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: 'auto' }}
-                      exit={{ height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-6 pb-6">
-                        <p className="text-sm text-sm-muted leading-relaxed">{faq.a}</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </StaggerItem>
-          ))}
-        </div>
-      </section>
-
-      {/* ====== FREE AUDIT CTA ====== */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <AnimatedSection>
-          <div className="shimmer-border-subtle border border-white/[0.06] rounded-2xl p-12 bg-sm-accent/5 text-center">
-            <p className="eyebrow mb-6">Free Audit</p>
-            <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-6">
-              Not sure where to start with e-commerce?
+      {/* ===== PACKAGE CARDS ===== */}
+      <section className="py-24 bg-sm-card/20">
+        <div className="max-w-7xl mx-auto px-6">
+          <AnimatedSection className="text-center mb-16">
+            <p className="eyebrow mb-4">Our Packages</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+              Three tiers. One goal. More sales, less friction.
             </h2>
-            <p className="text-lg text-sm-muted max-w-2xl mx-auto mb-8">
-              We&apos;ll audit your current online presence and show you exactly where you&apos;re losing sales, what to automate, and how to build a store that actually converts. Free, no obligation.
+            <p className="text-sm-muted max-w-2xl mx-auto">
+              Every package is quote-based and tailored to your store. Pick the tier that matches your stage of growth, and we will build it to spec.
             </p>
-            <a
-              href="/audit"
-              className="inline-block px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider hover:bg-sm-accent-light transition-all duration-200 font-medium"
-            >
-              GET YOUR FREE E-COMMERCE AUDIT
-            </a>
+          </AnimatedSection>
+          <div className="grid md:grid-cols-3 gap-6">
+            {PACKAGES.map((pkg, i) => (
+              <StaggerItem
+                key={pkg.tier}
+                index={i}
+                className={`${pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'} border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 flex flex-col`}
+              >
+                <h3 className="text-2xl font-display font-bold">{pkg.tier}</h3>
+                <p className="text-sm text-sm-muted mb-6">({pkg.subtitle})</p>
+                <div className="space-y-3 flex-1">
+                  {pkg.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
+                      <span className="text-sm text-sm-light">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setQuoteOpen(true)}
+                  className={`mt-8 w-full group inline-flex items-center justify-center gap-2 px-8 py-4 font-display font-bold rounded-xl transition-all hover:scale-[1.03] active:scale-[0.98] ${
+                    pkg.highlight
+                      ? 'bg-sm-accent text-black hover:bg-sm-accent-light'
+                      : 'border border-sm-border text-white hover:bg-white/5'
+                  }`}
+                >
+                  Get a Quote <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </StaggerItem>
+            ))}
           </div>
-        </AnimatedSection>
+        </div>
       </section>
 
-      {/* ====== FINAL CTA ====== */}
-      <section className="py-24 px-6 max-w-7xl mx-auto text-center">
-        <AnimatedSection>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight mb-8">
-            Ready to sell more with less effort?
-          </h2>
-          <button
-            onClick={() => setQuoteOpen(true)}
-            className="px-10 py-5 bg-sm-accent text-sm-bg font-mono text-lg uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
-          >
-            GET YOUR FREE QUOTE
-          </button>
-        </AnimatedSection>
+      {/* ===== CUSTOM SECTION ===== */}
+      <section className="py-24">
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimatedSection>
+            <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-10 md:p-14 bg-sm-surface/20 text-center">
+              <p className="eyebrow mb-4">Custom Builds</p>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                Need something different? We build custom.
+              </h2>
+              <p className="text-sm-muted max-w-xl mx-auto mb-8">
+                If none of the packages above fit your situation, we can scope a custom solution from scratch. Complex product configurators, headless multi-storefront architectures, bespoke marketplace integrations — whatever your store needs, we will build it.
+              </p>
+              <a
+                href="/packages/custom"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-black font-display font-bold rounded-xl transition-all hover:bg-sm-accent-light hover:scale-[1.03] active:scale-[0.98]"
+              >
+                EXPLORE CUSTOM BUILDS <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </div>
+          </AnimatedSection>
+        </div>
       </section>
 
-      {/* ====== FOOTER ====== */}
+      {/* ===== PAIN POINTS ===== */}
+      <section className="py-24 bg-sm-card/20">
+        <div className="max-w-7xl mx-auto px-6">
+          <AnimatedSection className="text-center mb-16">
+            <p className="eyebrow mb-4">The Problem</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold">
+              Why most Perth e-commerce stores underperform
+            </h2>
+          </AnimatedSection>
+          <div className="grid md:grid-cols-2 gap-6">
+            {PAIN_POINTS.map((point, i) => (
+              <StaggerItem key={point.title} index={i} className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20">
+                <point.icon className="w-8 h-8 text-sm-accent mb-4" />
+                <h3 className="text-xl font-display font-bold mb-2">{point.title}</h3>
+                <p className="text-sm text-sm-muted leading-relaxed">{point.desc}</p>
+              </StaggerItem>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== FAQ ===== */}
+      <section className="py-24">
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimatedSection className="text-center mb-16">
+            <p className="eyebrow mb-4">FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold">
+              Common questions about e-commerce packages
+            </h2>
+          </AnimatedSection>
+          <div className="space-y-3">
+            {FAQS.map((faq, i) => (
+              <AnimatedSection key={faq.q}>
+                <div className="border border-white/[0.06] rounded-xl overflow-hidden bg-sm-surface/20">
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full flex items-center justify-between gap-4 p-6 text-left"
+                  >
+                    <span className="font-display font-bold text-lg">{faq.q}</span>
+                    <ChevronDown className={`w-5 h-5 text-sm-muted shrink-0 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {openFaq === i && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <div className="px-6 pb-6 text-sm text-sm-muted leading-relaxed">
+                          {faq.a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== FREE AUDIT CTA ===== */}
+      <section className="py-24 bg-sm-card/20">
+        <div className="max-w-4xl mx-auto px-6">
+          <AnimatedSection>
+            <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-10 md:p-14 bg-sm-accent/5 text-center">
+              <p className="eyebrow mb-4">Free Audit</p>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                Not sure which package you need?
+              </h2>
+              <p className="text-sm-muted max-w-xl mx-auto mb-8">
+                We will audit your current store, show you exactly where you are losing sales, and recommend the right package to fix it. No cost, no obligation.
+              </p>
+              <a
+                href="/audit"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-black font-display font-bold rounded-xl transition-all hover:bg-sm-accent-light hover:scale-[1.03] active:scale-[0.98]"
+              >
+                GET YOUR FREE AUDIT <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ===== FINAL CTA ===== */}
+      <section className="py-24">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <AnimatedSection>
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+              Ready to sell more with less effort?
+            </h2>
+            <p className="text-sm-muted max-w-xl mx-auto mb-8">
+              Tell us about your store and we will match you with the right package. Most builds are live within days, not months.
+            </p>
+            <button
+              onClick={() => setQuoteOpen(true)}
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-black font-display font-bold rounded-xl transition-all hover:bg-sm-accent-light hover:scale-[1.03] active:scale-[0.98]"
+            >
+              GET A QUOTE <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ===== FOOTER ===== */}
       <footer className="py-12 px-6 max-w-7xl mx-auto">
         <AnimatedSection>
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">

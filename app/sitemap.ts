@@ -35,7 +35,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/blog/seo-perth`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
   ];
 
-  const industryPages = [
+  const packagePages = [
+    { url: `${base}/packages`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.9 },
+    { url: `${base}/packages/custom`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: `${base}/tradies`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: `${base}/restaurants`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: `${base}/real-estate`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
@@ -43,5 +45,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/mining`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
   ];
 
-  return [...pages, ...industryPages, ...blogPages, ...geoPages];
+  return [...pages, ...packagePages, ...blogPages, ...geoPages];
 }

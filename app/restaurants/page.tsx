@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { UtensilsCrossed, Clock, CalendarCheck, Phone, Users, Globe, Zap, MessageSquare, BarChart3, ChevronDown, MapPin, ArrowRight, CheckCircle2, Mail, Star } from 'lucide-react';
+import { UtensilsCrossed, CalendarCheck, Phone, Users, BarChart3, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
 
@@ -31,21 +31,60 @@ function StaggerItem({ children, className = '', index = 0 }: { children: React.
 
 /* ── Data ── */
 
+const PACKAGES = [
+  {
+    tier: 'Starter',
+    subtitle: 'Single Venue',
+    features: [
+      'Website with menu',
+      'Online ordering system',
+      'Google integration',
+      'Basic reservation system',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Growth',
+    subtitle: 'Busy Venue',
+    features: [
+      'Everything in Starter',
+      'AI phone ordering',
+      'Loyalty and retention system',
+      'Automated marketing (SMS/email)',
+      'Review management',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Pro',
+    subtitle: 'Multi-Venue / Chain',
+    features: [
+      'Everything in Growth',
+      'Multi-location dashboard',
+      'Inventory automation',
+      'Staff scheduling',
+      'Delivery platform integrations',
+      'Analytics',
+    ],
+    highlight: true,
+  },
+];
+
 const PAIN_POINTS = [
   {
     icon: BarChart3,
     title: 'Third-party apps taking 30% of every order',
-    desc: 'UberEats, DoorDash, and Menulog are eating your margins. Every order through their platform is profit you never see. Your food, your brand, their cut.',
+    desc: 'UberEats, DoorDash, and Menulog are eating your margins. Every order through their platform is profit you never see.',
   },
   {
     icon: CalendarCheck,
     title: 'No-shows costing you thousands',
-    desc: 'Empty tables on a Friday night with a full waitlist. Wasted prep, wasted staff hours, wasted revenue. Without a system, no-shows are just part of the game.',
+    desc: 'Empty tables on a Friday night with a full waitlist. Wasted prep, wasted staff hours, wasted revenue.',
   },
   {
     icon: Users,
     title: 'One-time diners who never come back',
-    desc: 'Great meal, great service, and then silence. Without a retention system, every customer walks out the door and forgets you exist within a week.',
+    desc: 'Great meal, great service, and then silence. Without a retention system, every customer walks out the door and forgets you exist.',
   },
   {
     icon: Phone,
@@ -54,54 +93,14 @@ const PAIN_POINTS = [
   },
 ];
 
-const SOLUTIONS = [
-  {
-    icon: Globe,
-    title: 'Custom online ordering',
-    desc: 'Your own branded ordering system with zero commission fees. Direct orders, direct revenue, direct customer data. Works on mobile, desktop, and in-venue QR.',
-  },
-  {
-    icon: CalendarCheck,
-    title: 'AI table booking with no-show protection',
-    desc: 'Automated booking confirmations, SMS reminders, and deposit collection. Customers confirm or cancel ahead of time so you can fill empty seats before service.',
-  },
-  {
-    icon: Mail,
-    title: 'Automated SMS and email loyalty campaigns',
-    desc: 'Trigger-based marketing that brings diners back. Birthday offers, re-engagement sequences, and seasonal promotions that run on autopilot.',
-  },
-  {
-    icon: MessageSquare,
-    title: 'AI phone agent for reservations',
-    desc: 'An AI voice agent that answers calls, takes bookings, handles dietary questions, and never puts anyone on hold. Works 24/7 so you never miss a reservation.',
-  },
-  {
-    icon: UtensilsCrossed,
-    title: 'Menu management dashboard',
-    desc: 'Update menus, prices, specials, and availability from one central dashboard. Changes go live instantly across your website, ordering system, and booking pages.',
-  },
-  {
-    icon: Star,
-    title: 'Review collection and response automation',
-    desc: 'Automatically request Google reviews after every visit. AI-drafted responses to every review, positive or negative, to protect your reputation while you focus on service.',
-  },
-];
-
-const STATS = [
-  { value: '30+', label: 'Perth hospitality businesses helped' },
-  { value: '85%', label: 'Average reduction in no-shows' },
-  { value: '$0', label: 'Commission on orders through your own system' },
-  { value: '< 48hrs', label: 'To launch your ordering system' },
-];
-
 const FAQS = [
   {
-    q: 'How much does it cost to build a custom ordering and booking system?',
-    a: 'Every restaurant is different, so we scope and quote based on your specific needs. Most projects start from a few thousand dollars and scale based on features like AI phone agents, loyalty automation, and multi-location support. We provide a detailed quote within 24 hours of your enquiry.',
+    q: 'Which package is right for my restaurant?',
+    a: 'If you are a single venue getting set up with online ordering and reservations, Starter covers the essentials. If you are a busy venue that needs AI phone ordering, loyalty automation, and review management, Growth is the right fit. Running multiple locations or a chain? Pro gives you the full operational stack. Not sure? Get a free audit and we will recommend the right tier.',
   },
   {
     q: 'How long does it take to go live?',
-    a: 'Most ordering systems launch within 48 hours. Booking systems with AI no-show protection typically take 3-5 days. Full-stack builds including loyalty, phone agents, and review automation are delivered within 1-2 weeks. We move fast because we build in-house, not offshore.',
+    a: 'Most ordering systems launch within 48 hours. Booking systems with AI no-show protection typically take 3-5 days. Full-stack builds including loyalty, phone agents, and review automation are delivered within 1-2 weeks.',
   },
   {
     q: 'Will it integrate with my existing POS?',
@@ -109,17 +108,17 @@ const FAQS = [
   },
   {
     q: 'How does the AI booking system reduce no-shows?',
-    a: 'The system sends automated SMS confirmations and reminders at strategic intervals before the reservation. If a customer does not confirm, their table is released and the next person on the waitlist is notified. Optional deposit collection adds another layer of commitment. The result is an average 85% reduction in no-shows across our clients.',
+    a: 'The system sends automated SMS confirmations and reminders at strategic intervals before the reservation. If a customer does not confirm, their table is released and the next person on the waitlist is notified. Optional deposit collection adds another layer of commitment.',
   },
   {
     q: 'Do you provide ongoing support after launch?',
-    a: 'Absolutely. Every build comes with 30 days of included support. After that, we offer ongoing maintenance plans that cover updates, monitoring, campaign management, and priority support. Most of our restaurant clients stay on a monthly plan because the system keeps generating value.',
+    a: 'Absolutely. Every build comes with 30 days of included support. After that, we offer ongoing maintenance plans that cover updates, monitoring, campaign management, and priority support.',
   },
 ];
 
 /* ── Page ── */
 
-export default function RestaurantsPage() {
+export default function RestaurantPackagesPage() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -129,8 +128,8 @@ export default function RestaurantsPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'Service',
-        name: 'AI Ordering, Booking & Retention Systems for Restaurants',
-        description: 'AI-powered ordering, table booking, and customer retention systems for Perth restaurants and hospitality venues.',
+        name: 'Restaurant Technology Packages',
+        description: 'Ordering, booking, and retention system packages for Perth restaurants and hospitality venues. From single-venue essentials to multi-location operational stacks.',
         provider: {
           '@type': 'Organization',
           name: 'Stackmate',
@@ -149,34 +148,106 @@ export default function RestaurantsPage() {
         },
       }) }} />
 
+      {/* JSON-LD FAQ Schema */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: FAQS.map(faq => ({
+          '@type': 'Question',
+          name: faq.q,
+          acceptedAnswer: { '@type': 'Answer', text: faq.a },
+        })),
+      }) }} />
+
       <Header onQuoteClick={() => setQuoteOpen(true)} />
       <QuoteModal isOpen={quoteOpen} onClose={() => setQuoteOpen(false)} />
 
       {/* ====== HERO ====== */}
       <section className="pt-32 pb-16 max-w-5xl mx-auto px-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <p className="eyebrow mb-4">Restaurants &amp; Hospitality</p>
+          <p className="eyebrow mb-4">Packages for Restaurants</p>
           <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight mb-6">
-            Fill more seats. Waste less food.<br />Run a tighter service.
+            Choose the right system<br />for your venue
           </h1>
           <p className="text-lg text-sm-light max-w-2xl">
-            Perth restaurants need more than a website. They need systems that handle ordering, booking, and retention automatically &mdash; so you can focus on what happens in the kitchen and on the floor.
+            Perth restaurants need more than a website. Whether you run a single venue or a chain across the city, there is a package built to match where you are now and where you are heading.
           </p>
           <div className="flex flex-wrap gap-4 mt-8">
-            <button
-              onClick={() => setQuoteOpen(true)}
-              className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
-            >
-              GET YOUR FREE QUOTE <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
             <a
               href="/audit"
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
+            >
+              GET YOUR FREE AUDIT <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </a>
+            <button
+              onClick={() => setQuoteOpen(true)}
               className="inline-flex items-center gap-2 px-8 py-4 border border-white/[0.12] text-sm-light font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-surface/30 transition-all duration-200 font-medium"
             >
-              FREE RESTAURANT AUDIT
-            </a>
+              GET A QUOTE
+            </button>
           </div>
         </motion.div>
+      </section>
+
+      {/* ====== PACKAGE CARDS ====== */}
+      <section className="py-24 px-6 max-w-7xl mx-auto">
+        <AnimatedSection>
+          <p className="eyebrow mb-4 text-center">Packages</p>
+          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-4">
+            Three tiers. One goal.
+          </h2>
+          <p className="text-sm-muted text-center max-w-2xl mx-auto mb-16">
+            Every package is built to reduce your dependency on third-party platforms, automate front-of-house operations, and bring customers back through the door.
+          </p>
+        </AnimatedSection>
+        <div className="grid md:grid-cols-3 gap-6">
+          {PACKAGES.map((pkg, i) => (
+            <StaggerItem key={pkg.tier} index={i}>
+              <div className={`${pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'} border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 h-full flex flex-col`}>
+                <p className="text-2xl font-display font-bold">{pkg.tier}</p>
+                <p className="text-sm text-sm-muted mb-6">{pkg.subtitle}</p>
+                <ul className="space-y-3 flex-1">
+                  {pkg.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
+                      <span className="text-sm text-sm-light">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => setQuoteOpen(true)}
+                  className={`mt-8 w-full py-3 rounded-lg font-mono text-sm uppercase tracking-wider transition-all duration-200 font-medium ${
+                    pkg.highlight
+                      ? 'bg-sm-accent text-sm-bg hover:bg-sm-accent-light'
+                      : 'border border-white/[0.12] text-sm-light hover:bg-sm-surface/30'
+                  }`}
+                >
+                  Get a Quote
+                </button>
+              </div>
+            </StaggerItem>
+          ))}
+        </div>
+      </section>
+
+      {/* ====== CUSTOM SECTION ====== */}
+      <section className="py-16 px-6 max-w-4xl mx-auto">
+        <AnimatedSection>
+          <div className="shimmer-border border border-white/[0.06] rounded-2xl p-12 bg-sm-accent/5 text-center">
+            <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight mb-4">
+              Need something different? We build custom.
+            </h2>
+            <p className="text-sm-muted max-w-xl mx-auto mb-8">
+              If your venue does not fit neatly into a tier, we will scope a custom solution around your exact requirements. No templates, no compromises.
+            </p>
+            <a
+              href="/packages/custom"
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-sm-accent-light transition-all duration-200 font-medium"
+            >
+              EXPLORE CUSTOM BUILDS <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </a>
+          </div>
+        </AnimatedSection>
       </section>
 
       {/* ====== PAIN POINTS ====== */}
@@ -203,50 +274,6 @@ export default function RestaurantsPage() {
         </div>
       </section>
 
-      {/* ====== WHAT WE BUILD ====== */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <AnimatedSection>
-          <p className="eyebrow mb-4 text-center">What We Build</p>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-4">
-            Systems that run your front-of-house
-          </h2>
-          <p className="text-sm-muted text-center max-w-2xl mx-auto mb-16">
-            Every tool is built bespoke for your venue. No templates, no subscriptions to platforms that own your data, no compromises.
-          </p>
-        </AnimatedSection>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SOLUTIONS.map((solution, i) => (
-            <StaggerItem key={solution.title} index={i}>
-              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20 h-full hover:border-sm-accent/20 transition-all duration-300">
-                <solution.icon className="w-8 h-8 text-sm-light mb-4" />
-                <h3 className="text-lg font-display font-bold mb-2">{solution.title}</h3>
-                <p className="text-sm text-sm-muted leading-relaxed">{solution.desc}</p>
-              </div>
-            </StaggerItem>
-          ))}
-        </div>
-      </section>
-
-      {/* ====== STATS ====== */}
-      <section className="py-24 px-6 max-w-5xl mx-auto">
-        <AnimatedSection>
-          <p className="eyebrow mb-4 text-center">By The Numbers</p>
-          <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
-            Results that speak for themselves
-          </h2>
-        </AnimatedSection>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {STATS.map((stat, i) => (
-            <StaggerItem key={stat.label} index={i}>
-              <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 text-center bg-sm-surface/20">
-                <p className="text-3xl md:text-4xl font-display font-bold text-sm-accent mb-2">{stat.value}</p>
-                <p className="text-sm text-sm-muted">{stat.label}</p>
-              </div>
-            </StaggerItem>
-          ))}
-        </div>
-      </section>
-
       {/* ====== FAQ ====== */}
       <section className="py-24 px-6 max-w-4xl mx-auto">
         <AnimatedSection>
@@ -255,16 +282,6 @@ export default function RestaurantsPage() {
             Common questions from restaurant owners
           </h2>
         </AnimatedSection>
-
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: FAQS.map(faq => ({
-            '@type': 'Question',
-            name: faq.q,
-            acceptedAnswer: { '@type': 'Answer', text: faq.a },
-          })),
-        }) }} />
 
         <div className="space-y-4">
           {FAQS.map((faq, i) => (
@@ -296,27 +313,6 @@ export default function RestaurantsPage() {
             </StaggerItem>
           ))}
         </div>
-      </section>
-
-      {/* ====== FREE AUDIT CTA ====== */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <AnimatedSection>
-          <div className="shimmer-border border border-white/[0.06] rounded-2xl p-12 bg-sm-accent/5 text-center">
-            <p className="eyebrow mb-6">Free Restaurant Audit</p>
-            <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-6">
-              Not sure where to start? Get a free restaurant audit.
-            </h2>
-            <p className="text-lg text-sm-muted max-w-2xl mx-auto mb-8">
-              We&apos;ll analyse your ordering, booking, and retention setup and show you exactly where you&apos;re losing revenue. No cost, no obligation. We respond within 48 hours.
-            </p>
-            <a
-              href="/audit"
-              className="inline-block px-8 py-4 bg-sm-accent text-sm-bg font-mono text-sm uppercase tracking-wider hover:bg-sm-accent-light transition-all duration-200 font-medium"
-            >
-              GET YOUR FREE RESTAURANT AUDIT
-            </a>
-          </div>
-        </AnimatedSection>
       </section>
 
       {/* ====== FINAL CTA ====== */}

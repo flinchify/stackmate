@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { Home, Clock, Users, Globe, Zap, MessageSquare, BarChart3, ChevronDown, MapPin, ArrowRight, CheckCircle2, Mail, Phone, Search, Target } from 'lucide-react';
+import { Home, Mail, Clock, Globe, BarChart3, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
 
@@ -35,6 +35,45 @@ function StaggerItem({ children, className = '', index = 0 }: { children: React.
 /*  Data                                                              */
 /* ------------------------------------------------------------------ */
 
+const PACKAGES = [
+  {
+    tier: 'Starter',
+    subtitle: 'Solo Agent',
+    features: [
+      'Professional agent website',
+      'Property listings',
+      'Lead capture forms',
+      'Automated email drip campaigns',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Growth',
+    subtitle: 'Small Agency',
+    features: [
+      'Everything in Starter',
+      'CRM integration',
+      'AI lead qualification chatbot',
+      'Automated appraisal booking',
+      'Market report generation',
+    ],
+    highlight: false,
+  },
+  {
+    tier: 'Pro',
+    subtitle: 'Agency / Group',
+    features: [
+      'Everything in Growth',
+      'Multi-agent portal',
+      'Vendor reporting dashboards',
+      'AI property matching',
+      'REA/Domain API integration',
+      'Commission tracking',
+    ],
+    highlight: true,
+  },
+];
+
 const PAIN_POINTS = [
   {
     icon: Mail,
@@ -58,54 +97,14 @@ const PAIN_POINTS = [
   },
 ];
 
-const SERVICES = [
-  {
-    icon: Home,
-    title: 'Property listing websites with lead capture',
-    desc: 'Dedicated single-property sites with integrated enquiry forms, click-to-call, and real-time lead notifications straight to your phone.',
-  },
-  {
-    icon: Search,
-    title: 'AI-powered property appraisal tools',
-    desc: 'Embed an instant online appraisal widget on your site. Vendors enter their address, get an estimate, and you capture a qualified seller lead.',
-  },
-  {
-    icon: MessageSquare,
-    title: 'Automated email and SMS nurture sequences',
-    desc: 'Drip campaigns that keep you top-of-mind with buyers, sellers, and past clients -- triggered automatically based on behaviour and lifecycle stage.',
-  },
-  {
-    icon: Zap,
-    title: 'CRM integration and pipeline automation',
-    desc: 'Connect your existing CRM to every lead source. Automate task creation, status updates, and handoffs so nothing slips through the cracks.',
-  },
-  {
-    icon: Users,
-    title: 'Open home registration and follow-up systems',
-    desc: 'Digital sign-in at open homes with instant SMS follow-up, feedback requests, and automatic CRM entry. No more illegible clipboards.',
-  },
-  {
-    icon: Target,
-    title: 'Market report generation and distribution',
-    desc: 'Branded suburb market reports generated and sent on autopilot. Position yourself as the local expert without lifting a finger.',
-  },
-];
-
-const STATS = [
-  { value: '25+', label: 'Perth real estate professionals helped' },
-  { value: '5x', label: 'Increase in qualified leads' },
-  { value: '< 2 days', label: 'Typical build time' },
-  { value: '90%', label: 'Of follow-ups automated' },
-];
-
 const FAQS = [
   {
-    q: 'Will this integrate with my existing CRM and portals like REIWA or Domain?',
-    a: 'Yes. We build integrations that connect with the tools you already use -- whether that is Rex, Agentbox, Eagle, or portal feeds from REIWA, Domain, and realestate.com.au. Data flows automatically so you never double-handle leads.',
+    q: 'Which package is right for my agency?',
+    a: 'Solo agents getting started with a professional online presence should start with Starter. Small agencies that need CRM, AI lead qualification, and automated appraisals will benefit from Growth. Larger agencies or groups that need multi-agent portals, vendor dashboards, and portal API integrations should look at Pro. Not sure? Get a free audit and we will recommend the right tier.',
   },
   {
-    q: 'How much does it cost?',
-    a: 'Every agency is different. A single-property listing site might start from a few hundred dollars; a full lead-capture and automation stack is a larger investment. We scope everything upfront with fixed pricing -- no hourly surprises.',
+    q: 'Will this integrate with my existing CRM and portals like REIWA or Domain?',
+    a: 'Yes. We build integrations that connect with the tools you already use -- whether that is Rex, Agentbox, Eagle, or portal feeds from REIWA, Domain, and realestate.com.au.',
   },
   {
     q: 'How quickly can you deliver?',
@@ -153,7 +152,7 @@ function FAQItem({ faq, index }: { faq: typeof FAQS[number]; index: number }) {
 /*  Page                                                              */
 /* ------------------------------------------------------------------ */
 
-export default function RealEstatePage() {
+export default function RealEstatePackagesPage() {
   const [quoteOpen, setQuoteOpen] = useState(false);
 
   const faqSchema = {
@@ -169,14 +168,14 @@ export default function RealEstatePage() {
   const serviceSchema = {
     '@context': 'https://schema.org',
     '@type': 'Service',
-    name: 'Real Estate Lead Capture & Automation',
+    name: 'Real Estate Packages -- Websites, Automation & AI',
     provider: {
       '@type': 'Organization',
       name: 'Stackmate',
       url: 'https://stackmate.digital',
       areaServed: { '@type': 'City', name: 'Perth', containedInPlace: { '@type': 'State', name: 'Western Australia' } },
     },
-    description: 'AI-powered lead capture, nurture sequences, and automation systems for Perth real estate agents.',
+    description: 'Tiered packages for real estate agents and agencies -- from professional websites and lead capture to AI-powered property matching and portal API integrations.',
     serviceType: 'Technology Consulting',
     url: 'https://stackmate.digital/real-estate',
   };
@@ -195,13 +194,13 @@ export default function RealEstatePage() {
         {/* ====== HERO ====== */}
         <section className="pt-32 pb-16 px-6 max-w-5xl mx-auto text-center">
           <AnimatedSection>
-            <p className="eyebrow mb-4">Real Estate</p>
+            <p className="eyebrow mb-4">Packages for Real Estate</p>
             <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight mb-6 leading-[1.1]">
-              Turn every listing into a<br />
-              <span className="text-sm-accent">lead machine</span>
+              Choose the right system<br />
+              <span className="text-sm-accent">for your agency</span>
             </h1>
             <p className="text-lg md:text-xl text-sm-muted font-body max-w-2xl mx-auto mb-10 leading-relaxed">
-              Perth real estate agents need more than a website. You need systems that capture every enquiry, nurture leads automatically, and give you back the hours you are currently losing to admin. We build exactly that.
+              Whether you are a solo agent building your first digital presence or a multi-office group that needs end-to-end automation, we have a package that fits. Pick a tier and start converting more leads today.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
@@ -216,6 +215,73 @@ export default function RealEstatePage() {
               >
                 Get a Quote
               </button>
+            </div>
+          </AnimatedSection>
+        </section>
+
+        {/* ====== PACKAGE CARDS ====== */}
+        <section className="py-24 px-6 max-w-7xl mx-auto">
+          <AnimatedSection>
+            <p className="eyebrow mb-4 text-center">Packages</p>
+            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
+              Three tiers, zero guesswork
+            </h2>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {PACKAGES.map((pkg, i) => (
+              <StaggerItem key={pkg.tier} index={i}>
+                <div
+                  className={`${
+                    pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'
+                  } border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 h-full flex flex-col`}
+                >
+                  <div className="mb-6">
+                    <Home className="w-8 h-8 text-sm-accent mb-4" />
+                    <h3 className="font-display font-bold text-2xl mb-1">{pkg.tier}</h3>
+                    <p className="text-sm text-sm-muted font-body">{pkg.subtitle}</p>
+                  </div>
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {pkg.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
+                        <span className="text-sm text-sm-light font-body">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => setQuoteOpen(true)}
+                    className={`w-full inline-flex items-center justify-center gap-2 font-display font-bold px-6 py-3 rounded-lg transition-colors text-base ${
+                      pkg.highlight
+                        ? 'bg-sm-accent hover:bg-sm-accent/90 text-sm-dark'
+                        : 'border border-white/[0.12] hover:border-sm-accent/40 text-sm-text'
+                    }`}
+                  >
+                    Get a Quote <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </StaggerItem>
+            ))}
+          </div>
+        </section>
+
+        {/* ====== CUSTOM SECTION ====== */}
+        <section className="py-24 px-6 max-w-4xl mx-auto">
+          <AnimatedSection>
+            <div className="shimmer-border border border-white/[0.06] rounded-2xl p-8 text-center">
+              <p className="eyebrow mb-4">Custom builds</p>
+              <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-4">
+                Need something different? We build custom.
+              </h2>
+              <p className="text-sm-muted font-body max-w-xl mx-auto mb-8 leading-relaxed">
+                If none of the tiers above fit your workflow, we will scope a solution from scratch. Tell us what you need and we will design a system around the way your agency actually operates.
+              </p>
+              <a
+                href="/packages/custom"
+                className="inline-flex items-center gap-2 bg-sm-accent hover:bg-sm-accent/90 text-sm-dark font-display font-bold px-8 py-4 rounded-lg transition-colors text-lg"
+              >
+                Explore Custom Builds <ArrowRight className="w-5 h-5" />
+              </a>
             </div>
           </AnimatedSection>
         </section>
@@ -242,49 +308,6 @@ export default function RealEstatePage() {
           </div>
         </section>
 
-        {/* ====== WHAT WE BUILD ====== */}
-        <section className="py-24 px-6 max-w-7xl mx-auto">
-          <AnimatedSection>
-            <p className="eyebrow mb-4 text-center">What we build</p>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
-              Systems that sell while you sleep
-            </h2>
-          </AnimatedSection>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {SERVICES.map((service, i) => (
-              <StaggerItem key={service.title} index={i}>
-                <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 bg-sm-surface/20 h-full hover:border-sm-accent/20 transition-all duration-300">
-                  <service.icon className="w-8 h-8 text-sm-accent mb-4" />
-                  <h3 className="font-display font-bold text-lg mb-2">{service.title}</h3>
-                  <p className="text-sm-muted font-body leading-relaxed text-sm">{service.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </div>
-        </section>
-
-        {/* ====== STATS ====== */}
-        <section className="py-24 px-6 max-w-7xl mx-auto">
-          <AnimatedSection>
-            <p className="eyebrow mb-4 text-center">By the numbers</p>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight text-center mb-16">
-              Results that speak for themselves
-            </h2>
-          </AnimatedSection>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {STATS.map((stat, i) => (
-              <StaggerItem key={stat.label} index={i}>
-                <div className="shimmer-border-subtle border border-white/[0.06] rounded-xl p-6 text-center bg-sm-surface/20">
-                  <div className="text-3xl md:text-4xl font-display font-bold text-sm-accent mb-2">{stat.value}</div>
-                  <p className="text-sm text-sm-muted font-body">{stat.label}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </div>
-        </section>
-
         {/* ====== FAQ ====== */}
         <section className="py-24 px-6 max-w-4xl mx-auto">
           <AnimatedSection>
@@ -299,54 +322,6 @@ export default function RealEstatePage() {
               <FAQItem key={faq.q} faq={faq} index={i} />
             ))}
           </div>
-        </section>
-
-        {/* ====== FREE AUDIT CTA ====== */}
-        <section className="py-24 px-6 max-w-4xl mx-auto">
-          <AnimatedSection>
-            <div className="shimmer-border border border-white/[0.06] rounded-2xl p-8 text-center">
-              <p className="eyebrow mb-4">Free audit</p>
-              <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-4">
-                Find out what you are leaving on the table
-              </h2>
-              <p className="text-sm-muted font-body max-w-xl mx-auto mb-8 leading-relaxed">
-                We will review your current digital presence, lead flow, and follow-up process -- then show you exactly where the gaps are and how to fix them. No cost, no obligation.
-              </p>
-              <a
-                href="/audit"
-                className="inline-flex items-center gap-2 bg-sm-accent hover:bg-sm-accent/90 text-sm-dark font-display font-bold px-8 py-4 rounded-lg transition-colors text-lg"
-              >
-                FREE AUDIT <ArrowRight className="w-5 h-5" />
-              </a>
-            </div>
-          </AnimatedSection>
-        </section>
-
-        {/* ====== FINAL CTA ====== */}
-        <section className="py-24 px-6 max-w-5xl mx-auto text-center">
-          <AnimatedSection>
-            <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight mb-6">
-              Ready to close more deals<br />
-              <span className="text-sm-accent">on autopilot?</span>
-            </h2>
-            <p className="text-lg text-sm-muted font-body max-w-2xl mx-auto mb-10 leading-relaxed">
-              Stop losing leads to slow follow-ups and outdated tech. Let us build the systems that keep your pipeline full and your weekends free.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button
-                onClick={() => setQuoteOpen(true)}
-                className="inline-flex items-center gap-2 bg-sm-accent hover:bg-sm-accent/90 text-sm-dark font-display font-bold px-8 py-4 rounded-lg transition-colors text-lg"
-              >
-                Get Started <ArrowRight className="w-5 h-5" />
-              </button>
-              <a
-                href="/audit"
-                className="inline-flex items-center gap-2 border border-white/[0.12] hover:border-sm-accent/40 text-sm-text font-display font-bold px-8 py-4 rounded-lg transition-colors text-lg"
-              >
-                FREE AUDIT
-              </a>
-            </div>
-          </AnimatedSection>
         </section>
 
       </main>
