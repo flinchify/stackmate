@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,12 +9,12 @@ import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
 
 const INDUSTRIES = [
-  { icon: Wrench, title: 'Tradies', desc: 'Websites, quoting systems, AI receptionists, and job management for trade businesses.', href: '/tradies' },
-  { icon: UtensilsCrossed, title: 'Restaurants', desc: 'Online ordering, reservation systems, loyalty automation, and AI phone agents for hospitality.', href: '/restaurants' },
-  { icon: Home, title: 'Real Estate', desc: 'Lead capture, CRM automation, appraisal tools, and vendor reporting for agents and agencies.', href: '/real-estate' },
-  { icon: ShoppingCart, title: 'E-Commerce', desc: 'Custom storefronts, AI product recommendations, cart recovery, and inventory automation.', href: '/ecommerce' },
-  { icon: HardHat, title: 'Mining', desc: 'Safety compliance, operational dashboards, fleet tracking, and AI predictive maintenance.', href: '/mining' },
-  { icon: Settings, title: 'Custom', desc: 'Don\'t fit a category? We build systems for any industry. Tell us what you need.', href: '/packages/custom' },
+  { icon: Wrench, title: 'Tradies', desc: 'Websites, quoting systems, AI receptionists, and job management for trade businesses.', href: '/tradies', industry: 'tradies' },
+  { icon: UtensilsCrossed, title: 'Restaurants', desc: 'Online ordering, reservation systems, loyalty automation, and AI phone agents for hospitality.', href: '/restaurants', industry: 'restaurants' },
+  { icon: Home, title: 'Real Estate', desc: 'Lead capture, CRM automation, appraisal tools, and vendor reporting for agents and agencies.', href: '/real-estate', industry: 'local-services' },
+  { icon: ShoppingCart, title: 'E-Commerce', desc: 'Custom storefronts, AI product recommendations, cart recovery, and inventory automation.', href: '/ecommerce', industry: 'ecommerce' },
+  { icon: HardHat, title: 'Mining', desc: 'Safety compliance, operational dashboards, fleet tracking, and AI predictive maintenance.', href: '/mining', industry: 'enterprise' },
+  { icon: Settings, title: 'Custom', desc: 'Don\'t fit a category? We build systems for any industry. Tell us what you need.', href: '/packages/custom', industry: '' },
 ];
 
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -37,8 +37,17 @@ function StaggerItem({ children, className = '', index = 0 }: { children: React.
   );
 }
 
+function formatPrice(cents: number): string {
+  return 'A$' + (cents / 100).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 export default function PackagesPage() {
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const [apiPackages, setApiPackages] = useState<{ industry: string; upfrontPrice: number }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/packages').then(r => r.json()).then(d => setApiPackages(d.packages || [])).catch(() => {});
+  }, []);
 
   return (
     <main>
@@ -101,6 +110,8 @@ export default function PackagesPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {INDUSTRIES.map((industry, i) => {
               const isCustom = i === INDUSTRIES.length - 1;
+              const industryPkgs = industry.industry ? apiPackages.filter(p => p.industry === industry.industry) : [];
+              const minPrice = industryPkgs.length > 0 ? Math.min(...industryPkgs.map(p => p.upfrontPrice)) : 0;
               return (
                 <StaggerItem
                   key={industry.title}
@@ -109,7 +120,10 @@ export default function PackagesPage() {
                 >
                   <industry.icon className="w-10 h-10 text-sm-accent mb-4" />
                   <h3 className="text-xl font-display font-bold mb-2">{industry.title}</h3>
-                  <p className="text-sm text-sm-muted leading-relaxed mb-6">{industry.desc}</p>
+                  <p className="text-sm text-sm-muted leading-relaxed mb-4">{industry.desc}</p>
+                  {minPrice > 0 && (
+                    <p className="text-sm font-display font-bold text-sm-accent mb-4">From {formatPrice(minPrice)}</p>
+                  )}
                   <Link
                     href={industry.href}
                     className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-wider text-sm-accent group-hover:gap-3 transition-all"

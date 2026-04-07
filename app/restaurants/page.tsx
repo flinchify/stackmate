@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { UtensilsCrossed, CalendarCheck, Phone, Users, BarChart3, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
@@ -118,9 +118,18 @@ const FAQS = [
 
 /* ── Page ── */
 
+function formatPrice(cents: number): string {
+  return 'A$' + (cents / 100).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 export default function RestaurantPackagesPage() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [apiPackages, setApiPackages] = useState<{ tier: string; tierLabel: string; upfrontPrice: number; monthlyPrice: number; features: string[] }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/packages?industry=restaurants').then(r => r.json()).then(d => setApiPackages(d.packages || [])).catch(() => {});
+  }, []);
 
   return (
     <main>
@@ -201,32 +210,42 @@ export default function RestaurantPackagesPage() {
           </p>
         </AnimatedSection>
         <div className="grid md:grid-cols-3 gap-6">
-          {PACKAGES.map((pkg, i) => (
-            <StaggerItem key={pkg.tier} index={i}>
-              <div className={`${pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'} border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 h-full flex flex-col`}>
-                <p className="text-2xl font-display font-bold">{pkg.tier}</p>
-                <p className="text-sm text-sm-muted mb-6">{pkg.subtitle}</p>
-                <ul className="space-y-3 flex-1">
-                  {pkg.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
-                      <span className="text-sm text-sm-light">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => setQuoteOpen(true)}
-                  className={`mt-8 w-full py-3 rounded-lg font-mono text-sm uppercase tracking-wider transition-all duration-200 font-medium ${
-                    pkg.highlight
-                      ? 'bg-sm-accent text-sm-bg hover:bg-sm-accent-light'
-                      : 'border border-white/[0.12] text-sm-light hover:bg-sm-surface/30'
-                  }`}
-                >
-                  Get a Quote
-                </button>
-              </div>
-            </StaggerItem>
-          ))}
+          {PACKAGES.map((pkg, i) => {
+            const apiPkg = apiPackages.find(a => a.tier === pkg.tier.toLowerCase());
+            const features = apiPkg ? apiPkg.features : pkg.features;
+            return (
+              <StaggerItem key={pkg.tier} index={i}>
+                <div className={`${pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'} border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 h-full flex flex-col`}>
+                  <p className="text-2xl font-display font-bold">{pkg.tier}</p>
+                  <p className="text-sm text-sm-muted mb-2">{apiPkg ? apiPkg.tierLabel : pkg.subtitle}</p>
+                  {apiPkg && (
+                    <div className="mb-4">
+                      <p className="text-xl font-display font-bold text-sm-accent">From {formatPrice(apiPkg.upfrontPrice)}</p>
+                      <p className="text-sm text-sm-muted">{formatPrice(apiPkg.monthlyPrice)}/mo</p>
+                    </div>
+                  )}
+                  <ul className="space-y-3 flex-1">
+                    {features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
+                        <span className="text-sm text-sm-light">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => setQuoteOpen(true)}
+                    className={`mt-8 w-full py-3 rounded-lg font-mono text-sm uppercase tracking-wider transition-all duration-200 font-medium ${
+                      pkg.highlight
+                        ? 'bg-sm-accent text-sm-bg hover:bg-sm-accent-light'
+                        : 'border border-white/[0.12] text-sm-light hover:bg-sm-surface/30'
+                    }`}
+                  >
+                    Get a Quote
+                  </button>
+                </div>
+              </StaggerItem>
+            );
+          })}
         </div>
       </section>
 

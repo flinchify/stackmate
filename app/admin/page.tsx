@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar, LayoutDashboard, Copy, ExternalLink } from 'lucide-react';
+import { RefreshCw, Eye, Clock, CheckCircle, XCircle, AlertCircle, Trash2, Plus, Users, FileText, Receipt, Repeat, FolderKanban, DollarSign, Download, Search, Send, Package, Terminal, BookOpen, Globe, TrendingDown, Mail, Radar, LayoutDashboard, Copy, ExternalLink, Tag } from 'lucide-react';
 
 interface Expense {
   id: string; clientName?: string; category: string; description: string;
@@ -98,6 +98,9 @@ export default function AdminPage() {
   const [newDashboard, setNewDashboard] = useState({ clientName: '', clientEmail: '', clientLogo: '', clientDomain: '', brandColor: '#f97316', notes: '' });
   const [editingDashboard, setEditingDashboard] = useState<string | null>(null);
   const [dashboardMetric, setDashboardMetric] = useState({ type: 'seo', date: '', score: 0, platform: '', month: '', visits: 0, keyword: '', position: 0, change: 0, leadName: '', leadSource: '', metricLabel: '', metricValue: 0, metricPrev: 0 });
+  const [pkgList, setPkgList] = useState<{ id: string; industry: string; tier: string; tierLabel: string; upfrontPrice: number; monthlyPrice: number; features: string[]; includesDescription: string | null; visible: boolean; sortOrder: number }[]>([]);
+  const [pkgEditing, setPkgEditing] = useState<string | null>(null);
+  const [pkgEditValues, setPkgEditValues] = useState<{ upfrontPrice: number; monthlyPrice: number }>({ upfrontPrice: 0, monthlyPrice: 0 });
 
   // Load saved auth
   useEffect(() => {
@@ -141,6 +144,8 @@ export default function AdminPage() {
         if (aaRes.ok) { const aaData = await aaRes.json(); setAutoAudits(aaData.audits || []); }
         const dbRes = await fetch('/api/admin/dashboards', { headers: h });
         if (dbRes.ok) { const dbData = await dbRes.json(); setDashboards(dbData.dashboards || []); }
+        const pkgRes = await fetch('/api/admin/packages', { headers: h });
+        if (pkgRes.ok) { const pkgData = await pkgRes.json(); setPkgList(pkgData.packages || []); }
       } catch {}
     } catch { alert('Failed to fetch'); }
     finally { setLoading(false); }
@@ -305,6 +310,7 @@ export default function AdminPage() {
     { key: 'mailing', icon: Mail, label: 'Mailing List' },
     { key: 'monitoring', icon: Radar, label: '24/7 Monitoring' },
     { key: 'dashboards', icon: LayoutDashboard, label: `Dashboards (${dashboards.length})` },
+    { key: 'packages', icon: Tag, label: `Packages (${pkgList.length})` },
     { key: 'terminal', icon: Terminal, label: 'Activity' },
   ];
 
@@ -1105,6 +1111,94 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {tab === 'packages' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-display font-bold flex items-center gap-2"><Tag className="w-5 h-5 text-orange-400" /> Package Management</h3>
+              {pkgList.length === 0 && (
+                <button
+                  onClick={async () => {
+                    const res = await fetch('/api/admin/packages/seed', { method: 'POST', headers: headers() });
+                    const data = await res.json();
+                    if (data.success) { logActivity(`Seeded ${data.seeded} packages`); fetchAll(); }
+                    else alert(data.error || 'Failed to seed');
+                  }}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold"
+                >
+                  Seed Packages
+                </button>
+              )}
+            </div>
+            {pkgList.length === 0 ? (
+              <div className="text-center py-16 text-sm-muted">No packages yet. Click &quot;Seed Packages&quot; to populate all tiers.</div>
+            ) : (
+              <div className="space-y-8">
+                {['tradies', 'restaurants', 'ecommerce', 'local-services', 'corporate', 'enterprise'].map(industry => {
+                  const industryPkgs = pkgList.filter(p => p.industry === industry);
+                  if (industryPkgs.length === 0) return null;
+                  return (
+                    <div key={industry}>
+                      <h4 className="font-display font-bold text-lg mb-3 capitalize">{industry.replace('-', ' ')}</h4>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        {industryPkgs.map(pkg => (
+                          <div key={pkg.id} className={`border rounded-lg p-4 ${pkg.visible ? 'border-orange-500/40 bg-orange-500/5' : 'border-sm-border bg-sm-dark'}`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-display font-bold">{pkg.tierLabel}</span>
+                              <button
+                                onClick={async () => {
+                                  await fetch('/api/admin/packages', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: pkg.id, visible: !pkg.visible }) });
+                                  logActivity(`${pkg.tierLabel} (${industry}) → ${!pkg.visible ? 'visible' : 'hidden'}`);
+                                  fetchAll();
+                                }}
+                                className={`text-xs px-2 py-1 rounded ${pkg.visible ? 'bg-green-500/20 text-green-400' : 'bg-sm-surface text-sm-muted'}`}
+                              >
+                                {pkg.visible ? 'Visible' : 'Hidden'}
+                              </button>
+                            </div>
+                            <p className="text-xs text-sm-muted mb-1">Tier: {pkg.tier}</p>
+                            {pkgEditing === pkg.id ? (
+                              <div className="space-y-2 my-2">
+                                <div>
+                                  <label className="text-xs text-sm-muted">Upfront (cents)</label>
+                                  <input type="number" value={pkgEditValues.upfrontPrice} onChange={e => setPkgEditValues(p => ({ ...p, upfrontPrice: Number(e.target.value) }))} className={inputClass} />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-sm-muted">Monthly (cents)</label>
+                                  <input type="number" value={pkgEditValues.monthlyPrice} onChange={e => setPkgEditValues(p => ({ ...p, monthlyPrice: Number(e.target.value) }))} className={inputClass} />
+                                </div>
+                                <div className="flex gap-2">
+                                  <button onClick={async () => {
+                                    await fetch('/api/admin/packages', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: pkg.id, upfrontPrice: pkgEditValues.upfrontPrice, monthlyPrice: pkgEditValues.monthlyPrice }) });
+                                    logActivity(`Updated prices for ${pkg.tierLabel}: upfront=${pkgEditValues.upfrontPrice}, monthly=${pkgEditValues.monthlyPrice}`);
+                                    setPkgEditing(null);
+                                    fetchAll();
+                                  }} className="px-3 py-1 bg-orange-500 text-white rounded text-xs">Save</button>
+                                  <button onClick={() => setPkgEditing(null)} className="px-3 py-1 border border-sm-border text-sm-muted rounded text-xs">Cancel</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="my-2">
+                                <p className="text-sm font-bold">A${(pkg.upfrontPrice / 100).toLocaleString()} <span className="text-xs text-sm-muted font-normal">upfront</span></p>
+                                <p className="text-sm font-bold">A${(pkg.monthlyPrice / 100).toLocaleString()}<span className="text-xs text-sm-muted font-normal">/mo</span></p>
+                                <button onClick={() => { setPkgEditing(pkg.id); setPkgEditValues({ upfrontPrice: pkg.upfrontPrice, monthlyPrice: pkg.monthlyPrice }); }} className="text-xs text-orange-400 hover:text-orange-300 mt-1">Edit Prices</button>
+                              </div>
+                            )}
+                            <div className="mt-2 space-y-1">
+                              {pkg.features.map((f, i) => (
+                                <p key={i} className="text-xs text-sm-muted">- {f}</p>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

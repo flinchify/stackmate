@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Home, Mail, Clock, Globe, BarChart3, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
@@ -152,8 +152,17 @@ function FAQItem({ faq, index }: { faq: typeof FAQS[number]; index: number }) {
 /*  Page                                                              */
 /* ------------------------------------------------------------------ */
 
+function formatPrice(cents: number): string {
+  return 'A$' + (cents / 100).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 export default function RealEstatePackagesPage() {
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const [apiPackages, setApiPackages] = useState<{ tier: string; tierLabel: string; upfrontPrice: number; monthlyPrice: number; features: string[] }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/packages?industry=local-services').then(r => r.json()).then(d => setApiPackages(d.packages || [])).catch(() => {});
+  }, []);
 
   const faqSchema = {
     '@context': 'https://schema.org',
@@ -229,39 +238,49 @@ export default function RealEstatePackagesPage() {
           </AnimatedSection>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {PACKAGES.map((pkg, i) => (
-              <StaggerItem key={pkg.tier} index={i}>
-                <div
-                  className={`${
-                    pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'
-                  } border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 h-full flex flex-col`}
-                >
-                  <div className="mb-6">
-                    <Home className="w-8 h-8 text-sm-accent mb-4" />
-                    <h3 className="font-display font-bold text-2xl mb-1">{pkg.tier}</h3>
-                    <p className="text-sm text-sm-muted font-body">{pkg.subtitle}</p>
-                  </div>
-                  <ul className="space-y-3 mb-8 flex-1">
-                    {pkg.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
-                        <span className="text-sm text-sm-light font-body">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => setQuoteOpen(true)}
-                    className={`w-full inline-flex items-center justify-center gap-2 font-display font-bold px-6 py-3 rounded-lg transition-colors text-base ${
-                      pkg.highlight
-                        ? 'bg-sm-accent hover:bg-sm-accent/90 text-sm-dark'
-                        : 'border border-white/[0.12] hover:border-sm-accent/40 text-sm-text'
-                    }`}
+            {PACKAGES.map((pkg, i) => {
+              const apiPkg = apiPackages.find(a => a.tier === pkg.tier.toLowerCase());
+              const features = apiPkg ? apiPkg.features : pkg.features;
+              return (
+                <StaggerItem key={pkg.tier} index={i}>
+                  <div
+                    className={`${
+                      pkg.highlight ? 'shimmer-border' : 'shimmer-border-subtle'
+                    } border border-white/[0.06] rounded-xl p-8 bg-sm-surface/20 h-full flex flex-col`}
                   >
-                    Get a Quote <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </StaggerItem>
-            ))}
+                    <div className="mb-4">
+                      <Home className="w-8 h-8 text-sm-accent mb-4" />
+                      <h3 className="font-display font-bold text-2xl mb-1">{pkg.tier}</h3>
+                      <p className="text-sm text-sm-muted font-body">{apiPkg ? apiPkg.tierLabel : pkg.subtitle}</p>
+                    </div>
+                    {apiPkg && (
+                      <div className="mb-4">
+                        <p className="text-xl font-display font-bold text-sm-accent">From {formatPrice(apiPkg.upfrontPrice)}</p>
+                        <p className="text-sm text-sm-muted">{formatPrice(apiPkg.monthlyPrice)}/mo</p>
+                      </div>
+                    )}
+                    <ul className="space-y-3 mb-8 flex-1">
+                      {features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-3">
+                          <CheckCircle2 className="w-5 h-5 text-sm-accent shrink-0 mt-0.5" />
+                          <span className="text-sm text-sm-light font-body">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => setQuoteOpen(true)}
+                      className={`w-full inline-flex items-center justify-center gap-2 font-display font-bold px-6 py-3 rounded-lg transition-colors text-base ${
+                        pkg.highlight
+                          ? 'bg-sm-accent hover:bg-sm-accent/90 text-sm-dark'
+                          : 'border border-white/[0.12] hover:border-sm-accent/40 text-sm-text'
+                      }`}
+                    >
+                      Get a Quote <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </StaggerItem>
+              );
+            })}
           </div>
         </section>
 

@@ -61,6 +61,7 @@ export default function Header({ onQuoteClick }: HeaderProps) {
 
   const navItems = [
     { label: 'ENTERPRISE', href: '/services' },
+    { label: 'PRICING', href: '/pricing' },
     { label: 'CLIENTS', href: '/clients' },
     { label: 'TOOLS', href: '/tools' },
     { label: 'BLOG', href: '/blog' },
@@ -227,6 +228,14 @@ export default function Header({ onQuoteClick }: HeaderProps) {
                   )}
                 </AnimatePresence>
               </div>
+
+              <a
+                href="/pricing"
+                onClick={() => setMobileOpen(false)}
+                className="font-mono text-sm uppercase tracking-wider text-sm-muted hover:text-sm-accent transition-colors"
+              >
+                PRICING
+              </a>
 
               <a
                 href="/clients"

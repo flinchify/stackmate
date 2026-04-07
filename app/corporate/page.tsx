@@ -3,11 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { ShoppingCart, Globe, Package, Search, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
+import { Building2, FileText, Users, Globe, BarChart3, CheckCircle2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import QuoteModal from '@/components/QuoteModal';
-
-/* ── Inline animation components ── */
 
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
@@ -29,44 +27,43 @@ function StaggerItem({ children, className = '', index = 0 }: { children: React.
   );
 }
 
-/* ── Data ── */
-
 const PACKAGES = [
   {
     tier: 'Starter',
-    subtitle: 'New Store',
+    subtitle: 'Corporate Starter',
     features: [
-      'Custom Shopify or headless store',
-      'Product catalog',
-      'Payment processing',
-      'Shipping integration',
-      'Basic analytics',
+      'Professional corporate website',
+      'Trust/about pages',
+      'Team profiles',
+      'Contact system',
+      'Basic SEO',
+      'Maintenance',
     ],
     highlight: false,
   },
   {
     tier: 'Growth',
-    subtitle: 'Scaling Store',
+    subtitle: 'Corporate Growth',
     features: [
       'Everything in Starter',
-      'AI product recommendations',
-      'Abandoned cart recovery',
-      'Automated email flows',
-      'Inventory management',
-      'Multi-channel selling',
+      'Content marketing structure',
+      'Case studies',
+      'Stronger SEO/GEO',
+      'Monthly optimization',
+      'Analytics',
     ],
     highlight: false,
   },
   {
     tier: 'Pro',
-    subtitle: 'Enterprise',
+    subtitle: 'Corporate Pro',
     features: [
       'Everything in Growth',
-      'Custom ERP integration',
-      'AI-powered pricing',
-      'Wholesale portal',
-      'Advanced analytics and BI dashboard',
-      'API marketplace',
+      'Custom internal tools',
+      'Client portal',
+      'Advanced analytics',
+      'AI automation',
+      'Full SEO/GEO program',
     ],
     highlight: true,
   },
@@ -75,62 +72,60 @@ const PACKAGES = [
 const PAIN_POINTS = [
   {
     icon: Globe,
-    title: 'Template stores that all look the same',
-    desc: 'Generic Shopify themes erode trust before a customer even adds to cart. If your store looks like every other store, buyers assume your products are the same too.',
+    title: 'Outdated website eroding trust',
+    desc: 'Your website is the first impression for clients, partners, and recruits. An outdated site signals an outdated business. If your competitors look more professional online, you are losing opportunities before the first meeting.',
   },
   {
-    icon: ShoppingCart,
-    title: 'Cart abandonment bleeding revenue',
-    desc: 'Without automated recovery flows, every abandoned cart is money walking out the door. Most Perth stores lose 60-80% of potential sales at checkout.',
+    icon: FileText,
+    title: 'No content strategy driving inbound',
+    desc: 'Without structured case studies, thought leadership, and SEO-optimised content, your website is a digital brochure that generates no leads. Your competitors are ranking for the keywords your clients are searching.',
   },
   {
-    icon: Package,
-    title: 'Manual inventory updates across platforms',
-    desc: 'Selling on your website, marketplaces, and in-store with no sync system means overselling, stockouts, and hours wasted on spreadsheets every week.',
+    icon: Users,
+    title: 'Manual processes slowing the team',
+    desc: 'Client onboarding, reporting, and internal workflows still running on email chains and shared drives. Every manual touchpoint is a bottleneck that scales linearly with headcount.',
   },
   {
-    icon: Search,
-    title: 'No idea what your customers actually want',
-    desc: 'Zero personalisation means every visitor gets the same experience. No product recommendations, no behavioural targeting, no data-driven upsells.',
+    icon: BarChart3,
+    title: 'No visibility into what is working',
+    desc: 'Without proper analytics and attribution, marketing spend is a guess. You cannot optimise what you cannot measure, and most corporate websites have zero conversion tracking.',
   },
 ];
 
 const FAQS = [
   {
-    q: 'Which package is right for my store?',
-    a: 'If you are launching a new store and need a solid foundation with payments and shipping, Starter is the right starting point. If you are scaling and need AI recommendations, cart recovery, and inventory management, Growth will drive your next phase. Enterprise-level stores that need ERP integration, dynamic pricing, and wholesale capabilities should look at Pro. Not sure? Get a free audit and we will recommend the right tier.',
+    q: 'Which package is right for my business?',
+    a: 'If you need a professional corporate web presence with team profiles and a contact system, Starter covers the essentials. If you are ready to invest in content marketing, case studies, and SEO, Growth will drive inbound leads. If you need custom internal tools, client portals, and AI automation, Pro is the right fit. Not sure? Get a free audit and we will recommend the right tier.',
   },
   {
-    q: 'What payment processors do you integrate with?',
-    a: 'We integrate with all major Australian payment gateways including Stripe, Square, PayPal, Afterpay, Zip Pay, and direct bank transfers. We also handle multi-currency setups for stores selling internationally.',
+    q: 'How long does it take to deliver?',
+    a: 'Most corporate websites are live within 1-2 weeks. Larger builds with custom portals, internal tools, and AI integrations typically take 2-4 weeks depending on scope.',
   },
   {
-    q: 'How long does it take to build an e-commerce store?',
-    a: 'A standard custom store with product catalogue, checkout, and payment processing can be live in under 3 days. More complex builds with AI recommendations, inventory sync, and custom automation typically take 5-10 days.',
+    q: 'Can you integrate with our existing systems?',
+    a: 'Yes. We integrate with CRMs, ERPs, project management tools, and internal systems. Whether you use Salesforce, HubSpot, or custom infrastructure, we build around your existing stack.',
   },
   {
-    q: 'What are the ongoing costs after launch?',
-    a: 'Hosting for a custom store typically runs $20-50/month depending on traffic. There are no Stackmate lock-in fees or recurring platform charges. We offer optional maintenance and support plans if you want ongoing optimisation.',
+    q: 'What does ongoing support include?',
+    a: 'Every build includes 30 days of support. After that, monthly plans cover hosting, maintenance, content updates, SEO/GEO optimization, analytics reporting, and priority support.',
   },
   {
-    q: 'Will my store be optimised for SEO?',
-    a: 'Every store we build ships with technical SEO baked in from day one: server-side rendering, structured product data, optimised meta tags, image compression, clean URL structures, and mobile-first design.',
+    q: 'Do you work with businesses outside Perth?',
+    a: 'Yes. While we are based in Perth, we work with corporate clients across Australia. All communication and delivery is remote-friendly.',
   },
 ];
-
-/* ── Page ── */
 
 function formatPrice(cents: number): string {
   return 'A$' + (cents / 100).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-export default function EcommercePage() {
+export default function CorporatePage() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [apiPackages, setApiPackages] = useState<{ tier: string; tierLabel: string; upfrontPrice: number; monthlyPrice: number; features: string[] }[]>([]);
 
   useEffect(() => {
-    fetch('/api/packages?industry=ecommerce').then(r => r.json()).then(d => setApiPackages(d.packages || [])).catch(() => {});
+    fetch('/api/packages?industry=corporate').then(r => r.json()).then(d => setApiPackages(d.packages || [])).catch(() => {});
   }, []);
 
   const faqSchema = {
@@ -139,10 +134,7 @@ export default function EcommercePage() {
     mainEntity: FAQS.map((faq) => ({
       '@type': 'Question',
       name: faq.q,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: faq.a,
-      },
+      acceptedAnswer: { '@type': 'Answer', text: faq.a },
     })),
   };
 
@@ -151,29 +143,27 @@ export default function EcommercePage() {
       <Header onQuoteClick={() => setQuoteOpen(true)} />
       <QuoteModal isOpen={quoteOpen} onClose={() => setQuoteOpen(false)} />
 
-      {/* Service Schema */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'Service',
-        name: 'E-Commerce Packages — Custom Stores & Automation',
+        name: 'Corporate Packages -- Websites, Portals & AI Automation',
         provider: { '@type': 'Organization', name: 'Stackmate', url: 'https://stackmate.digital' },
-        areaServed: { '@type': 'State', name: 'Western Australia' },
-        description: 'E-commerce packages for Perth businesses — from custom Shopify stores to enterprise platforms with AI recommendations, inventory sync, and ERP integration.',
-        serviceType: 'E-Commerce Development',
+        areaServed: { '@type': 'Country', name: 'Australia' },
+        description: 'Corporate web development packages -- from professional websites to custom portals, AI automation, and full SEO/GEO programs.',
+        serviceType: 'Corporate Web Development',
       }) }} />
 
-      {/* FAQ Schema */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* ===== HERO ===== */}
       <section className="pt-32 pb-16 max-w-5xl mx-auto px-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <p className="eyebrow mb-4">Packages for E-Commerce</p>
+          <p className="eyebrow mb-4">Packages for Corporate</p>
           <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight mb-6">
-            Choose the right package for your online store
+            Choose the right package for your business
           </h1>
           <p className="text-lg text-sm-light max-w-2xl mb-8">
-            Whether you are launching your first store or scaling an enterprise operation, we have a package built for where your business is today. Custom stores, AI-powered selling, and automation that runs while you sleep. No lock-in contracts. No template compromises.
+            From professional corporate websites to full-stack digital infrastructure with AI automation, client portals, and content marketing systems. Built for Australian businesses that need to look and operate at the level they compete.
           </p>
           <div className="flex flex-wrap gap-4">
             <a
@@ -198,16 +188,15 @@ export default function EcommercePage() {
           <AnimatedSection className="text-center mb-16">
             <p className="eyebrow mb-4">Our Packages</p>
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Three tiers. One goal. More sales, less friction.
+              Three tiers. One goal. Professional digital infrastructure.
             </h2>
             <p className="text-sm-muted max-w-2xl mx-auto">
-              Every package is quote-based and tailored to your store. Pick the tier that matches your stage of growth, and we will build it to spec.
+              Every package is quote-based and tailored to your business. Pick the tier that fits your stage and goals, and we will build it to spec.
             </p>
           </AnimatedSection>
           <div className="grid md:grid-cols-3 gap-6">
             {PACKAGES.map((pkg, i) => {
-              const tierKey = pkg.tier.toLowerCase() === 'pro' ? 'scale' : pkg.tier.toLowerCase();
-              const apiPkg = apiPackages.find(a => a.tier === tierKey);
+              const apiPkg = apiPackages.find(a => a.tier === pkg.tier.toLowerCase());
               const features = apiPkg ? apiPkg.features : pkg.features;
               return (
                 <StaggerItem
@@ -258,7 +247,7 @@ export default function EcommercePage() {
                 Need something different? We build custom.
               </h2>
               <p className="text-sm-muted max-w-xl mx-auto mb-8">
-                If none of the packages above fit your situation, we can scope a custom solution from scratch. Complex product configurators, headless multi-storefront architectures, bespoke marketplace integrations — whatever your store needs, we will build it.
+                If none of the packages above fit your requirements, we can scope a custom solution from scratch. Enterprise integrations, bespoke internal tools, complex automation workflows -- whatever your business needs, we will build it.
               </p>
               <a
                 href="/packages/custom"
@@ -277,7 +266,7 @@ export default function EcommercePage() {
           <AnimatedSection className="text-center mb-16">
             <p className="eyebrow mb-4">The Problem</p>
             <h2 className="text-3xl md:text-4xl font-display font-bold">
-              Why most Perth e-commerce stores underperform
+              Your digital presence should match your ambition
             </h2>
           </AnimatedSection>
           <div className="grid md:grid-cols-2 gap-6">
@@ -298,7 +287,7 @@ export default function EcommercePage() {
           <AnimatedSection className="text-center mb-16">
             <p className="eyebrow mb-4">FAQ</p>
             <h2 className="text-3xl md:text-4xl font-display font-bold">
-              Common questions about e-commerce packages
+              Common questions about corporate packages
             </h2>
           </AnimatedSection>
           <div className="space-y-3">
@@ -343,7 +332,7 @@ export default function EcommercePage() {
                 Not sure which package you need?
               </h2>
               <p className="text-sm-muted max-w-xl mx-auto mb-8">
-                We will audit your current store, show you exactly where you are losing sales, and recommend the right package to fix it. No cost, no obligation.
+                We will audit your current digital presence, identify gaps and opportunities, and recommend the right package for your business. No cost, no obligation.
               </p>
               <a
                 href="/audit"
@@ -361,10 +350,10 @@ export default function EcommercePage() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <AnimatedSection>
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Ready to sell more with less effort?
+              Ready to upgrade your digital infrastructure?
             </h2>
             <p className="text-sm-muted max-w-xl mx-auto mb-8">
-              Tell us about your store and we will match you with the right package. Most builds are live within days, not months.
+              Tell us about your business and we will match you with the right package. Most corporate websites are live within two weeks.
             </p>
             <button
               onClick={() => setQuoteOpen(true)}

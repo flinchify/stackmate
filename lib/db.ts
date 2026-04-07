@@ -189,6 +189,21 @@ export async function ensureTables() {
     created_at TIMESTAMPTZ DEFAULT NOW()
   )`;
 
+  await sql`CREATE TABLE IF NOT EXISTS packages (
+    id TEXT PRIMARY KEY,
+    industry TEXT NOT NULL,
+    tier TEXT NOT NULL,
+    tier_label TEXT NOT NULL,
+    upfront_price NUMERIC NOT NULL,
+    monthly_price NUMERIC NOT NULL,
+    features JSONB DEFAULT '[]',
+    includes_description TEXT,
+    visible BOOLEAN DEFAULT false,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
+
   await sql`CREATE TABLE IF NOT EXISTS client_dashboards (
     id TEXT PRIMARY KEY,
     access_code TEXT UNIQUE NOT NULL,

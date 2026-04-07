@@ -1,0 +1,358 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { seedPackages, getPackageCount } from '@/lib/packages-store';
+
+function checkAuth(req: NextRequest): boolean {
+  return req.headers.get('x-admin-secret') === (process.env.ADMIN_SECRET || 'stackmate-admin-2026');
+}
+
+const SEED_DATA = [
+  // ── TRADIES ──
+  {
+    id: 'pkg_tradies_starter',
+    industry: 'tradies',
+    tier: 'starter',
+    tierLabel: 'Solo Tradie',
+    upfrontPrice: 599900,
+    monthlyPrice: 49900,
+    features: [
+      '5-page website',
+      'Mobile responsive',
+      'Contact form',
+      'Click-to-call',
+      'Basic on-page SEO',
+      'Google Business Profile setup guidance',
+      'Basic maintenance, hosting, and reporting',
+    ],
+    includesDescription: 'Hosting, maintenance, and basic reporting',
+    sortOrder: 0,
+  },
+  {
+    id: 'pkg_tradies_growth',
+    industry: 'tradies',
+    tier: 'growth',
+    tierLabel: 'Growing Team',
+    upfrontPrice: 899900,
+    monthlyPrice: 149000,
+    features: [
+      'Everything in Starter',
+      'Quote request engine',
+      'Suburb/service area pages',
+      'Testimonials and review integration',
+      'Local SEO + GEO foundations',
+      'Monthly maintenance and content updates',
+      'Reporting dashboard',
+    ],
+    includesDescription: 'Hosting, maintenance, content updates, SEO/GEO, and reporting',
+    sortOrder: 1,
+  },
+  {
+    id: 'pkg_tradies_pro',
+    industry: 'tradies',
+    tier: 'pro',
+    tierLabel: 'Established Business',
+    upfrontPrice: 1499900,
+    monthlyPrice: 249000,
+    features: [
+      'Everything in Growth',
+      'Advanced quote flow',
+      'Admin dashboard',
+      'AI chat/lead triage',
+      'Stronger monthly SEO/GEO work',
+      'Conversion updates',
+      'Monthly reporting and support',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, AI tools, conversion optimization, and reporting',
+    sortOrder: 2,
+  },
+
+  // ── RESTAURANTS ──
+  {
+    id: 'pkg_restaurants_starter',
+    industry: 'restaurants',
+    tier: 'starter',
+    tierLabel: 'Single Venue',
+    upfrontPrice: 449900,
+    monthlyPrice: 49900,
+    features: [
+      'Website with menu pages',
+      'Enquiry/booking flow',
+      'Gallery',
+      'Basic local SEO',
+      'Maintenance and reporting',
+    ],
+    includesDescription: 'Hosting, maintenance, and basic reporting',
+    sortOrder: 0,
+  },
+  {
+    id: 'pkg_restaurants_growth',
+    industry: 'restaurants',
+    tier: 'growth',
+    tierLabel: 'Busy Venue',
+    upfrontPrice: 899900,
+    monthlyPrice: 169000,
+    features: [
+      'Everything in Starter',
+      'Reservation integration',
+      'Promo landing pages',
+      'Stronger local SEO + GEO',
+      'Monthly content and reporting',
+      'Review system',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, content, and reporting',
+    sortOrder: 1,
+  },
+  {
+    id: 'pkg_restaurants_pro',
+    industry: 'restaurants',
+    tier: 'pro',
+    tierLabel: 'Multi-Venue Chain',
+    upfrontPrice: 1799900,
+    monthlyPrice: 299000,
+    features: [
+      'Everything in Growth',
+      'QR ordering/online ordering flow',
+      'Loyalty/offer system',
+      'Admin panel',
+      'AI assistant/chat',
+      'Ongoing optimization',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, AI tools, loyalty management, and reporting',
+    sortOrder: 2,
+  },
+
+  // ── ECOMMERCE ──
+  {
+    id: 'pkg_ecommerce_starter',
+    industry: 'ecommerce',
+    tier: 'starter',
+    tierLabel: 'Brand Starter',
+    upfrontPrice: 599900,
+    monthlyPrice: 49900,
+    features: [
+      'Storefront setup',
+      'Up to 20 products',
+      'Collections',
+      'Policy pages',
+      'Analytics',
+      'Basic SEO',
+      'Maintenance',
+    ],
+    includesDescription: 'Hosting, maintenance, and basic reporting',
+    sortOrder: 0,
+  },
+  {
+    id: 'pkg_ecommerce_growth',
+    industry: 'ecommerce',
+    tier: 'growth',
+    tierLabel: 'Brand Growth',
+    upfrontPrice: 999900,
+    monthlyPrice: 199000,
+    features: [
+      'Everything in Starter',
+      'Stronger PDP/CRO structure',
+      'Email capture',
+      'Blog/content structure',
+      'SEO/GEO foundations',
+      'Monthly optimization',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, CRO, and reporting',
+    sortOrder: 1,
+  },
+  {
+    id: 'pkg_ecommerce_scale',
+    industry: 'ecommerce',
+    tier: 'scale',
+    tierLabel: 'Brand Scale',
+    upfrontPrice: 1999900,
+    monthlyPrice: 399000,
+    features: [
+      'Everything in Growth',
+      'Advanced CRO',
+      'Landing pages',
+      'Dashboards',
+      'AI support assistant',
+      'Reporting',
+      'Experimentation cadence',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, AI tools, CRO, experimentation, and reporting',
+    sortOrder: 2,
+  },
+
+  // ── LOCAL SERVICES ──
+  {
+    id: 'pkg_local-services_starter',
+    industry: 'local-services',
+    tier: 'starter',
+    tierLabel: 'Service Starter',
+    upfrontPrice: 449900,
+    monthlyPrice: 49900,
+    features: [
+      'Lead generation website',
+      'Booking/consultation enquiry',
+      'Basic SEO',
+      'Maintenance and reporting',
+    ],
+    includesDescription: 'Hosting, maintenance, and basic reporting',
+    sortOrder: 0,
+  },
+  {
+    id: 'pkg_local-services_growth',
+    industry: 'local-services',
+    tier: 'growth',
+    tierLabel: 'Service Growth',
+    upfrontPrice: 899900,
+    monthlyPrice: 169000,
+    features: [
+      'Everything in Starter',
+      'Location/service pages',
+      'Reviews and proof',
+      'CRM integration',
+      'Stronger SEO/GEO',
+      'Monthly optimization',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, CRM, and reporting',
+    sortOrder: 1,
+  },
+  {
+    id: 'pkg_local-services_pro',
+    industry: 'local-services',
+    tier: 'pro',
+    tierLabel: 'Service Pro',
+    upfrontPrice: 1499900,
+    monthlyPrice: 329000,
+    features: [
+      'Everything in Growth',
+      'AI lead qualification',
+      'Multi-location support',
+      'Advanced automation',
+      'Full monthly SEO/GEO',
+      'Reporting dashboards',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, AI tools, automation, and reporting',
+    sortOrder: 2,
+  },
+
+  // ── CORPORATE ──
+  {
+    id: 'pkg_corporate_starter',
+    industry: 'corporate',
+    tier: 'starter',
+    tierLabel: 'Corporate Starter',
+    upfrontPrice: 799900,
+    monthlyPrice: 49900,
+    features: [
+      'Professional corporate website',
+      'Trust/about pages',
+      'Team profiles',
+      'Contact system',
+      'Basic SEO',
+      'Maintenance',
+    ],
+    includesDescription: 'Hosting, maintenance, and basic reporting',
+    sortOrder: 0,
+  },
+  {
+    id: 'pkg_corporate_growth',
+    industry: 'corporate',
+    tier: 'growth',
+    tierLabel: 'Corporate Growth',
+    upfrontPrice: 1499900,
+    monthlyPrice: 299000,
+    features: [
+      'Everything in Starter',
+      'Content marketing structure',
+      'Case studies',
+      'Stronger SEO/GEO',
+      'Monthly optimization',
+      'Analytics',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, content marketing, and reporting',
+    sortOrder: 1,
+  },
+  {
+    id: 'pkg_corporate_pro',
+    industry: 'corporate',
+    tier: 'pro',
+    tierLabel: 'Corporate Pro',
+    upfrontPrice: 2999900,
+    monthlyPrice: 499000,
+    features: [
+      'Everything in Growth',
+      'Custom internal tools',
+      'Client portal',
+      'Advanced analytics',
+      'AI automation',
+      'Full SEO/GEO program',
+    ],
+    includesDescription: 'Hosting, maintenance, SEO/GEO, AI tools, portals, and reporting',
+    sortOrder: 2,
+  },
+
+  // ── ENTERPRISE ──
+  {
+    id: 'pkg_enterprise_base',
+    industry: 'enterprise',
+    tier: 'base',
+    tierLabel: 'Enterprise Base',
+    upfrontPrice: 5000000,
+    monthlyPrice: 500000,
+    features: [
+      'Custom web application',
+      'Admin dashboard',
+      'API integrations',
+      'Security hardening',
+      'Dedicated support',
+    ],
+    includesDescription: 'Hosting, maintenance, security, dedicated support, and reporting',
+    sortOrder: 0,
+  },
+  {
+    id: 'pkg_enterprise_growth',
+    industry: 'enterprise',
+    tier: 'growth',
+    tierLabel: 'Enterprise Growth',
+    upfrontPrice: 10000000,
+    monthlyPrice: 1000000,
+    features: [
+      'Everything in Base',
+      'Multi-system integration',
+      'Advanced workflows',
+      'Data pipelines',
+      'Team portals',
+    ],
+    includesDescription: 'Hosting, maintenance, integrations, workflows, and dedicated support',
+    sortOrder: 1,
+  },
+  {
+    id: 'pkg_enterprise_ai',
+    industry: 'enterprise',
+    tier: 'ai-systems',
+    tierLabel: 'Enterprise AI',
+    upfrontPrice: 15000000,
+    monthlyPrice: 2000000,
+    features: [
+      'Everything in Growth',
+      'Custom AI agents',
+      'ML pipelines',
+      'IoT integration',
+      'Command centre',
+      'Predictive systems',
+    ],
+    includesDescription: 'Hosting, maintenance, AI/ML infrastructure, IoT, and dedicated support',
+    sortOrder: 2,
+  },
+];
+
+export async function POST(req: NextRequest) {
+  if (!checkAuth(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const existing = await getPackageCount();
+  if (existing > 0) {
+    return NextResponse.json({ error: 'Packages already seeded. Delete existing packages first.', count: existing }, { status: 409 });
+  }
+
+  const count = await seedPackages(SEED_DATA);
+  return NextResponse.json({ success: true, seeded: count });
+}

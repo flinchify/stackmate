@@ -43,6 +43,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/real-estate`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: `${base}/ecommerce`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: `${base}/mining`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/corporate`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${base}/pricing`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.9 },
   ];
 
   return [...pages, ...packagePages, ...blogPages, ...geoPages];
