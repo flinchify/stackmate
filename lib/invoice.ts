@@ -4,7 +4,7 @@ export interface InvoiceItem { description: string; quantity: number; unitPrice:
 export interface Invoice {
   id: string; quoteId: string; clientName: string; clientEmail: string; clientAddress?: string;
   items: InvoiceItem[]; subtotal: number; gst: number; total: number;
-  status: string; issuedAt: string; dueAt: string; paidAt?: string; notes?: string;
+  status: string; issuedAt: string; dueAt: string; paidAt?: string; notes?: string; linkedProjectId?: string;
 }
 export interface RecurringService {
   id: string; clientName: string; clientEmail: string; service: string; description: string;
@@ -13,13 +13,13 @@ export interface RecurringService {
 export interface Project {
   id: string; clientName: string; clientEmail: string; title: string; description: string;
   status: string; priority: string; startDate?: string; dueDate?: string; completedDate?: string; notes?: string;
-  depositAmount: number; mrrAmount: number; costAmount: number;
+  depositAmount: number; mrrAmount: number; costAmount: number; linkedInvoiceId?: string;
 }
 
 // ---- INVOICES ----
 let invoiceCount = 0;
 
-export async function generateInvoice(params: { quoteId: string; clientName: string; clientEmail: string; clientAddress?: string; items: InvoiceItem[]; notes?: string }): Promise<Invoice> {
+export async function generateInvoice(params: { quoteId: string; clientName: string; clientEmail: string; clientAddress?: string; items: InvoiceItem[]; notes?: string; linkedProjectId?: string }): Promise<Invoice> {
   await ensureTables();
   const countRows = await sql`SELECT COUNT(*) as c FROM invoices`;
   invoiceCount = Number(countRows[0].c) + 1;
@@ -30,10 +30,10 @@ export async function generateInvoice(params: { quoteId: string; clientName: str
   const due = new Date(now); due.setDate(due.getDate() + 14);
   const id = `INV-${String(invoiceCount).padStart(4, '0')}`;
 
-  await sql`INSERT INTO invoices (id, quote_id, client_name, client_email, client_address, items, subtotal, gst, total, status, issued_at, due_at, notes)
-    VALUES (${id}, ${params.quoteId}, ${params.clientName}, ${params.clientEmail}, ${params.clientAddress || null}, ${JSON.stringify(params.items)}, ${subtotal}, ${gst}, ${total}, 'draft', ${now.toISOString()}, ${due.toISOString()}, ${params.notes || null})`;
+  await sql`INSERT INTO invoices (id, quote_id, client_name, client_email, client_address, items, subtotal, gst, total, status, issued_at, due_at, notes, linked_project_id)
+    VALUES (${id}, ${params.quoteId}, ${params.clientName}, ${params.clientEmail}, ${params.clientAddress || null}, ${JSON.stringify(params.items)}, ${subtotal}, ${gst}, ${total}, 'draft', ${now.toISOString()}, ${due.toISOString()}, ${params.notes || null}, ${params.linkedProjectId || null})`;
 
-  return { id, quoteId: params.quoteId, clientName: params.clientName, clientEmail: params.clientEmail, clientAddress: params.clientAddress, items: params.items, subtotal, gst, total, status: 'draft', issuedAt: now.toISOString(), dueAt: due.toISOString(), notes: params.notes };
+  return { id, quoteId: params.quoteId, clientName: params.clientName, clientEmail: params.clientEmail, clientAddress: params.clientAddress, items: params.items, subtotal, gst, total, status: 'draft', issuedAt: now.toISOString(), dueAt: due.toISOString(), notes: params.notes, linkedProjectId: params.linkedProjectId };
 }
 
 export async function generateInvoiceFromQuote(quote: { id: string; companyName: string; email: string; services: string[]; otherService?: string; estimate: { setupMin: number; setupMax: number; monthlyMin: number; monthlyMax: number } }): Promise<Invoice> {
@@ -47,10 +47,39 @@ export async function generateInvoiceFromQuote(quote: { id: string; companyName:
   return generateInvoice({ quoteId: quote.id, clientName: quote.companyName, clientEmail: quote.email, items, notes: `Services: ${serviceList}. Payment due within 14 days.` });
 }
 
+function mapInvoiceRow(r: Record<string, any>): Invoice {
+  return { id: r.id, quoteId: r.quote_id, clientName: r.client_name, clientEmail: r.client_email, clientAddress: r.client_address, items: r.items, subtotal: Number(r.subtotal), gst: Number(r.gst), total: Number(r.total), status: r.status, issuedAt: r.issued_at, dueAt: r.due_at, paidAt: r.paid_at, notes: r.notes, linkedProjectId: r.linked_project_id };
+}
+
 export async function getInvoices(): Promise<Invoice[]> {
   await ensureTables();
   const rows = await sql`SELECT * FROM invoices ORDER BY issued_at DESC`;
-  return rows.map(r => ({ id: r.id, quoteId: r.quote_id, clientName: r.client_name, clientEmail: r.client_email, clientAddress: r.client_address, items: r.items, subtotal: Number(r.subtotal), gst: Number(r.gst), total: Number(r.total), status: r.status, issuedAt: r.issued_at, dueAt: r.due_at, paidAt: r.paid_at, notes: r.notes }));
+  return rows.map(mapInvoiceRow);
+}
+
+export async function getInvoiceById(id: string): Promise<Invoice | null> {
+  await ensureTables();
+  const rows = await sql`SELECT * FROM invoices WHERE id = ${id}`;
+  if (rows.length === 0) return null;
+  return mapInvoiceRow(rows[0]);
+}
+
+export async function updateInvoice(id: string, updates: Partial<{ items: InvoiceItem[]; notes: string; dueAt: string; clientAddress: string; clientName: string; clientEmail: string }>): Promise<Invoice | null> {
+  await ensureTables();
+  if (updates.items) {
+    const subtotal = updates.items.reduce((s, i) => s + i.total, 0);
+    const gst = Math.round(subtotal * 0.1 * 100) / 100;
+    const total = subtotal + gst;
+    await sql`UPDATE invoices SET items = ${JSON.stringify(updates.items)}, subtotal = ${subtotal}, gst = ${gst}, total = ${total} WHERE id = ${id}`;
+  }
+  if (updates.notes !== undefined) await sql`UPDATE invoices SET notes = ${updates.notes} WHERE id = ${id}`;
+  if (updates.dueAt) await sql`UPDATE invoices SET due_at = ${updates.dueAt} WHERE id = ${id}`;
+  if (updates.clientAddress !== undefined) await sql`UPDATE invoices SET client_address = ${updates.clientAddress} WHERE id = ${id}`;
+  if (updates.clientName) await sql`UPDATE invoices SET client_name = ${updates.clientName} WHERE id = ${id}`;
+  if (updates.clientEmail) await sql`UPDATE invoices SET client_email = ${updates.clientEmail} WHERE id = ${id}`;
+  const rows = await sql`SELECT * FROM invoices WHERE id = ${id}`;
+  if (rows.length === 0) return null;
+  return mapInvoiceRow(rows[0]);
 }
 
 export async function updateInvoiceStatus(id: string, status: string): Promise<Invoice | null> {
@@ -58,8 +87,7 @@ export async function updateInvoiceStatus(id: string, status: string): Promise<I
   const paidAt = status === 'paid' ? new Date().toISOString() : null;
   const rows = await sql`UPDATE invoices SET status = ${status}, paid_at = COALESCE(${paidAt}, paid_at) WHERE id = ${id} RETURNING *`;
   if (rows.length === 0) return null;
-  const r = rows[0];
-  return { id: r.id, quoteId: r.quote_id, clientName: r.client_name, clientEmail: r.client_email, items: r.items, subtotal: Number(r.subtotal), gst: Number(r.gst), total: Number(r.total), status: r.status, issuedAt: r.issued_at, dueAt: r.due_at, paidAt: r.paid_at, notes: r.notes };
+  return mapInvoiceRow(rows[0]);
 }
 
 // ---- RECURRING ----
@@ -101,10 +129,14 @@ export async function addProject(params: Omit<Project, 'id'>): Promise<Project> 
   return { ...params, id };
 }
 
+function mapProjectRow(r: Record<string, any>): Project {
+  return { id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes, depositAmount: Number(r.deposit_amount) || 0, mrrAmount: Number(r.mrr_amount) || 0, costAmount: Number(r.cost_amount) || 0, linkedInvoiceId: r.linked_invoice_id };
+}
+
 export async function getProjects(): Promise<Project[]> {
   await ensureTables();
   const rows = await sql`SELECT * FROM projects ORDER BY created_at DESC`;
-  return rows.map(r => ({ id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes, depositAmount: Number(r.deposit_amount) || 0, mrrAmount: Number(r.mrr_amount) || 0, costAmount: Number(r.cost_amount) || 0 }));
+  return rows.map(mapProjectRow);
 }
 
 export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
@@ -113,10 +145,10 @@ export async function updateProject(id: string, updates: Partial<Project>): Prom
   if (updates.depositAmount !== undefined) await sql`UPDATE projects SET deposit_amount = ${updates.depositAmount} WHERE id = ${id}`;
   if (updates.mrrAmount !== undefined) await sql`UPDATE projects SET mrr_amount = ${updates.mrrAmount} WHERE id = ${id}`;
   if (updates.costAmount !== undefined) await sql`UPDATE projects SET cost_amount = ${updates.costAmount} WHERE id = ${id}`;
+  if (updates.linkedInvoiceId !== undefined) await sql`UPDATE projects SET linked_invoice_id = ${updates.linkedInvoiceId} WHERE id = ${id}`;
   const rows = await sql`SELECT * FROM projects WHERE id = ${id}`;
   if (rows.length === 0) return null;
-  const r = rows[0];
-  return { id: r.id, clientName: r.client_name, clientEmail: r.client_email, title: r.title, description: r.description, status: r.status, priority: r.priority, startDate: r.start_date, dueDate: r.due_date, completedDate: r.completed_date, notes: r.notes, depositAmount: Number(r.deposit_amount) || 0, mrrAmount: Number(r.mrr_amount) || 0, costAmount: Number(r.cost_amount) || 0 };
+  return mapProjectRow(rows[0]);
 }
 
 export async function deleteProject(id: string): Promise<boolean> {

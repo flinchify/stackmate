@@ -95,6 +95,10 @@ export async function ensureTables() {
   await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS mrr_amount NUMERIC DEFAULT 0`;
   await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS cost_amount NUMERIC DEFAULT 0`;
 
+  // Pipeline linking columns
+  await sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS linked_project_id TEXT`;
+  await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS linked_invoice_id TEXT`;
+
   await sql`CREATE TABLE IF NOT EXISTS expenses (
     id TEXT PRIMARY KEY,
     client_name TEXT,

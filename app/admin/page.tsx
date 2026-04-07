@@ -17,8 +17,8 @@ interface Quote {
 }
 
 interface Invoice {
-  id: string; quoteId: string; clientName: string; clientEmail: string; items: { description: string; quantity: number; unitPrice: number; total: number }[];
-  subtotal: number; gst: number; total: number; status: string; issuedAt: string; dueAt: string; paidAt?: string; notes?: string;
+  id: string; quoteId: string; clientName: string; clientEmail: string; clientAddress?: string; items: { description: string; quantity: number; unitPrice: number; total: number }[];
+  subtotal: number; gst: number; total: number; status: string; issuedAt: string; dueAt: string; paidAt?: string; notes?: string; linkedProjectId?: string;
 }
 
 interface RecurringService {
@@ -29,7 +29,7 @@ interface RecurringService {
 interface Project {
   id: string; clientName: string; clientEmail: string; title: string; description: string;
   status: string; priority: string; startDate?: string; dueDate?: string; completedDate?: string; notes?: string;
-  depositAmount: number; mrrAmount: number; costAmount: number;
+  depositAmount: number; mrrAmount: number; costAmount: number; linkedInvoiceId?: string;
 }
 
 interface Client { id: string; name: string; url: string; logoUrl: string; heroUrl: string; createdAt: string; }
@@ -98,6 +98,8 @@ export default function AdminPage() {
   const [autoAudits, setAutoAudits] = useState<{ id: string; clientName?: string; url: string; lastRun?: string; frequency: string; geoScore?: number; seoScore?: number; performanceScore?: number; status: string }[]>([]);
   const [newAutoAudit, setNewAutoAudit] = useState({ clientName: '', url: '', frequency: 'daily' });
   const [newExpense, setNewExpense] = useState({ clientName: '', category: 'api', description: '', amount: 0, recurring: true, frequency: 'monthly', date: '' });
+  const [editingInvoice, setEditingInvoice] = useState<string | null>(null);
+  const [invoiceEdits, setInvoiceEdits] = useState<{ items: { description: string; quantity: number; unitPrice: number; total: number }[]; notes: string; dueAt: string; clientAddress: string; clientName: string; clientEmail: string }>({ items: [], notes: '', dueAt: '', clientAddress: '', clientName: '', clientEmail: '' });
   const [dashboards, setDashboards] = useState<{ id: string; accessCode: string; clientName: string; clientEmail?: string; clientLogo?: string; clientDomain?: string; brandColor: string; metrics: { label: string; value: number; prev?: number }[]; seoScores: { date: string; score: number }[]; geoScores: { platform: string; score: number }[]; trafficData: { month: string; visits: number }[]; rankings: { keyword: string; position: number; change: number }[]; leads: { date: string; name: string; source?: string }[]; notes?: string; createdAt: string }[]>([]);
   const [newDashboard, setNewDashboard] = useState({ clientName: '', clientEmail: '', clientLogo: '', clientDomain: '', brandColor: '#f97316', notes: '' });
   const [editingDashboard, setEditingDashboard] = useState<string | null>(null);
@@ -436,6 +438,36 @@ export default function AdminPage() {
                   ))}
                 </div>
                 {selected.status === 'paid' && <p className="text-xs text-orange-400 mt-2">Invoice auto-generated</p>}
+                {(selected.status === 'accepted' || selected.status === 'quoted') && (
+                  <button
+                    onClick={async () => {
+                      const setupAvg = Math.round((selected.estimate.setupMin + selected.estimate.setupMax) / 2 / 100) * 100;
+                      const mrrAvg = Math.round((selected.estimate.monthlyMin + selected.estimate.monthlyMax) / 2 / 100) * 100;
+                      const projBody = {
+                        clientName: selected.companyName,
+                        clientEmail: selected.email,
+                        title: `Website Build — ${selected.companyName}`,
+                        description: selected.description,
+                        status: 'queued',
+                        priority: 'medium',
+                        depositAmount: setupAvg,
+                        mrrAmount: mrrAvg,
+                        costAmount: 0,
+                      };
+                      await fetch('/api/admin/projects', { method: 'POST', headers: headers(), body: JSON.stringify(projBody) });
+                      if (selected.status !== 'accepted') {
+                        await fetch('/api/admin/quotes', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: selected.id, status: 'accepted' }) });
+                      }
+                      logActivity(`Converted quote ${selected.companyName} to project`);
+                      alert(`Project created for ${selected.companyName}!`);
+                      setTab('projects');
+                      fetchAll();
+                    }}
+                    className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-sm text-xs bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    <FolderKanban className="w-3 h-3" /> Convert to Project
+                  </button>
+                )}
                 <button
                   onClick={async () => {
                     if (!confirm(`Delete quote from ${selected.companyName}? This cannot be undone.`)) return;
@@ -513,14 +545,68 @@ export default function AdminPage() {
                         <h3 className="font-display font-bold">{inv.id}</h3>
                         <p className="text-xs text-sm-muted">{inv.clientName} — {inv.clientEmail}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-display font-bold text-lg text-orange-400">${inv.total.toLocaleString()}</p>
-                        <p className="text-xs text-sm-muted">incl. ${inv.gst.toLocaleString()} GST</p>
+                      <div className="flex items-center gap-2">
+                        <a href={`/invoice/${inv.id}`} target="_blank" rel="noopener" className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs border border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400 transition-colors"><ExternalLink className="w-3 h-3" /> View</a>
+                        <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/invoice/${inv.id}`); alert('Invoice link copied!'); }} className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs border border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400 transition-colors"><Copy className="w-3 h-3" /> Copy Link</button>
+                        <button onClick={() => {
+                          if (editingInvoice === inv.id) { setEditingInvoice(null); return; }
+                          setEditingInvoice(inv.id);
+                          setInvoiceEdits({ items: [...inv.items], notes: inv.notes || '', dueAt: inv.dueAt ? new Date(inv.dueAt).toISOString().split('T')[0] : '', clientAddress: inv.clientAddress || '', clientName: inv.clientName, clientEmail: inv.clientEmail });
+                        }} className={`flex items-center gap-1 px-2 py-1 rounded-sm text-xs border transition-colors ${editingInvoice === inv.id ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-sm-border text-sm-light hover:border-orange-500/30 hover:text-orange-400'}`}><Settings className="w-3 h-3" /> Edit</button>
+                        <div className="text-right ml-2">
+                          <p className="font-display font-bold text-lg text-orange-400">${inv.total.toLocaleString()}</p>
+                          <p className="text-xs text-sm-muted">incl. ${inv.gst.toLocaleString()} GST</p>
+                        </div>
                       </div>
                     </div>
-                    {inv.items.map((item, i) => (
-                      <div key={i} className="flex justify-between text-sm mb-1"><span className="text-sm-light">{item.description}</span><span className="text-sm-muted">${item.total.toLocaleString()}</span></div>
-                    ))}
+
+                    {editingInvoice === inv.id ? (
+                      <div className="mb-4 p-4 rounded-sm border border-orange-500/20 bg-orange-500/5">
+                        <div className="grid grid-cols-3 gap-3 mb-4">
+                          <div><label className="text-xs text-sm-muted block mb-1">Client Name</label><input value={invoiceEdits.clientName} onChange={e => setInvoiceEdits(p => ({ ...p, clientName: e.target.value }))} className={inputClass} /></div>
+                          <div><label className="text-xs text-sm-muted block mb-1">Client Email</label><input value={invoiceEdits.clientEmail} onChange={e => setInvoiceEdits(p => ({ ...p, clientEmail: e.target.value }))} className={inputClass} /></div>
+                          <div><label className="text-xs text-sm-muted block mb-1">Due Date</label><input type="date" value={invoiceEdits.dueAt} onChange={e => setInvoiceEdits(p => ({ ...p, dueAt: e.target.value }))} className={inputClass} /></div>
+                        </div>
+                        <div className="mb-4">
+                          <label className="text-xs text-sm-muted block mb-1">Client Address</label>
+                          <input value={invoiceEdits.clientAddress} onChange={e => setInvoiceEdits(p => ({ ...p, clientAddress: e.target.value }))} className={inputClass} placeholder="Street, City, State, Postcode" />
+                        </div>
+                        <div className="mb-3">
+                          <label className="text-xs text-sm-muted block mb-2">Line Items</label>
+                          {invoiceEdits.items.map((item, i) => (
+                            <div key={i} className="flex gap-2 mb-2 items-end">
+                              <div className="flex-1"><input value={item.description} onChange={e => { const items = [...invoiceEdits.items]; items[i] = { ...items[i], description: e.target.value }; setInvoiceEdits(p => ({ ...p, items })); }} className={inputClass} placeholder="Description" /></div>
+                              <div className="w-20"><input type="number" value={item.quantity || ''} onChange={e => { const items = [...invoiceEdits.items]; const qty = Number(e.target.value); items[i] = { ...items[i], quantity: qty, total: qty * items[i].unitPrice }; setInvoiceEdits(p => ({ ...p, items })); }} className={inputClass} placeholder="Qty" /></div>
+                              <div className="w-28"><input type="number" value={item.unitPrice || ''} onChange={e => { const items = [...invoiceEdits.items]; const price = Number(e.target.value); items[i] = { ...items[i], unitPrice: price, total: items[i].quantity * price }; setInvoiceEdits(p => ({ ...p, items })); }} className={inputClass} placeholder="Unit $" /></div>
+                              <div className="w-24 text-right text-sm text-sm-light py-3">${(item.quantity * item.unitPrice).toLocaleString()}</div>
+                              <button onClick={() => { const items = invoiceEdits.items.filter((_, j) => j !== i); setInvoiceEdits(p => ({ ...p, items })); }} className="text-red-400 hover:text-red-300 p-2"><Trash2 className="w-3.5 h-3.5" /></button>
+                            </div>
+                          ))}
+                          <button onClick={() => setInvoiceEdits(p => ({ ...p, items: [...p.items, { description: '', quantity: 1, unitPrice: 0, total: 0 }] }))} className="text-xs text-orange-400 hover:underline">+ Add Item</button>
+                        </div>
+                        <div className="mb-4">
+                          <label className="text-xs text-sm-muted block mb-1">Notes</label>
+                          <textarea value={invoiceEdits.notes} onChange={e => setInvoiceEdits(p => ({ ...p, notes: e.target.value }))} className={`${inputClass} h-20`} placeholder="Invoice notes..." />
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={async () => {
+                            const items = invoiceEdits.items.map(it => ({ ...it, total: it.quantity * it.unitPrice }));
+                            await fetch('/api/admin/invoices', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: inv.id, items, notes: invoiceEdits.notes, dueAt: invoiceEdits.dueAt ? new Date(invoiceEdits.dueAt).toISOString() : undefined, clientAddress: invoiceEdits.clientAddress, clientName: invoiceEdits.clientName, clientEmail: invoiceEdits.clientEmail }) });
+                            logActivity(`Invoice ${inv.id} updated`);
+                            setEditingInvoice(null);
+                            fetchAll();
+                          }} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-sm">Save Changes</button>
+                          <button onClick={() => setEditingInvoice(null)} className="px-4 py-2 border border-sm-border text-sm-muted rounded-sm text-sm">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {inv.items.map((item, i) => (
+                          <div key={i} className="flex justify-between text-sm mb-1"><span className="text-sm-light">{item.description}</span><span className="text-sm-muted">${item.total.toLocaleString()}</span></div>
+                        ))}
+                      </>
+                    )}
+
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-sm-border">
                       <div className="flex gap-3 text-xs text-sm-muted">
                         <span>Issued: {new Date(inv.issuedAt).toLocaleDateString()}</span>
@@ -641,12 +727,40 @@ export default function AdminPage() {
                 ) : (
                   <button onClick={() => { setEditingFinancials(proj.id); setFinancialEdits({ depositAmount: proj.depositAmount, mrrAmount: proj.mrrAmount, costAmount: proj.costAmount }); }} className="text-xs text-orange-400 hover:underline mb-2 block">Edit Financials</button>
                 )}
-                <div className="flex gap-1.5">
+                {proj.linkedInvoiceId && (
+                  <p className="text-xs text-sm-muted mb-2">Invoice: <a href={`/invoice/${proj.linkedInvoiceId}`} target="_blank" rel="noopener" className="text-orange-400 hover:underline">{proj.linkedInvoiceId}</a></p>
+                )}
+                <div className="flex gap-1.5 flex-wrap">
                   {['queued', 'in-progress', 'review', 'delivered', 'completed'].map(s => (
                     <button key={s} onClick={() => updateProjectStatus(proj.id, s)}
                       className={`px-2 py-1 rounded-sm text-xs border capitalize ${proj.status === s ? 'bg-orange-500 text-white border-orange-500' : 'border-sm-border text-sm-muted'}`}
                     >{s}</button>
                   ))}
+                  {proj.depositAmount > 0 && !proj.linkedInvoiceId && (
+                    <button onClick={async () => {
+                      const items: { description: string; quantity: number; unitPrice: number; total: number }[] = [];
+                      items.push({ description: `Project Setup — ${proj.title}`, quantity: 1, unitPrice: proj.depositAmount, total: proj.depositAmount });
+                      if (proj.mrrAmount > 0) items.push({ description: `Monthly Management — ${proj.title} (first month)`, quantity: 1, unitPrice: proj.mrrAmount, total: proj.mrrAmount });
+                      const res = await fetch('/api/admin/invoices', { method: 'POST', headers: headers(), body: JSON.stringify({ quoteId: '', clientName: proj.clientName, clientEmail: proj.clientEmail, items, notes: `Invoice for ${proj.title}`, linkedProjectId: proj.id }) });
+                      const data = await res.json();
+                      if (data.invoice) {
+                        await fetch('/api/admin/projects', { method: 'PATCH', headers: headers(), body: JSON.stringify({ id: proj.id, linkedInvoiceId: data.invoice.id }) });
+                        logActivity(`Invoice ${data.invoice.id} generated for project ${proj.title}`);
+                        alert(`Invoice ${data.invoice.id} created!`);
+                        fetchAll();
+                      }
+                    }} className="px-2 py-1 rounded-sm text-xs border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-colors flex items-center gap-1"><Receipt className="w-3 h-3" /> Generate Invoice</button>
+                  )}
+                  {proj.mrrAmount > 0 && (
+                    <button onClick={async () => {
+                      const now = new Date();
+                      const nextMonth = new Date(now); nextMonth.setMonth(nextMonth.getMonth() + 1);
+                      await fetch('/api/admin/recurring', { method: 'POST', headers: headers(), body: JSON.stringify({ clientName: proj.clientName, clientEmail: proj.clientEmail, service: proj.title, description: `Recurring service from ${proj.title}`, monthlyAmount: proj.mrrAmount, startDate: now.toISOString().split('T')[0], nextBillingDate: nextMonth.toISOString().split('T')[0], status: 'active' }) });
+                      logActivity(`Recurring service set up for ${proj.clientName}: ${proj.title} $${proj.mrrAmount}/mo`);
+                      alert(`Recurring service ($${proj.mrrAmount}/mo) created for ${proj.clientName}!`);
+                      fetchAll();
+                    }} className="px-2 py-1 rounded-sm text-xs border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors flex items-center gap-1"><Repeat className="w-3 h-3" /> Set Up Recurring</button>
+                  )}
                 </div>
               </div>
               );
