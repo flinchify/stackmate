@@ -102,8 +102,6 @@ function CodeBlock({ lines }: { lines: string[] }) {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
-  const [showCursor, setShowCursor] = useState(true);
-
   useEffect(() => {
     if (currentLineIndex < lines.length) {
       const currentLine = lines[currentLineIndex];
@@ -129,13 +127,6 @@ function CodeBlock({ lines }: { lines: string[] }) {
     }
   }, [currentLineIndex, currentCharIndex, displayedLines, lines]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShowCursor(prev => !prev);
-    }, 600);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="bg-sm-surface rounded-lg border border-sm-border font-mono text-sm overflow-hidden">
       {/* Terminal header */}
@@ -151,13 +142,13 @@ function CodeBlock({ lines }: { lines: string[] }) {
         {displayedLines.map((line, i) => (
           <div key={i} className="leading-relaxed">
             {line}
-            {i === displayedLines.length - 1 && currentLineIndex < lines.length && showCursor && (
-              <span className="bg-sm-accent w-2 h-5 inline-block ml-0.5 cursor-blink"></span>
+            {i === displayedLines.length - 1 && currentLineIndex < lines.length && (
+              <span className="bg-sm-accent w-[8px] h-[1.1em] inline-block ml-0.5 align-middle cursor-blink"></span>
             )}
           </div>
         ))}
-        {currentLineIndex >= lines.length && showCursor && (
-          <span className="bg-sm-accent w-2 h-5 inline-block cursor-blink"></span>
+        {currentLineIndex >= lines.length && (
+          <span className="bg-sm-accent w-[8px] h-[1.1em] inline-block align-middle cursor-blink"></span>
         )}
       </div>
     </div>

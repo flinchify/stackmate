@@ -193,6 +193,7 @@ section[id] {
 
 .cursor-blink {
   animation: cursor-blink 1.2s ease-in-out infinite;
+  will-change: opacity;
 }
 
 /* Dashed line animation */
